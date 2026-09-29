@@ -1,0 +1,2155 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Planning Commandes</title>
+<meta name="theme-color" content="#1c4f8f">
+<style>
+/* Layout : appli une colonne (téléphone) ; barre d'onglets en bas ; tablette = contenu centré, plus large. */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --surface-2: #f6f8fb; --fg: #18212d; --muted: #5b6878;
+  --line: #d9dfe7; --accent: #1c4f8f; --accent-fg: #ffffff; --accent-soft: #dde8f6;
+  --danger: #b3261e; --danger-soft: #fbe3e1; --ok: #1e7a3c; --we: #fbe7e7; --today: #1c4f8f;
+  --shadow: 0 1px 2px rgba(20, 30, 45, .08), 0 4px 16px rgba(20, 30, 45, .06);
+  --f-titre: "Gelasio", Georgia, "Times New Roman", serif;
+  --f-ui: "Noto Sans", "Segoe UI", Roboto, Arial, sans-serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11151b; --surface: #1a2029; --surface-2: #212833; --fg: #e8edf3; --muted: #9aa7b6;
+  --line: #2e3744; --accent: #7fb0ec; --accent-fg: #0d1a2b; --accent-soft: #22344c;
+  --danger: #ff8a80; --danger-soft: #3a1f1d; --ok: #7fd49a; --we: #3a2629; --today: #7fb0ec;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11151b; --surface: #1a2029; --surface-2: #212833; --fg: #e8edf3; --muted: #9aa7b6;
+  --line: #2e3744; --accent: #7fb0ec; --accent-fg: #0d1a2b; --accent-soft: #22344c;
+  --danger: #ff8a80; --danger-soft: #3a1f1d; --ok: #7fd49a; --we: #3a2629; --today: #7fb0ec;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4); color-scheme: dark }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.4;
+  -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.appli { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 12px calc(84px + env(safe-area-inset-bottom, 0px)); }
+
+/* en-tête d'onglet */
+.entete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.entete h1 { font-family: var(--f-titre); font-weight: 600; font-size: 1.55rem; margin: 0; letter-spacing: .01em;
+  text-wrap: balance; flex: 1 1 auto; min-width: 0; }
+.nav-mois { display: flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.nav-mois h1 { text-align: center; }
+.rond { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; flex: none; }
+.rond svg { width: 20px; height: 20px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px;
+  display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: .93rem; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.accent { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn.fantome { background: transparent; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.plein { width: 100%; justify-content: center; padding-block: 13px; font-size: 1rem; }
+.rangee { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* carte */
+.carte { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+.carte + .carte, .bloc + .bloc { margin-top: 14px; }
+.carte > .pad { padding: 14px 16px; }
+.bloc h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 18px 4px 8px; font-weight: 700; }
+.discret { color: var(--muted); font-size: .88rem; }
+
+/* segmenté */
+.seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font-size: .88rem; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+
+/* pastilles du mois */
+.pastilles { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.pastille { border-radius: 999px; padding: 3px 10px; font-size: .8rem; font-weight: 700; border: 1px solid rgba(0,0,0,.08);
+  font-variant-numeric: tabular-nums; }
+.pastille.neutre { background: var(--surface); color: var(--fg); border-color: var(--line); }
+
+/* grille compacte */
+.grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; touch-action: pan-y; user-select: none; }
+.grille .jsem { text-align: center; font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .04em; padding: 2px 0 4px; }
+.grille .jsem.we { color: #b0463f; }
+.case { position: relative; min-height: 64px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+  padding: 4px 4px 5px; text-align: left; display: flex; flex-direction: column; gap: 1px; overflow: hidden; min-width: 0; color: #1d2530; }
+.case.vide { background: transparent; border-style: dashed; opacity: .45; }
+.case.we { background: var(--we); }
+.case .num { font-family: var(--f-titre); font-size: 1rem; line-height: 1.1; color: var(--muted); }
+.case.we .num { color: #b0463f; }
+.case .nom { font-weight: 700; font-size: .7rem; line-height: 1.15; overflow-wrap: anywhere; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.case .h { font-size: .62rem; line-height: 1.12; opacity: .85; font-variant-numeric: tabular-nums; }
+.case .nom.long { font-size: .6rem; }
+.case .gros { font-weight: 800; font-size: 1.05rem; text-align: center; margin: auto 0; }
+.case.fonce { color: #fff; }
+.case.fonce .num { color: rgba(255,255,255,.85); }
+.case.colore .num { color: #4a4f57; }
+.case.fonce.colore .num { color: rgba(255,255,255,.85); }
+.case.sel { outline: 2.5px solid var(--accent); outline-offset: 1px; }
+.case.aujourdhui::after { content: ""; position: absolute; inset: 2px; border: 2px solid var(--today); border-radius: 6px; pointer-events: none; }
+.case .greve { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.case .greve span { transform: rotate(-28deg); color: rgba(200, 0, 0, .42); font-weight: 900; font-size: .8rem; letter-spacing: .06em; }
+@media (min-width: 560px) { .case { min-height: 84px; padding: 6px; } .case .nom { font-size: .8rem; } .case .h { font-size: .7rem; } .case .gros { font-size: 1.4rem; } }
+
+/* vue A4 */
+.a4 { overflow: auto; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); touch-action: pan-x pan-y pinch-zoom; }
+.a4 canvas { display: block; width: 100%; height: auto; }
+.a4.zoom canvas { width: 1400px; max-width: none; }
+
+/* détail du jour */
+.detail h3 { font-family: var(--f-titre); font-weight: 600; font-size: 1.2rem; margin: 0; }
+.sv { border-top: 1px solid var(--line); padding: 10px 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
+.sv:first-of-type { border-top: 0; }
+.sv .code { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.sv .code i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); flex: none; }
+.sv .heures { grid-column: 1 / -1; font-variant-numeric: tabular-nums; font-size: .92rem; }
+.sv .heures div { padding: 1px 0; }
+.sv .src { grid-column: 1 / -1; color: var(--muted); font-size: .8rem; overflow-wrap: anywhere; }
+.icone-btn { border: 0; background: transparent; color: var(--muted); padding: 6px; border-radius: 8px; }
+.icone-btn svg { width: 18px; height: 18px; }
+.badge-greve { display: inline-block; background: var(--danger-soft); color: var(--danger); font-weight: 700; font-size: .8rem;
+  border-radius: 6px; padding: 2px 8px; }
+
+/* formulaires */
+label.champ { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); font-weight: 600; }
+input[type="text"], input[type="number"], select, textarea { background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; width: 100%; font-size: 1rem; color: var(--fg); }
+.grille-champs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.case-a-cocher { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.case-a-cocher input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* listes */
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); min-width: 0; }
+.liste li:first-child { border-top: 0; }
+.liste .txt { flex: 1 1 auto; min-width: 0; }
+.liste .txt b { display: block; overflow-wrap: anywhere; }
+.liste .txt small { color: var(--muted); display: block; }
+.puce { width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(0,0,0,.14); flex: none; display: grid; place-items: center;
+  font-size: .7rem; font-weight: 800; }
+button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; min-width: 0; }
+
+/* FISC */
+.tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tuile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.tuile .v { font-size: 1.45rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tuile .l { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.tuile.fort { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.tuile.fort .l { color: inherit; opacity: .85; }
+.defile { overflow-x: auto; }
+table.fisc { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: .85rem; white-space: nowrap; }
+table.fisc th, table.fisc td { padding: 7px 9px; text-align: right; border-bottom: 1px solid var(--line); }
+table.fisc th:first-child, table.fisc td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+table.fisc thead th { font-size: .74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+table.fisc tr.total td { font-weight: 800; background: var(--accent-soft); }
+table.fisc tr.total td:first-child { background: var(--accent-soft); }
+.graphe { width: 100%; height: 260px; display: block; }
+.anneau-legende { list-style: none; margin: 0; padding: 0 16px 14px; display: grid; gap: 6px; font-size: .88rem; }
+.anneau-legende li { display: flex; align-items: center; gap: 8px; }
+.anneau-legende i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.anneau-legende span:last-child { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.legende { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .82rem; padding: 0 16px 14px; }
+.legende span { display: inline-flex; align-items: center; gap: 6px; }
+.legende i { width: 12px; height: 12px; border-radius: 3px; }
+.km-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.calcul { font-variant-numeric: tabular-nums; font-size: .9rem; line-height: 1.7; }
+.calcul b { font-weight: 700; }
+.greves-ligne { color: var(--danger); font-weight: 700; font-size: .88rem; }
+
+/* thèmes */
+.themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.themes button { border: 2px solid var(--line); border-radius: 10px; padding: 6px; background: var(--surface); text-align: left; font-weight: 600; font-size: .85rem; }
+.themes button[aria-pressed="true"] { border-color: var(--accent); }
+.themes canvas { width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 6px; border: 1px solid var(--line); }
+
+/* palette */
+.palette { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
+.palette button { aspect-ratio: 1; border-radius: 6px; border: 1px solid rgba(0,0,0,.15); padding: 0; min-width: 0; }
+.palette button[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+/* barre d'onglets */
+.onglets { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.onglets button { border: 0; background: transparent; padding: 8px 4px 10px; display: grid; justify-items: center; gap: 2px;
+  font-size: .72rem; font-weight: 700; color: var(--muted); }
+.onglets svg { width: 24px; height: 24px; }
+.onglets button[aria-current="page"] { color: var(--accent); }
+
+/* feuille (dialogue en bas) */
+.voile { position: fixed; inset: 0; background: rgba(10, 16, 24, .45); z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+.feuille { background: var(--surface); width: 100%; max-width: 640px; max-height: 88%; overflow: auto; border-radius: 18px 18px 0 0;
+  padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 30px rgba(0,0,0,.2); }
+.feuille h2 { font-family: var(--f-titre); font-weight: 600; font-size: 1.3rem; margin: 2px 0 12px; }
+.feuille .poignee { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 10px; }
+@media (min-width: 700px) { .voile { align-items: center; } .feuille { border-radius: 18px; } }
+
+/* message */
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 60;
+  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: .9rem; max-width: min(92vw, 520px);
+  box-shadow: var(--shadow); }
+.etat-vide { text-align: center; padding: 28px 18px; }
+.etat-vide p { margin: 6px 0 14px; color: var(--muted); }
+.resultats li { align-items: flex-start; }
+.ok { color: var(--ok); } .ko { color: var(--danger); }
+.zone-danger { border-color: var(--danger); }
+.zone-danger h3 { color: var(--danger); margin: 0 0 6px; font-size: 1rem; }
+@media (prefers-reduced-motion: no-preference) { .case { transition: transform .08s; } .case:active { transform: scale(.97); } }
+</style>
+<div class="appli" id="appli">
+  <!-- PLANNING -->
+  <section id="v-planning" data-vue="planning">
+    <div class="entete">
+      <div class="nav-mois">
+        <button class="rond" id="mois-prec" aria-label="Mois précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h1 id="titre-mois">Planning</h1>
+        <button class="rond" id="mois-suiv" aria-label="Mois suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+    <div class="rangee" style="margin-bottom:12px; justify-content: space-between">
+      <div class="seg" role="group" aria-label="Affichage">
+        <button id="vue-compacte" aria-pressed="true">Compact</button>
+        <button id="vue-a4" aria-pressed="false">Page A4</button>
+      </div>
+      <div class="rangee">
+        <button class="btn fantome" id="btn-auj">Aujourd'hui</button>
+        <button class="btn" id="btn-pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>PDF</button>
+      </div>
+    </div>
+    <div class="pastilles" id="pastilles"></div>
+    <div id="zone-compacte"><div class="grille" id="grille"></div></div>
+    <div id="zone-a4" hidden><div class="a4" id="a4"><canvas id="toile-a4"></canvas></div>
+      <p class="discret" style="margin:6px 4px 0">Touchez une case pour voir le détail du jour. Pincez pour zoomer.</p></div>
+    <div class="carte detail" id="detail" style="margin-top:14px"></div>
+  </section>
+
+  <!-- COMMANDES -->
+  <section id="v-commandes" data-vue="commandes" hidden>
+    <div class="entete"><h1>Commandes</h1></div>
+    <div class="carte"><div class="pad">
+      <p style="margin:0 0 12px">Choisissez un ou plusieurs bulletins de commande (PDF) enregistrés sur l'appareil. Leurs jours sont ajoutés au planning ; le bulletin le plus récent l'emporte pour chaque jour.</p>
+      <label class="btn accent plein" for="fichiers-pdf" id="btn-ajouter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Ajouter une commande</label>
+      <input type="file" id="fichiers-pdf" accept="application/pdf,.pdf" multiple hidden>
+      <p class="discret" id="etat-import" style="margin:10px 0 0" hidden></p>
+    </div></div>
+    <div class="carte" id="carte-resultats" hidden><ul class="liste resultats" id="resultats"></ul></div>
+    <div class="bloc"><h2>Commandes importées</h2>
+      <div class="carte"><ul class="liste" id="liste-commandes"></ul></div></div>
+  </section>
+
+  <!-- FISC -->
+  <section id="v-fisc" data-vue="fisc" hidden>
+    <div class="entete"><h1>FISC</h1>
+      <select id="fisc-annee" aria-label="Année" style="width:auto"></select></div>
+    <div class="tuiles" id="fisc-tuiles"></div>
+    <div class="bloc"><h2>Graphiques</h2>
+      <div class="carte"><div class="pad rangee" style="justify-content:space-between">
+          <b>Par mois</b>
+          <div class="seg" role="group" aria-label="Mesure"><button id="mes-km" aria-pressed="true">Kilomètres</button><button id="mes-j" aria-pressed="false">Jours</button></div>
+        </div>
+        <canvas class="graphe" id="fisc-barres" aria-label="Histogramme mensuel"></canvas>
+        <div class="legende" id="fisc-legende"></div>
+        <p class="discret" id="fisc-info" style="margin:0 16px 12px; min-height:1.2em"></p>
+      </div>
+      <div class="carte"><div class="pad"><b>Répartition</b></div>
+        <canvas class="graphe" id="fisc-anneau" style="height:200px" aria-label="Répartition"></canvas>
+        <ul class="anneau-legende" id="anneau-legende"></ul></div>
+    </div>
+    <div class="bloc"><h2>Détail mois par mois</h2>
+      <div class="carte defile"><table class="fisc" id="fisc-table"></table></div>
+      <div class="carte"><div class="pad calcul" id="fisc-calcul"></div></div></div>
+    <div class="bloc"><h2>Distances d'un aller (km)</h2>
+      <div class="carte"><div class="pad">
+        <div class="km-grille" id="km-champs"></div>
+        <div class="rangee" style="margin-top:12px">
+          <button class="btn" id="km-def">Définir par défaut</button>
+          <button class="btn fantome" id="km-reset">Revenir au défaut</button>
+        </div>
+        <p class="discret" style="margin:10px 0 0">Seuls les jours avec un acheminement en AUTO sont comptés ; les jours de grève ne sont pas comptés. Un jour qui cite plusieurs gares compte une fois, pour la plus éloignée.</p>
+      </div></div></div>
+  </section>
+
+  <!-- RÉGLAGES -->
+  <section id="v-reglages" data-vue="reglages" hidden>
+    <div class="entete"><h1>Réglages</h1></div>
+    <div class="bloc"><h2>Thème du planning</h2>
+      <div class="carte"><div class="pad">
+        <div class="themes" id="themes"></div>
+        <p class="discret" style="margin:10px 0 0">Le thème s'applique à l'écran et au PDF. Les couleurs des codes ne changent pas.</p>
+      </div></div></div>
+    <div class="bloc"><h2>Codes et couleurs</h2>
+      <div class="carte"><ul class="liste" id="liste-codes"></ul>
+        <div class="pad rangee" style="border-top:1px solid var(--line)">
+          <button class="btn accent" id="code-ajout">Ajouter un code</button>
+          <label class="btn" for="fichier-codes">Importer un codes.txt</label>
+          <input type="file" id="fichier-codes" accept=".txt,text/plain" hidden>
+          <button class="btn fantome" id="codes-export">Enregistrer codes.txt</button>
+        </div></div></div>
+    <div class="bloc"><h2>Sauvegarde</h2>
+      <div class="carte"><div class="pad">
+        <p style="margin:0 0 10px">Le planning est enregistré automatiquement. Vous pouvez aussi en garder une copie, ou reprendre une copie faite ici ou sur le PC (planning.json, ou PDF créé par le programme).</p>
+        <div class="rangee">
+          <button class="btn" id="sauv-export">Enregistrer une copie (.json)</button>
+          <label class="btn" for="fichier-sauv">Reprendre une copie…</label>
+          <input type="file" id="fichier-sauv" accept=".json,application/json,.pdf,application/pdf" hidden>
+        </div>
+        <p class="discret" id="etat-stockage" style="margin:10px 0 0"></p>
+      </div></div></div>
+    <div class="bloc"><h2>Zone de danger</h2>
+      <div class="carte zone-danger"><div class="pad">
+        <h3>Nouveau planning</h3>
+        <p style="margin:0 0 10px">Efface tous les jours, notes et grèves de ce planning. Pensez à enregistrer une copie avant.</p>
+        <label class="champ" for="confirm-effacer">Tapez EFFACER pour confirmer</label>
+        <div class="rangee" style="margin-top:6px"><input type="text" id="confirm-effacer" autocomplete="off" style="max-width:200px">
+          <button class="btn danger" id="btn-effacer" disabled>Effacer le planning</button></div>
+      </div></div></div>
+  </section>
+</div>
+
+<nav class="onglets" aria-label="Sections">
+  <button data-onglet="planning" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Planning</button>
+  <button data-onglet="commandes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 12v6M9 15h6"/></svg>Commandes</button>
+  <button data-onglet="fisc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>FISC</button>
+  <button data-onglet="reglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
+</nav>
+<div id="couche"></div>
+<script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
+<script>
+// Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
+// Utilisable dans le navigateur et dans node (tests).
+(function (racine) {
+  "use strict";
+
+  const R_DATE = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const R_HEURE = /^\d{1,2}[:h]\d{2}$/;
+  const R_JOUR = /^(lun|mar|mer|jeu|ven|sam|dim)\.?$/i;
+
+  // --- mots d'une page, reconstruits comme pdfplumber (extract_words) ------------
+  // items : textContent.items de pdf.js ; H : hauteur de la page (points)
+  function motsDePage(items, H) {
+    const chars = [];
+    for (const it of items) {
+      const s = it.str || "";
+      if (!s.length) continue;
+      const tr = it.transform;
+      const taille = Math.hypot(tr[2], tr[3]) || it.height || 10;
+      const larg = it.width || 0;
+      const cw = larg / s.length;
+      const base = tr[5];
+      const top = H - base - taille * 0.8;
+      const bottom = H - base + taille * 0.2;
+      for (let k = 0; k < s.length; k++) {
+        const x0 = tr[4] + k * cw;
+        chars.push({ c: s[k], x0, x1: x0 + cw, top, bottom });
+      }
+    }
+    // lignes : regroupement vertical (tolérance 3), puis tri horizontal
+    chars.sort((a, b) => a.top - b.top || a.x0 - b.x0);
+    const lignes = [];
+    for (const ch of chars) {
+      const l = lignes[lignes.length - 1];
+      if (l && Math.abs(l.top - ch.top) <= 3) l.chars.push(ch);
+      else lignes.push({ top: ch.top, chars: [ch] });
+    }
+    const mots = [];
+    for (const l of lignes) {
+      l.chars.sort((a, b) => a.x0 - b.x0);
+      let cour = null;
+      for (const ch of l.chars) {
+        if (/\s/.test(ch.c)) { if (cour) { mots.push(cour); cour = null; } continue; }
+        if (cour && ch.x0 - cour.x1 <= 3 && ch.x0 >= cour.x0 - 1) {
+          cour.text += ch.c; cour.x1 = Math.max(cour.x1, ch.x1);
+          cour.top = Math.min(cour.top, ch.top); cour.bottom = Math.max(cour.bottom, ch.bottom);
+        } else {
+          if (cour) mots.push(cour);
+          cour = { text: ch.c, x0: ch.x0, x1: ch.x1, top: ch.top, bottom: ch.bottom };
+        }
+      }
+      if (cour) mots.push(cour);
+    }
+    return mots;
+  }
+
+  function texteDePage(mots) {
+    return grouperLignes(mots).map(l => l.map(w => w.text).join(" ")).join("\n");
+  }
+
+  function grouperLignes(mots, tol = 3) {
+    const lignes = [];
+    const tries = [...mots].sort((a, b) => a.top - b.top || a.x0 - b.x0);
+    for (const w of tries) {
+      const l = lignes[lignes.length - 1];
+      if (l && Math.abs(l[0].top - w.top) <= tol) l.push(w);
+      else lignes.push([w]);
+    }
+    return lignes.map(l => l.sort((a, b) => a.x0 - b.x0));
+  }
+
+  function capitaliser(m) {
+    return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+  }
+
+  function joli(texte) {
+    texte = texte.replace(/\s+/g, " ").trim();
+    const aDesLettres = /\p{L}/u.test(texte);
+    if (texte && aDesLettres && texte === texte.toUpperCase()) {
+      const petits = new Set(["A", "À", "DU", "DE", "DES", "LA", "LE", "LES", "ET", "AU", "AUX", "EN", "D", "L"]);
+      texte = texte.split(" ").map((m, i) => {
+        if (i === 0) return capitaliser(m);
+        if (petits.has(m)) return m === "A" ? "à" : m.toLowerCase();
+        if (m.length <= 3 && /^\p{L}+$/u.test(m)) return m;
+        return capitaliser(m);
+      }).join(" ");
+    }
+    return texte;
+  }
+
+  const iso = (a, m, j) => `${a}-${String(m).padStart(2, "0")}-${String(j).padStart(2, "0")}`;
+  function dateFr(t) {                 // "03/09/2026" -> "2026-09-03"
+    const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(t);
+    return m ? iso(+m[3], +m[2], +m[1]) : null;
+  }
+
+  // pages : [{mots, hauteur}]
+  function lireBulletin(pages) {
+    const info = { agent: "", edition: null, debut: null, fin: null, jours: {} };
+    const texteTotal = pages.map(p => texteDePage(p.mots)).join("\n");
+    if (!texteTotal.trim()) throw new Error("Ce PDF ne contient pas de texte lisible (document scanné ?).");
+
+    let m = /Agent\s*:\s*(.+)/.exec(texteTotal);
+    if (m) info.agent = m[1].trim();
+    m = /Edition le\s*(\d{2}\/\d{2}\/\d{4})\s*,?\s*(\d{1,2}:\d{2})?/.exec(texteTotal);
+    if (m) {
+      const hm = (m[2] || "00:00").split(":");
+      info.edition = `${dateFr(m[1])}T${hm[0].padStart(2, "0")}:${hm[1]}:00`;
+    }
+    m = /allant du\s*(\d{2}\/\d{2}\/\d{4})\s*au\s*(\d{2}\/\d{2}\/\d{4})/.exec(texteTotal);
+    if (m) { info.debut = dateFr(m[1]); info.fin = dateFr(m[2]); }
+
+    const blocs = [];               // [date, util, comp, date-intitulé]
+    let colUtil = null, colComp = null;
+    let enteteP1 = [];
+    const memeMot = (a, b) => a.text === b.text && Math.abs(a.x0 - b.x0) < 3 && Math.abs(a.top - b.top) < 3;
+
+    pages.forEach((page, nPage) => {
+      const mots = page.mots;
+      const entete = mots.find(w => w.text === "Utilisation");
+      let haut = entete ? entete.bottom + 1 : 0;
+      if (entete) {
+        colUtil = entete.x0 - 10;
+        if (!enteteP1.length) enteteP1 = mots.filter(w => w.top < entete.top - 2);
+      } else if (enteteP1.length) {
+        const repetes = mots.filter(w => enteteP1.some(e => memeMot(w, e)));
+        if (repetes.length) haut = Math.max(...repetes.map(w => w.bottom)) + 1;
+      }
+      if (colUtil === null) return;
+
+      let bas = page.hauteur;
+      mots.forEach((w, i) => {
+        const suivant = i + 1 < mots.length ? mots[i + 1].text : "";
+        if (w.top > haut && (
+          w.text.startsWith("Signature") ||
+          (w.text === "Fin" && suivant.toLowerCase().startsWith("d'impression")) ||
+          (w.text === "SOCIETE" && suivant === "NATIONALE") ||
+          (w.text === "Page" && w.top > page.hauteur * 0.85))) {
+          bas = Math.min(bas, w.top - 1);
+        }
+      });
+      const decal = nPage * 100000;
+      const zone = mots.filter(w => haut < w.top && w.top < bas)
+        .map(w => ({ ...w, top: w.top + decal, bottom: w.bottom + decal }));
+      haut += decal; bas += decal;
+
+      if (entete || colComp === null) {
+        const cand = zone.filter(w => w.x0 > colUtil + 50).map(w => w.x0);
+        if (cand.length) colComp = Math.min(...cand) - 3;
+      }
+      if (colComp === null) return;
+
+      const debuts = [];
+      for (const w of zone) {
+        const md = w.x0 < colUtil && R_DATE.exec(w.text);
+        if (md) {
+          const lab = zone.filter(x => x.x0 < colUtil && R_JOUR.test(x.text) &&
+            w.top - x.top >= 0 && w.top - x.top < 18);
+          const y = Math.min(...lab.map(x => x.top), w.top - 12);
+          debuts.push([y - 2, iso(+md[3], +md[2], +md[1])]);
+        }
+      }
+      debuts.sort((a, b) => a[0] - b[0]);
+      const limites = [[haut, null], ...debuts, [bas, "FIN"]];
+      for (let k = 0; k + 1 < limites.length; k++) {
+        const [y0, date] = limites[k], y1 = limites[k + 1][0];
+        const ms = zone.filter(w => y0 <= w.top && w.top < y1 && w.x0 >= colUtil);
+        const md = zone.filter(w => y0 <= w.top && w.top < y1 && w.x0 < colUtil &&
+          !R_DATE.test(w.text) && !R_JOUR.test(w.text));
+        let bloc;
+        if (date === null) {
+          if (!blocs.length || !(ms.length || md.length)) continue;
+          bloc = blocs[blocs.length - 1];
+        } else {
+          bloc = [date, [], [], []];
+          blocs.push(bloc);
+        }
+        bloc[1].push(...ms.filter(w => w.x0 < colComp));
+        bloc[2].push(...ms.filter(w => w.x0 >= colComp));
+        bloc[3].push(...md);
+      }
+    });
+
+    for (const [date, mUtil, mComp, mDate] of blocs) {
+      const intitule = grouperLignes(mDate).map(l => l.map(w => w.text).join(" ")).join(" ");
+      const lUtil = grouperLignes(mUtil).map(l => l.map(w => w.text).join(" "));
+      let code = lUtil.find(l => !l.toLowerCase().startsWith("du ")) || "";
+      code = code ? code.split(" ")[0] : "";
+      const libelle = [], horaires = [];
+      for (const l of grouperLignes(mComp)) {
+        const t = l.map(w => w.text);
+        if (t[0].toLowerCase().startsWith("fin")) continue;
+        const heures = t.filter(x => R_HEURE.test(x)).map(x => x.replace("h", ":"));
+        if (heures.length) {
+          const etiq = t.filter(x => !R_HEURE.test(x)).join(" ");
+          horaires.push(`${etiq} ${heures.join(" – ")}`.trim());
+        } else libelle.push(t.join(" "));
+      }
+      (info.jours[date] = info.jours[date] || []).push({
+        code, horaires: horaires.join(" / "), libelle: joli(libelle.join(" ")),
+        source: "pdf", intitule
+      });
+    }
+    return info;
+  }
+
+  // Lecture complète avec pdf.js : données binaires -> info bulletin
+  async function lireBulletinPdf(pdfjs, donnees) {
+    const doc = await pdfjs.getDocument({ data: donnees, isEvalSupported: false }).promise;
+    const pages = [];
+    for (let n = 1; n <= doc.numPages; n++) {
+      const p = await doc.getPage(n);
+      const vp = p.getViewport({ scale: 1 });
+      const tc = await p.getTextContent();
+      pages.push({ mots: motsDePage(tc.items, vp.height), hauteur: vp.height });
+    }
+    let pj = null;
+    try { pj = await doc.getAttachments(); } catch (e) { /* pas de pièce jointe */ }
+    await doc.destroy();
+    return { pages, pieces: pj };
+  }
+
+  const api = { motsDePage, lireBulletin, lireBulletinPdf, joli, grouperLignes };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else racine.LecteurBulletin = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+// Modèle : codes, planning, nuits / DN, FISC (port de planning_pdf.py)
+(function (racine) {
+  "use strict";
+
+  const JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+  const MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre",
+    "octobre", "novembre", "décembre"];
+  const MOIS_ABREGE = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  const CODES_REPOS = ["RP", "RU", "RQ", "CA", "RN", "RM", "CET", "JF", "VT", "RS"];
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // ---------------------------------------------------------------- codes
+  const ENTETE_CODES = `# ==================================================================
+#  CODES SPÉCIAUX DU PLANNING
+# ==================================================================
+#
+#  Une ligne par code, 4 colonnes séparées par des ;
+#
+#    CODE DU BULLETIN ; NOM AFFICHÉ ; COULEUR DE FOND ; gros
+#
+#  - NOM AFFICHÉ : [date] = intitulé écrit sous la date dans le bulletin
+#                  (on peut ajouter du texte : [date] Vireux)
+#  - COULEUR     : bleu, vert, violet, orange, jaune, rose, rouge, turquoise,
+#                  gris, beige, marron, blanc, noir, gris foncé, bleu foncé,
+#                  vert foncé, rouge foncé, ou R,V,B (255,240,200), ou #FFF0C8
+#  - gros        : nom en très gros au centre de la case (comme RP)
+#
+# CODE     ; NOM     ; COULEUR  ; gros
+`;
+  const CODES_TXT_DEFAUT = ENTETE_CODES + `GIV002     ; S-GIV   ; bleu
+GIV001     ; M-GIV   ; vert
+GIV301T    ; N-GIV   ; 170,186,222
+DN         ; DN      ; 170,186,222
+FZECU      ; [date]
+ZREVIN     ; DISPO Revin ; violet
+RP         ; RP      ; orange   ; gros
+RN         ; RN      ; orange   ; gros
+RU         ; RU      ; orange   ; gros
+RQ         ; RQ      ; orange   ; gros
+C          ; C       ; orange   ; gros
+F1         ; F1      ; orange   ; gros
+F2         ; F2      ; orange   ; gros
+F3         ; F3      ; orange   ; gros
+F4         ; F4      ; orange   ; gros
+FV         ; FV      ; orange   ; gros
+F6         ; F6      ; orange   ; gros
+F7         ; F7      ; orange   ; gros
+RVN303T    ; [date]  ; jaune
+RVN302T    ; [date] Vireux ; 210,32,182
+REVRTI     ; [date] travaux ; #FFC000
+AH         ; AH      ; orange   ; gros
+FDPX       ; FDPX    ; noir
+REVRTM     ; [date] travaux ; #FFC000
+PGVRVSD    ; [date]
+`;
+
+  const COULEURS = {
+    "bleu": [214, 230, 250], "vert": [215, 240, 215], "violet": [228, 215, 245],
+    "orange": [255, 221, 186], "jaune": [255, 245, 180], "rose": [252, 220, 235],
+    "rouge": [250, 205, 205], "turquoise": [205, 240, 238], "gris": [225, 225, 225],
+    "beige": [245, 235, 215], "marron": [230, 210, 190], "blanc": [255, 255, 255],
+    "noir": [45, 45, 45], "gris fonce": [100, 100, 100], "gris foncé": [100, 100, 100],
+    "bleu fonce": [40, 70, 130], "bleu foncé": [40, 70, 130],
+    "vert fonce": [40, 110, 60], "vert foncé": [40, 110, 60],
+    "rouge fonce": [150, 40, 40], "rouge foncé": [150, 40, 40],
+  };
+
+  function couleur(txt) {
+    txt = (txt || "").trim().toLowerCase();
+    if (!txt || ["aucune", "non", "-", "none"].includes(txt)) return null;
+    if (COULEURS[txt]) return COULEURS[txt].slice();
+    if (/^#[0-9a-f]{6}$/.test(txt)) return [1, 3, 5].map(i => parseInt(txt.slice(i, i + 2), 16));
+    const p = txt.split(/[,\s]+/).filter(Boolean);
+    if (p.length === 3 && p.every(x => /^\d+$/.test(x) && +x <= 255)) return p.map(Number);
+    throw new Error(`couleur inconnue « ${txt} »`);
+  }
+
+  function lireCodes(texte) {
+    const codes = {}, ordre = [], erreurs = [];
+    (texte || "").replace(/^﻿/, "").split(/\r?\n/).forEach((l, n) => {
+      l = l.trim();
+      if (!l || l.startsWith("#")) return;
+      const c = l.split(";").map(x => x.trim());
+      try {
+        if (!c[0]) throw new Error("code manquant");
+        const nom = c[1] ? c[1] : c[0];
+        const fond = c.length > 2 ? couleur(c[2]) : null;
+        const gros = c.length > 3 && ["gros", "oui", "x", "1"].includes(c[3].toLowerCase());
+        const k = c[0].toUpperCase();
+        if (!(k in codes)) ordre.push(k);
+        codes[k] = { code: c[0], nom, fond, gros };
+      } catch (e) { erreurs.push(`ligne ${n + 1} : ${e.message}`); }
+    });
+    return { codes, ordre, erreurs };
+  }
+
+  function nomCouleur(fond) {
+    if (!fond) return "";
+    for (const [nom, rvb] of Object.entries(COULEURS)) {
+      if (rvb.join() === fond.join() && !nom.endsWith(" fonce")) return nom;
+    }
+    return "#" + fond.map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
+  }
+
+  function ecrireCodes(liste) {             // [{code, nom, fond, gros}]
+    return ENTETE_CODES + liste.map(c => {
+      const cols = [c.code.padEnd(10), c.nom.padEnd(16), nomCouleur(c.fond).padEnd(10)];
+      if (c.gros) cols.push("gros");
+      return cols.join(" ; ").trimEnd();
+    }).join("\n") + "\n";
+  }
+
+  function paletteCouleurs() {
+    const hls = (h, l, s) => {           // colorsys.hls_to_rgb
+      const v = (m1, m2, hue) => {
+        hue = ((hue % 1) + 1) % 1;
+        if (hue < 1 / 6) return m1 + (m2 - m1) * hue * 6;
+        if (hue < .5) return m2;
+        if (hue < 2 / 3) return m1 + (m2 - m1) * (2 / 3 - hue) * 6;
+        return m1;
+      };
+      const m2 = l <= .5 ? l * (1 + s) : l + s - l * s, m1 = 2 * l - m2;
+      return [v(m1, m2, h + 1 / 3), v(m1, m2, h), v(m1, m2, h - 1 / 3)].map(x => Math.round(x * 255));
+    };
+    const lignes = [];
+    for (const [lum, sat] of [[.92, .75], [.84, .70], [.72, .65], [.55, .70], [.36, .70]]) {
+      lignes.push(Array.from({ length: 12 }, (_, k) => hls(k / 12, lum, sat)));
+    }
+    lignes.push([255, 238, 222, 205, 185, 165, 140, 115, 90, 70, 50, 25].map(g => [g, g, g]));
+    return lignes;
+  }
+
+  let CODES = {};
+  function reglerCodes(texte) {
+    const r = lireCodes(texte);
+    CODES = r.codes;
+    return r;
+  }
+  function infosCode(code) {
+    if (!code) return null;
+    const c = code.toUpperCase();
+    if (CODES[c]) return CODES[c];
+    return Object.values(CODES).find(v => v.nom.toUpperCase() === c) || null;
+  }
+  const codeAffiche = code => { const i = infosCode(code); return i ? i.nom : code; };
+  function nomAffiche(sv) {
+    const i = infosCode(sv.code);
+    if (!i) return sv.code;
+    let nom = i.nom;
+    if (/\[date\]/i.test(nom)) {
+      const rempl = sv.intitule || sv.code;
+      nom = nom.replace(/\[date\]/gi, () => rempl).replace(/\s+/g, " ").trim();
+    }
+    return nom;
+  }
+
+  // ---------------------------------------------------------------- dates
+  const iso = (a, m, j) => `${a}-${String(m).padStart(2, "0")}-${String(j).padStart(2, "0")}`;
+  function decaler(isoD, n) {
+    const [a, m, j] = isoD.split("-").map(Number);
+    const d = new Date(Date.UTC(a, m - 1, j + n));
+    return iso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+  }
+  const jourSemaine = isoD => { const [a, m, j] = isoD.split("-").map(Number); return (new Date(Date.UTC(a, m - 1, j)).getUTCDay() + 6) % 7; };
+  function semainesDuMois(a, m) {           // calendar.Calendar(0).monthdatescalendar
+    let d = iso(a, m, 1);
+    d = decaler(d, -jourSemaine(d));
+    const res = [];
+    while (true) {
+      const sem = Array.from({ length: 7 }, (_, k) => decaler(d, k));
+      res.push(sem);
+      d = decaler(d, 7);
+      const [aa, mm] = d.split("-").map(Number);
+      if (aa * 12 + mm > a * 12 + m) break;
+    }
+    return res;
+  }
+  const aujourdhui = () => { const d = new Date(); return iso(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+  function dateLongue(isoD) {
+    const [a, m, j] = isoD.split("-").map(Number);
+    return `${cap(JOURS[jourSemaine(isoD)])} ${j} ${MOIS_LONG[m - 1]} ${a}`;
+  }
+
+  // ---------------------------------------------------------------- nuits / DN
+  const CODE_DN = "DN";
+  function estNuit(sv) {
+    const h = sv.horaires || "";
+    const ps = /\bPS\s+(\d{1,2}):(\d{2})/.exec(h), fs = /\bFS\s+(\d{1,2}):(\d{2})/.exec(h);
+    let debut, fin;
+    if (ps && fs) { debut = +ps[1] * 60 + +ps[2]; fin = +fs[1] * 60 + +fs[2]; }
+    else {
+      const m = /(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/.exec(h);
+      if (!m || h.includes("PS") || h.includes("FS")) return false;
+      debut = +m[1] * 60 + +m[2]; fin = +m[3] * 60 + +m[4];
+    }
+    return fin < debut;
+  }
+  function service(code = "", horaires = "", libelle = "", source = "manuel", intitule = "") {
+    return { code, horaires, libelle, source, intitule };
+  }
+  function avecDn(jours) {
+    const nuits = new Set(Object.keys(jours).filter(d => jours[d].some(estNuit)));
+    const res = { ...jours };
+    for (const d of nuits) {
+      const l = decaler(d, 1);
+      if (nuits.has(l)) continue;
+      const ex = res[l] || [];
+      if (!ex.some(sv => sv.code === CODE_DN)) res[l] = [...ex, service(CODE_DN, "", "", "auto")];
+    }
+    return res;
+  }
+  function pourAffichage(jours) {
+    const res = avecDn(jours);
+    for (const [d, v] of Object.entries(res)) {
+      const autres = v.filter(sv => sv.code && sv.code.toUpperCase() !== "NU" && sv.source !== "auto");
+      if (autres.length && v.some(sv => (sv.code || "").toUpperCase() === "NU")) {
+        res[d] = v.filter(sv => (sv.code || "").toUpperCase() !== "NU");
+      }
+    }
+    return res;
+  }
+  function lignesHoraires(h) {
+    const plages = (h || "").split("/").map(x => x.trim()).filter(Boolean);
+    const res = []; let ps = null;
+    for (const p of plages) {
+      if (p.startsWith("PS ")) { res.push(p); ps = res.length - 1; }
+      else if (p.startsWith("FS ") && ps !== null) { res[ps] += "     " + p; ps = null; }
+      else res.push(p);
+    }
+    return res;
+  }
+
+  // ---------------------------------------------------------------- planning
+  // format identique à Planning.vers_dict() du programme PC
+  function planningVide() {
+    return { agent: "", jours: {}, edition: {}, greves: [], importes: {} };
+  }
+  function integrer(pl, info, fichier = "", empreinte = "") {
+    const ed = info.edition || null;
+    let maj = 0, ignores = 0;
+    const touches = new Set();
+    for (const [d, services] of Object.entries(info.jours)) {
+      const edD = pl.edition[d] || null;
+      if (d in pl.edition && edD && (!ed || edD > ed)) { ignores++; continue; }
+      const manuels = (pl.jours[d] || []).filter(s => s.source === "manuel");
+      pl.jours[d] = services.map(sv => ({ ...sv, fichier, empreinte })).concat(manuels);
+      pl.edition[d] = ed;
+      touches.add(d.slice(0, 7));
+      maj++;
+    }
+    if (info.agent) pl.agent = info.agent;
+    return { maj, ignores, touches };
+  }
+  function fusionner(pl, autre) {           // autre : dict au format vers_dict
+    let n = 0; const touches = new Set();
+    for (const [d, services] of Object.entries(autre.jours || {})) {
+      const edA = (autre.edition || {})[d] || null;
+      const edS = pl.edition[d] || null;
+      if (d in pl.jours && edS && (!edA || edS > edA)) continue;
+      const ex = (pl.jours[d] || []).filter(s => s.source === "manuel");
+      const cle = s => JSON.stringify([s.code, s.horaires, s.libelle, s.source]);
+      const vus = new Set(services.map(cle));
+      pl.jours[d] = services.map(s => ({ ...service(s.code || "", s.horaires || "", s.libelle || "", s.source || "manuel", s.intitule || ""),
+        fichier: s.fichier || "", empreinte: s.empreinte || "" })).concat(ex.filter(s => !vus.has(cle(s))));
+      pl.edition[d] = edA;
+      touches.add(d.slice(0, 7)); n++;
+    }
+    if (autre.agent && !pl.agent) pl.agent = autre.agent;
+    const g = new Set([...(pl.greves || []), ...(autre.greves || [])]);
+    pl.greves = [...g].sort();
+    return { n, touches };
+  }
+  function versDict(pl) {
+    const jours = {}, edition = {};
+    for (const d of Object.keys(pl.jours).sort()) {
+      jours[d] = pl.jours[d].map(s => ({ code: s.code, horaires: s.horaires, libelle: s.libelle, source: s.source,
+        intitule: s.intitule || "", fichier: s.fichier || "", empreinte: s.empreinte || "" }));
+      edition[d] = pl.edition[d] || null;
+    }
+    return { version: 1, agent: pl.agent, sortie: "", importes: {}, version_lecture: 4,
+      greves: [...pl.greves].sort(), jours, edition };
+  }
+
+  // ---------------------------------------------------------------- FISC
+  const FISC_NOMS = ["S-GIV", "M-GIV", "N-GIV", "Trav. Givet"];
+  const FISC_GARES = [["Vireux", [/VIREUX/]], ["Monthermé", [/\bMONTH/]], ["Nouzonville", [/\bNOUZ/]], ["Deville", [/\bDEVILLE/]]];
+  const FISC_COLONNES = FISC_NOMS.concat(FISC_GARES.map(g => g[0]));
+  const KM_USINE = { "Givet": 33, "Vireux": 22, "Monthermé": 12, "Nouzonville": 8, "Deville": 12 };
+  const FISC_SERIES = [["Givet", "#4C78A8"], ["Vireux", "#F58518"], ["Monthermé", "#54A24B"], ["Nouzonville", "#B279A2"], ["Deville", "#E45756"]];
+  const sansAccents = t => t.normalize("NFD").replace(/\p{Mn}/gu, "");
+
+  function comptageFisc(jours, annee, greves, kms) {
+    const gr = new Set(greves || []);
+    const res = {};
+    for (const [d, services] of Object.entries(jours)) {
+      if ((annee && +d.slice(0, 4) !== annee) || gr.has(d)) continue;
+      const enAuto = services.filter(sv => sv.code && /\bAUTO\b/.test(sv.horaires || ""));
+      const noms = new Set(enAuto.map(sv => nomAffiche(sv).toUpperCase()));
+      const trav = enAuto.some(sv => sv.code.toUpperCase().startsWith("REVRT") && (sv.intitule || "").toUpperCase().includes("GIVET"));
+      const textes = enAuto.map(sv => sansAccents(nomAffiche(sv)).toUpperCase());
+      const trouvees = FISC_GARES.filter(([, motifs]) => motifs.some(m => textes.some(t => m.test(t))))
+        .map(([nom]) => [kms[nom], nom]);
+      trouvees.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+      const gares = new Set(trouvees.length ? [trouvees[trouvees.length - 1][1]] : []);
+      for (const n of FISC_COLONNES) {
+        if ((n === "Trav. Givet" && trav) || gares.has(n) || (FISC_NOMS.includes(n) && noms.has(n.toUpperCase()))) {
+          const k = d.slice(0, 7);
+          res[k] = res[k] || Object.fromEntries(FISC_COLONNES.map(c => [c, 0]));
+          res[k][n]++;
+        }
+      }
+    }
+    return res;
+  }
+  function kmFisc(v, kms) {
+    const g = FISC_NOMS.reduce((s, n) => s + (v[n] || 0), 0);
+    const km = g * 2 * kms["Givet"] + FISC_GARES.reduce((s, [n]) => s + (v[n] || 0) * 2 * kms[n], 0);
+    return [g, km];
+  }
+  function kmTxt(n) {
+    n = Math.round(n * 10) / 10;
+    const [e, dec] = String(n).split(".");
+    return e.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + (dec ? "," + dec : "") + " km";
+  }
+  function valeursFisc(v, kms, mesure) {
+    const res = { "Givet": FISC_NOMS.reduce((s, n) => s + (v[n] || 0), 0) };
+    for (const [n] of FISC_GARES) res[n] = v[n] || 0;
+    if (mesure === "km") for (const n in res) res[n] = res[n] * 2 * (kms[n] || 0);
+    return res;
+  }
+
+  const api = { JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, cap,
+    couleur, lireCodes, nomCouleur, ecrireCodes, paletteCouleurs, reglerCodes, infosCode, codeAffiche, nomAffiche,
+    iso, decaler, jourSemaine, semainesDuMois, aujourdhui, dateLongue,
+    CODE_DN, estNuit, service, avecDn, pourAffichage, lignesHoraires,
+    planningVide, integrer, fusionner, versDict,
+    FISC_NOMS, FISC_GARES, FISC_COLONNES, KM_USINE, FISC_SERIES, comptageFisc, kmFisc, kmTxt, valeursFisc };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else racine.Modele = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+// Rendu du planning A4 sur un canvas (port de dessiner_planning, planning_pdf.py)
+(function (racine) {
+  "use strict";
+  const M = racine.Modele;
+
+  const BASE = {
+    fond: [255, 255, 255], titre: [90, 90, 90], annee: [60, 60, 60], trait: [85, 85, 85],
+    grille: [190, 190, 190], weekend: [252, 226, 226], weekend_entete: [248, 208, 208],
+    entete: null, entete_txt: [85, 85, 85], entete_txt_we: [175, 75, 75], hors_mois: null,
+    chiffre: [80, 80, 80], chiffre_we: [175, 75, 75],
+    txt: [35, 35, 35], txt_doux: [95, 95, 95], txt_repos: [150, 150, 150], gros: [140, 80, 25],
+  };
+  const THEMES = {
+    "Classique": {},
+    "Bleu moderne": { titre: [31, 78, 121], annee: [31, 78, 121], trait: [31, 78, 121], grille: [200, 212, 226],
+      weekend: [234, 241, 250], weekend_entete: [21, 58, 95], entete: [31, 78, 121], entete_txt: [255, 255, 255],
+      entete_txt_we: [255, 210, 120], hors_mois: [246, 248, 251], chiffre: [31, 78, 121], chiffre_we: [200, 110, 30],
+      gros: [31, 78, 121] },
+    "Minimal": { titre: [40, 40, 40], annee: [120, 120, 120], trait: [40, 40, 40], grille: [225, 225, 225],
+      weekend: [245, 245, 245], weekend_entete: [255, 255, 255], entete_txt: [120, 120, 120], entete_txt_we: [120, 120, 120],
+      chiffre: [40, 40, 40], chiffre_we: [40, 40, 40], gros: [70, 70, 70] },
+    "Contraste (impression)": { titre: [0, 0, 0], annee: [0, 0, 0], trait: [0, 0, 0], grille: [60, 60, 60],
+      weekend: [255, 246, 190], weekend_entete: [255, 230, 120], entete_txt: [0, 0, 0], entete_txt_we: [0, 0, 0],
+      chiffre: [0, 0, 0], chiffre_we: [0, 0, 0], txt: [0, 0, 0], txt_doux: [40, 40, 40], txt_repos: [90, 90, 90], gros: [0, 0, 0] },
+    "Vert sauge": { titre: [62, 99, 72], annee: [62, 99, 72], trait: [62, 99, 72], grille: [200, 216, 204],
+      weekend: [232, 242, 234], weekend_entete: [62, 99, 72], entete: [94, 135, 104], entete_txt: [255, 255, 255],
+      entete_txt_we: [255, 255, 255], chiffre: [62, 99, 72], chiffre_we: [160, 90, 60], gros: [62, 99, 72] },
+    "Sépia": { fond: [253, 248, 238], titre: [120, 84, 50], annee: [120, 84, 50], trait: [120, 84, 50],
+      grille: [222, 205, 180], weekend: [246, 232, 212], weekend_entete: [236, 214, 184], entete_txt: [120, 84, 50],
+      entete_txt_we: [160, 70, 40], hors_mois: [247, 240, 228], chiffre: [110, 80, 50], chiffre_we: [160, 70, 40],
+      txt: [60, 42, 25], txt_doux: [115, 90, 65], txt_repos: [165, 140, 115], gros: [140, 70, 30] },
+    "Sombre": { fond: [32, 34, 38], titre: [200, 205, 212], annee: [170, 175, 185], trait: [150, 155, 165],
+      grille: [70, 74, 82], weekend: [58, 40, 44], weekend_entete: [78, 48, 54], entete: [45, 48, 54],
+      entete_txt: [220, 222, 228], entete_txt_we: [240, 150, 150], hors_mois: [26, 27, 30], chiffre: [215, 218, 224],
+      chiffre_we: [240, 150, 150], txt: [235, 236, 240], txt_doux: [180, 184, 190], txt_repos: [130, 134, 140], gros: [255, 190, 110] },
+  };
+  const palette = nom => ({ ...BASE, ...(THEMES[nom] || {}) });
+  const lum = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+  const rgb = (c, a) => a === undefined ? `rgb(${c[0]},${c[1]},${c[2]})` : `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  const MOIS_TITRE = M.MOIS_LONG.map(M.cap);
+
+  const POL = {
+    titre: '"Gelasio", Georgia, "Times New Roman", serif',
+    texte: '"Gelasio", Georgia, "Times New Roman", serif',
+    sans: '"Noto Sans", "Segoe UI", Roboto, Arial, sans-serif',
+  };
+  function police(role, t) {
+    const px = Math.max(6, Math.floor(t));
+    if (role === "sans_gras") return `700 ${px}px ${POL.sans}`;
+    return `400 ${px}px ${POL[role]}`;
+  }
+
+  function dessiner(ctx, W, H, annee, mois, joursBruts, opts = {}) {
+    const agent = opts.agent || "", greves = new Set(opts.greves || []);
+    const jours = M.pourAffichage(joursBruts);
+    const P = palette(opts.theme || "Classique");
+    const mesureCache = new Map();
+    const larg = (t, f) => { ctx.font = f; return ctx.measureText(t).width; };
+    const metr = f => {                  // ascent police, ascent/descent visuels de « Hg »
+      if (!mesureCache.has(f)) {
+        ctx.font = f;
+        const m = ctx.measureText("Hg");
+        const px = parseFloat(/(\d+)px/.exec(f)[1]);
+        mesureCache.set(f, { asc: m.fontBoundingBoxAscent || px * .9, aA: m.actualBoundingBoxAscent || px * .72,
+          aD: m.actualBoundingBoxDescent || px * .2 });
+      }
+      return mesureCache.get(f);
+    };
+    const texte = (t, x, y, f, c, ancre = "ls") => {
+      ctx.font = f; ctx.fillStyle = rgb(c);
+      ctx.textAlign = ancre[0] === "l" ? "left" : ancre[0] === "r" ? "right" : "center";
+      if (ancre === "mm") { ctx.textBaseline = "middle"; ctx.fillText(t, x, y); }
+      else if (ancre[1] === "t") { ctx.textBaseline = "alphabetic"; ctx.fillText(t, x, y + metr(f).asc); }
+      else { ctx.textBaseline = "alphabetic"; ctx.fillText(t, x, y); }
+    };
+    const rect = (x0, y0, x1, y1, c) => { ctx.fillStyle = rgb(c); ctx.fillRect(x0, y0, x1 - x0, y1 - y0); };
+    const ligne = (xa, ya, xb, yb, c, w) => {
+      ctx.strokeStyle = rgb(c); ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(xa, ya); ctx.lineTo(xb, yb); ctx.stroke();
+    };
+    const couper = (t, f, largeur) => {
+      const lignes = []; let cour = "";
+      for (let m of t.split(/\s+/).filter(Boolean)) {
+        const essai = (cour + " " + m).trim();
+        if (larg(essai, f) <= largeur) { cour = essai; continue; }
+        if (cour) lignes.push(cour);
+        while (larg(m, f) > largeur && m.length > 1) {
+          let k = m.length;
+          while (k > 1 && larg(m.slice(0, k) + "-", f) > largeur) k--;
+          lignes.push(m.slice(0, k) + "-"); m = m.slice(k);
+        }
+        cour = m;
+      }
+      if (cour) lignes.push(cour);
+      return lignes;
+    };
+
+    ctx.save();
+    rect(0, 0, W, H, P.fond);
+    const u = Math.min(W, H * 1.6);
+    const x0 = Math.floor(u * .03), x1 = W - Math.floor(u * .03);
+    const yTrait = Math.floor(u * .078), hEntete = Math.floor(u * .028);
+    const yGrille = yTrait + hEntete, yFin = H - Math.floor(u * .022);
+    const col = (x1 - x0) / 7;
+    const semaines = M.semainesDuMois(annee, mois);
+    const NB = 6, lig = (yFin - yGrille) / NB;
+    const finT = Math.max(1, Math.floor(u * .0008)), ep = Math.max(1, Math.floor(u * .0015));
+    const moisDe = d => +d.slice(5, 7);
+    const infos = sv => M.infosCode(sv.code);
+    const fondDu = d => { for (const sv of jours[d] || []) { const i = infos(sv); if (i && i.fond) return i.fond; } return null; };
+
+    if (P.entete) rect(x0, yTrait, x1, yGrille, P.entete);
+    for (const c of [5, 6]) {
+      rect(x0 + c * col, yTrait, x0 + (c + 1) * col, yGrille, P.weekend_entete);
+      rect(x0 + c * col, yGrille, x0 + (c + 1) * col, yFin, P.weekend);
+    }
+    semaines.forEach((sem, r) => sem.forEach((d, c) => {
+      const box = [x0 + c * col, yGrille + r * lig, x0 + (c + 1) * col, yGrille + (r + 1) * lig];
+      if (moisDe(d) !== mois) { if (P.hors_mois) rect(...box, P.hors_mois); return; }
+      const f = fondDu(d);
+      if (f) rect(...box, f);
+    }));
+    for (let r = 1; r < NB; r++) ligne(x0, yGrille + r * lig, x1, yGrille + r * lig, P.grille, finT);
+    for (let c = 1; c < 7; c++) ligne(x0 + c * col, yGrille, x0 + c * col, yFin, P.grille, finT);
+    for (const y of [yTrait, yGrille, yFin]) ligne(x0, y, x1, y, P.trait, ep);
+
+    const fJour = police("texte", u * .0135);
+    M.JOURS.forEach((nom, c) => texte(nom, x0 + c * col + col / 2, yTrait + hEntete / 2, fJour,
+      c >= 5 ? P.entete_txt_we : P.entete_txt, "mm"));
+
+    // titre : mois en entier + année
+    const fTitre = police("titre", u * .06), yTitre = yTrait - u * .011;
+    const nomMois = MOIS_TITRE[mois - 1];
+    texte(nomMois, x0, yTitre, fTitre, P.titre, "ls");
+    texte(String(annee), x0 + larg(nomMois + " ", fTitre), yTitre, fTitre, P.annee, "ls");
+    if (agent) texte(agent, x1, yTitre, police("texte", u * .015), P.txt_doux, "rs");
+
+    const fNum = police("texte", u * .02);
+    const ascNum = metr(fNum).asc;
+    const pad = u * .007;
+    const fondSombre = lum(P.fond) < 140;
+    const cases = {};
+    semaines.forEach((sem, r) => sem.forEach((jour, c) => {
+      if (moisDe(jour) !== mois) return;
+      const cx0 = x0 + c * col, cy0 = yGrille + r * lig, cx1 = cx0 + col, cy1 = cy0 + lig;
+      cases[jour] = [cx0, cy0, cx1, cy1];
+      const fondJ = fondDu(jour);
+      const fondCase = fondJ || (c >= 5 ? P.weekend : P.fond);
+      const sombre = lum(fondCase) < 140;
+      let TXT, TXT_DOUX, TXT_REPOS, cGros, cNum;
+      if (sombre === fondSombre && !fondJ) {
+        [TXT, TXT_DOUX, TXT_REPOS, cGros, cNum] = [P.txt, P.txt_doux, P.txt_repos, P.gros, c >= 5 ? P.chiffre_we : P.chiffre];
+      } else if (sombre) {
+        [TXT, TXT_DOUX, TXT_REPOS] = [[255, 255, 255], [225, 225, 225], [210, 210, 210]]; cGros = cNum = [255, 255, 255];
+      } else {
+        const cl = fondSombre ? palette("Classique") : P;
+        [TXT, TXT_DOUX, TXT_REPOS, cGros, cNum] = [cl.txt, cl.txt_doux, cl.txt_repos, cl.gros, c >= 5 ? cl.chiffre_we : cl.chiffre];
+      }
+      const base = cy0 + pad + ascNum;
+      const numTxt = String(+jour.slice(8));
+      texte(numTxt, cx0 + pad, base, fNum, cNum, "ls");
+
+      const services = jours[jour] || [];
+      const special = services.find(sv => sv.code && !(infos(sv) || {}).gros);
+      let decalage = 0;
+      if (special) {
+        const xc = cx0 + pad + larg(numTxt, fNum) + u * .009;
+        const nom = M.nomAffiche(special), largNom = cx0 + col - pad - xc;
+        const parDate = /\[date\]/i.test((infos(special) || {}).nom || "");
+        const tMax = u * (parDate ? .0105 : .0165), tMin1 = u * (parDate ? .0085 : .0125);
+        let t = tMax;
+        while (larg(nom, police("sans_gras", t)) > largNom && t > tMin1) t *= .95;
+        let lignesNom = [nom];
+        if (larg(nom, police("sans_gras", t)) > largNom && nom.includes(" ")) {
+          const mots = nom.split(" ");
+          const coupes = [];
+          for (let k = 1; k < mots.length; k++) coupes.push([mots.slice(0, k).join(" "), mots.slice(k).join(" ")]);
+          lignesNom = coupes.reduce((a, b) => Math.max(b[0].length, b[1].length) < Math.max(a[0].length, a[1].length) ? b : a);
+          t = u * (parDate ? .0105 : .0145);
+        }
+        while (Math.max(...lignesNom.map(l => larg(l, police("sans_gras", t)))) > largNom && t > u * .007) t *= .93;
+        const fc = police("sans_gras", t);
+        const hNom = metr(fc).asc + metr(fc).aD + t * .15;
+        lignesNom.forEach((l, k) => texte(l, xc, base + k * hNom, fc, TXT, "ls"));
+        decalage = (lignesNom.length - 1) * hNom;
+      }
+      if (!services.length) return;
+      const largeur = col - 2 * pad;
+      const y0 = cy0 + pad + ascNum + u * .010 + decalage;
+      const gros = services.find(sv => { const i = infos(sv); return i && i.gros; });
+      const hautDispo = cy1 - pad - y0;
+
+      const composer = taille => {
+        const fg = police("sans_gras", taille), fn = police("sans", taille * .9), fh = police("sans_gras", taille);
+        const lignes = [];
+        for (const sv of services) {
+          if (sv === gros) continue;
+          const repos = M.CODES_REPOS.includes(M.codeAffiche(sv.code).toUpperCase());
+          const coul = repos ? TXT_REPOS : TXT;
+          const code = sv === special ? "" : M.nomAffiche(sv);
+          if (code) couper(code, fg, largeur).forEach(l => lignes.push([l, fg, coul]));
+          M.lignesHoraires(sv.horaires).forEach(h => lignes.push([h, fh, coul]));
+          if (sv.source === "manuel" && sv.libelle) couper(sv.libelle, fn, largeur).forEach(l => lignes.push([l, fn, TXT_DOUX]));
+        }
+        const m = metr(fg);
+        return [lignes, (m.aA + m.aD) + taille * .32];
+      };
+      let taille = u * .0145, lignes, hL;
+      while (true) {
+        [lignes, hL] = composer(taille);
+        const tient = lignes.length * hL <= hautDispo && lignes.every(([t, f]) => larg(t, f) <= largeur);
+        if (tient || taille <= u * .006) break;
+        taille *= .96;
+      }
+      let y = y0;
+      for (const [t, f, coul] of lignes) {
+        if (y + hL > cy1 - pad * .3) break;
+        ctx.font = f; ctx.fillStyle = rgb(coul); ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+        ctx.fillText(t, cx0 + pad, y + metr(f).aA);
+        y += hL;
+      }
+      if (gros) {
+        let txt = M.nomAffiche(gros);
+        if (gros.horaires) txt += "\n" + gros.horaires.replace(/ \/ /g, "\n");
+        const hReste = cy1 - pad - y;
+        let t = u * .05, lg, hLg;
+        while (true) {
+          const f = police("sans_gras", t);
+          lg = [];
+          for (const par of txt.split("\n")) lg.push(...couper(par, f, largeur));
+          hLg = metr(f).asc + metr(f).aD + t * .2;
+          if ((lg.length * hLg <= hReste && lg.every(l => larg(l, f) <= largeur)) || t <= u * .008) break;
+          t *= .92;
+        }
+        const f = police("sans_gras", t);
+        let yy = y + (hReste - lg.length * hLg) / 2;
+        for (const l of lg) { texte(l, cx0 + col / 2, yy, f, cGros, "mt"); yy += hLg; }
+      }
+    }));
+
+    for (const d of greves) if (cases[d]) filigrane(ctx, cases[d], police);
+    ctx.restore();
+    return cases;
+  }
+
+  function filigrane(ctx, [a, b, c, d], police) {
+    const x0 = a + 2, y0 = b + 2, w = c - a - 4, h = d - b - 4;
+    if (w < 10 || h < 10) return;
+    const angle = Math.atan2(h, w), diag = Math.hypot(w, h);
+    let t = h * .5;
+    while (t > 6) { ctx.font = police("sans_gras", t); if (ctx.measureText("GRÈVE").width <= diag * .8) break; t *= .94; }
+    ctx.save();
+    ctx.translate(x0 + w / 2, y0 + h / 2); ctx.rotate(-angle);
+    ctx.font = police("sans_gras", t); ctx.fillStyle = "rgba(200,0,0,0.353)";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("GRÈVE", 0, 0);
+    ctx.restore();
+  }
+
+  const api = { dessiner, THEMES, palette, rgb, lum };
+  racine.Rendu = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+// Planning Commandes — application mobile
+(function () {
+  "use strict";
+  const M = window.Modele, R = window.Rendu, L = window.LecteurBulletin;
+  // Adresses des bibliothèques : Internet (version web) ou fichiers intégrés (application Android)
+  const CONF = Object.assign({
+    pdfjsLib: "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.min.mjs",
+    pdfjsWorker: "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.worker.min.mjs",
+    pdflib: "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js",
+  }, window.CONF_APPLI || {});
+  const ANDROID = !!(window.Android && typeof window.Android.enregistrer === "function");
+  const MSG_RESEAU = ANDROID ? "" : " Vérifiez la connexion Internet puis réessayez.";
+  const $ = s => document.querySelector(s);
+  const el = (tag, attrs = {}, ...enfants) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of enfants.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c));
+    return e;
+  };
+  const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+  const fonce = c => c && R.lum(c) < 140;
+  const dateFr = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4) : "";
+  const ICONE_POUBELLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+  const KM_INIT = { "Givet": 33, "Vireux": 22, "Monthermé": 14, "Nouzonville": 8, "Deville": 12 };
+
+  // ------------------------------------------------------------------ état
+  const auj = M.aujourdhui();
+  const E = {
+    pl: M.planningVide(), codesTxt: M.CODES_TXT_DEFAUT, kms: { ...KM_INIT }, kmsDefaut: null,
+    theme: "Classique", annee: +auj.slice(0, 4), mois: +auj.slice(5, 7), sel: auj,
+    vue: window.innerWidth >= 900 ? "a4" : "compacte", mesure: "km", anneeFisc: null, zoom: false,
+  };
+
+  // ------------------------------------------------------------------ stockage
+  // claude.ai : base de données privée (data/users/<id>/…), un document par mois.
+  // Ailleurs : stockage du navigateur.
+  const Stock = {
+    mode: "local", db: null, base: null, file: Promise.resolve(), sales: new Set(), reglagesSales: false, minuterie: null,
+    async init() {
+      try {
+        if (window.claude && typeof window.claude.use === "function") {
+          const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+          const uid = user ? await user.id() : null;
+          if (db && uid) { this.db = db; this.base = `data/users/${uid}/reglages`; this.mode = "db"; }
+        }
+      } catch (e) { /* stockage du navigateur */ }
+    },
+    lsGet(k) { try { return JSON.parse(localStorage.getItem("pc:" + k) || "null"); } catch (e) { return null; } },
+    lsSet(k, v) { try { if (v === null) localStorage.removeItem("pc:" + k); else localStorage.setItem("pc:" + k, JSON.stringify(v)); } catch (e) { /* plein ou bloqué */ } },
+    async charger() {
+      let reg = null; const moisDocs = [];
+      if (this.mode === "db") {
+        const s = await this.db.doc(this.base).get();
+        reg = s.exists ? s.data() : null;
+        const q = await this.db.doc(this.base).collection("mois").get();
+        q.docs.forEach(d => moisDocs.push(d.data()));
+      } else {
+        reg = this.lsGet("reglages");
+        for (const k of (this.lsGet("liste-mois") || [])) { const m = this.lsGet("mois:" + k); if (m) moisDocs.push(m); }
+      }
+      return { reg, moisDocs };
+    },
+    marquer(mois, reglages = true) {
+      (mois || []).forEach(m => this.sales.add(m));
+      if (reglages) this.reglagesSales = true;
+      clearTimeout(this.minuterie);
+      this.minuterie = setTimeout(() => this.vider(), 500);
+    },
+    vider() {
+      const mois = [...this.sales]; this.sales.clear();
+      const reg = this.reglagesSales; this.reglagesSales = false;
+      if (!mois.length && !reg) return this.file;
+      this.file = this.file.then(async () => {
+        try {
+          for (const k of mois) await this.ecrireMois(k);
+          if (reg) await this.ecrireReglages();
+          etatStockage();
+        } catch (e) {
+          toast("Enregistrement impossible : " + (e && e.message || e) + ". Réessayez plus tard.");
+        }
+      });
+      return this.file;
+    },
+    donneesMois(k) {
+      const jours = {}, edition = {};
+      for (const d of Object.keys(E.pl.jours)) if (d.startsWith(k)) { jours[d] = E.pl.jours[d]; edition[d] = E.pl.edition[d] || null; }
+      return { mois: k, jours, edition };
+    },
+    async ecrireMois(k) {
+      const data = this.donneesMois(k);
+      const vide = !Object.keys(data.jours).length;
+      if (this.mode === "db") {
+        const ref = this.db.doc(this.base).collection("mois").doc(k);
+        if (vide) await ref.delete(); else await ref.set(data);
+      } else {
+        this.lsSet("mois:" + k, vide ? null : data);
+        const liste = new Set(this.lsGet("liste-mois") || []);
+        if (vide) liste.delete(k); else liste.add(k);
+        this.lsSet("liste-mois", [...liste].sort());
+      }
+    },
+    reglages() {
+      return { agent: E.pl.agent, greves: [...E.pl.greves].sort(), importes: E.pl.importes, codesTxt: E.codesTxt,
+        kms: E.kms, kmsDefaut: E.kmsDefaut, theme: E.theme };
+    },
+    async ecrireReglages() {
+      if (this.mode === "db") await this.db.doc(this.base).set(this.reglages());
+      else this.lsSet("reglages", this.reglages());
+    },
+  };
+  function etatStockage() {
+    const n = Object.keys(E.pl.jours).length;
+    $("#etat-stockage").textContent = (Stock.mode === "db"
+      ? "Enregistré dans votre espace Claude (privé, retrouvé sur tous vos appareils connectés)."
+      : ANDROID ? "Enregistré sur ce téléphone, dans l'application. Désinstaller l'application efface le planning : gardez une copie de temps en temps."
+      : "Enregistré dans ce navigateur uniquement.") + ` ${n} jour${n > 1 ? "s" : ""} au planning.`;
+  }
+
+  // ------------------------------------------------------------------ messages
+  let minuterieToast = null;
+  function toast(txt, ms = 3800) {
+    let t = $(".toast");
+    if (!t) { t = el("div", { class: "toast", role: "status" }); document.body.append(t); }
+    t.textContent = txt; t.hidden = false;
+    clearTimeout(minuterieToast);
+    minuterieToast = setTimeout(() => { t.hidden = true; }, ms);
+  }
+  function feuille(titre, contenu, surFermer) {
+    const voile = el("div", { class: "voile" });
+    const f = el("div", { class: "feuille", role: "dialog", "aria-modal": "true", "aria-label": titre },
+      el("div", { class: "poignee" }), el("h2", { text: titre }), contenu);
+    voile.append(f);
+    const fermer = () => { voile.remove(); document.removeEventListener("keydown", clavier); if (surFermer) surFermer(); };
+    const clavier = e => { if (e.key === "Escape") fermer(); };
+    voile.addEventListener("click", e => { if (e.target === voile) fermer(); });
+    document.addEventListener("keydown", clavier);
+    $("#couche").append(voile);
+    return fermer;
+  }
+
+  // ------------------------------------------------------------------ onglets
+  let ongletActif = "planning";
+  function montrerOnglet(nom) {
+    ongletActif = nom;
+    document.querySelectorAll("[data-vue]").forEach(s => { s.hidden = s.dataset.vue !== nom; });
+    document.querySelectorAll("[data-onglet]").forEach(b => {
+      if (b.dataset.onglet === nom) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    try { history.replaceState(null, "", "#" + nom); } catch (e) { /* ignoré */ }
+    window.scrollTo(0, 0);
+    rendre();
+  }
+  function rendre() {
+    if (ongletActif === "planning") rendrePlanning();
+    else if (ongletActif === "commandes") rendreCommandes();
+    else if (ongletActif === "fisc") rendreFisc();
+    else rendreReglages();
+  }
+
+  // ------------------------------------------------------------------ planning
+  function changerMois(n) {
+    let m = E.mois + n, a = E.annee;
+    while (m < 1) { m += 12; a--; } while (m > 12) { m -= 12; a++; }
+    E.annee = a; E.mois = m;
+    const cle = M.iso(a, m, 1).slice(0, 7);
+    if (!E.sel.startsWith(cle)) {
+      const jours = Object.keys(E.pl.jours).filter(d => d.startsWith(cle)).sort();
+      E.sel = auj.startsWith(cle) ? auj : (jours[0] || M.iso(a, m, 1));
+    }
+    rendrePlanning();
+  }
+  function allerA(d) { E.annee = +d.slice(0, 4); E.mois = +d.slice(5, 7); E.sel = d; }
+
+  function rendrePlanning() {
+    $("#titre-mois").textContent = `${M.cap(M.MOIS_LONG[E.mois - 1])} ${E.annee}`;
+    $("#vue-compacte").setAttribute("aria-pressed", E.vue === "compacte");
+    $("#vue-a4").setAttribute("aria-pressed", E.vue === "a4");
+    $("#zone-compacte").hidden = E.vue !== "compacte";
+    $("#zone-a4").hidden = E.vue !== "a4";
+    rendrePastilles();
+    if (E.vue === "compacte") rendreGrille(); else rendreA4();
+    rendreDetail();
+  }
+
+  function rendrePastilles() {
+    const cle = M.iso(E.annee, E.mois, 1).slice(0, 7);
+    const aff = M.pourAffichage(E.pl.jours);
+    const compte = new Map();
+    for (const [d, v] of Object.entries(aff)) {
+      if (!d.startsWith(cle)) continue;
+      const vus = new Set();
+      for (const sv of v) {
+        if (!sv.code) continue;
+        const nom = M.nomAffiche(sv);
+        if (vus.has(nom)) continue; vus.add(nom);
+        const i = M.infosCode(sv.code);
+        const c = compte.get(nom) || { n: 0, fond: i && i.fond };
+        c.n++; compte.set(nom, c);
+      }
+    }
+    const zone = $("#pastilles"); zone.replaceChildren();
+    [...compte.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 10).forEach(([nom, c]) => {
+      const p = el("span", { class: "pastille" + (c.fond ? "" : " neutre"), text: `${nom} ${c.n}` });
+      if (c.fond) { p.style.background = rgb(c.fond); p.style.color = fonce(c.fond) ? "#fff" : "#1d2530"; }
+      zone.append(p);
+    });
+    const gr = E.pl.greves.filter(d => d.startsWith(cle)).length;
+    if (gr) zone.append(el("span", { class: "pastille", style: "background:var(--danger-soft);color:var(--danger)", text: `Grève ${gr}` }));
+    const cpt = M.comptageFisc(E.pl.jours, E.annee, E.pl.greves, E.kms)[cle];
+    if (cpt) {
+      const [g, km] = M.kmFisc(cpt, E.kms);
+      zone.append(el("span", { class: "pastille neutre", text: `Givet ${g} j · ${M.kmTxt(km)}` }));
+    }
+  }
+
+  function infosCase(d, aff) {
+    const services = aff[d] || [];
+    const infos = sv => M.infosCode(sv.code);
+    let fond = null;
+    for (const sv of services) { const i = infos(sv); if (i && i.fond) { fond = i.fond; break; } }
+    const special = services.find(sv => sv.code && !(infos(sv) || {}).gros);
+    const gros = services.find(sv => { const i = infos(sv); return i && i.gros; });
+    let heure = "";
+    if (special) {
+      const h = special.horaires || "";
+      const ps = /\bPS\s+(\d{1,2}:\d{2})/.exec(h), fs = /\bFS\s+(\d{1,2}:\d{2})/.exec(h);
+      if (ps) heure = ps[1] + (fs ? "–" + fs[1] : "");
+      else { const p = M.lignesHoraires(h)[0]; heure = p ? p.replace(/^[A-Z]+\s+/, "") : ""; }
+    }
+    return { fond, special, gros, heure, services };
+  }
+
+  function rendreGrille() {
+    const g = $("#grille"); g.replaceChildren();
+    M.JOURS.forEach((j, c) => g.append(el("div", { class: "jsem" + (c >= 5 ? " we" : ""), text: j.slice(0, 3) })));
+    const aff = M.pourAffichage(E.pl.jours);
+    const greves = new Set(E.pl.greves);
+    for (const sem of M.semainesDuMois(E.annee, E.mois)) {
+      sem.forEach((d, c) => {
+        if (+d.slice(5, 7) !== E.mois) { g.append(el("div", { class: "case vide", "aria-hidden": "true" })); return; }
+        const x = infosCase(d, aff);
+        const classes = ["case"];
+        if (c >= 5) classes.push("we");
+        if (x.fond) classes.push("colore");
+        if (fonce(x.fond)) classes.push("fonce");
+        if (d === E.sel) classes.push("sel");
+        if (d === auj) classes.push("aujourdhui");
+        const nomSp = x.special ? M.nomAffiche(x.special) : "";
+        const b = el("button", { class: classes.join(" "), type: "button",
+          "aria-label": `${M.dateLongue(d)}${nomSp ? ", " + nomSp : ""}${x.gros ? ", " + M.nomAffiche(x.gros) : ""}`,
+          onclick: () => { E.sel = d; rendreGrille(); rendreDetail(); } },
+          el("span", { class: "num", text: String(+d.slice(8)) }));
+        if (x.fond) b.style.background = rgb(x.fond);
+        if (nomSp) b.append(el("span", { class: "nom" + (nomSp.length > 8 ? " long" : ""), text: nomSp }));
+        if (x.heure) b.append(el("span", { class: "h", text: x.heure.replace("–", "–\u200b") }));
+        if (x.gros && !nomSp) b.append(el("span", { class: "gros", text: M.nomAffiche(x.gros) }));
+        else if (x.gros) b.append(el("span", { class: "nom", text: M.nomAffiche(x.gros) }));
+        if (greves.has(d)) b.append(el("span", { class: "greve" }, el("span", { text: "GRÈVE" })));
+        g.append(b);
+      });
+    }
+  }
+
+  let casesA4 = {};
+  function rendreA4() {
+    const cont = $("#a4"), toile = $("#toile-a4");
+    cont.classList.toggle("zoom", E.zoom);
+    const largeurCss = E.zoom ? 1400 : Math.max(300, cont.clientWidth || 600);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const W = Math.round(largeurCss * dpr), H = Math.round(W * 2480 / 3508);
+    toile.width = W; toile.height = H;
+    const ctx = toile.getContext("2d");
+    casesA4 = R.dessiner(ctx, W, H, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: E.theme });
+    if (casesA4[E.sel]) {
+      const [a, b, c, d] = casesA4[E.sel];
+      ctx.strokeStyle = "#1c4f8f"; ctx.lineWidth = Math.max(2, W / 600);
+      ctx.strokeRect(a + 3, b + 3, c - a - 6, d - b - 6);
+    }
+  }
+  $("#toile-a4").addEventListener("click", e => {
+    const t = e.currentTarget, r = t.getBoundingClientRect();
+    const x = (e.clientX - r.left) * t.width / r.width, y = (e.clientY - r.top) * t.height / r.height;
+    for (const [d, [a, b, c, dd]] of Object.entries(casesA4)) {
+      if (x >= a && x < c && y >= b && y < dd) { E.sel = d; rendreA4(); rendreDetail(); $("#detail").scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
+    }
+  });
+
+  function rendreDetail() {
+    const z = $("#detail"); z.replaceChildren();
+    const pad = el("div", { class: "pad" }); z.append(pad);
+    if (!Object.keys(E.pl.jours).length) {
+      pad.append(el("div", { class: "etat-vide" },
+        el("h3", { text: "Aucune commande pour l'instant" }),
+        el("p", { text: "Ajoutez un bulletin de commande (PDF) : ses jours apparaîtront dans le planning, avec les codes et couleurs de vos réglages." }),
+        el("button", { class: "btn accent", onclick: () => montrerOnglet("commandes") }, "Ajouter une commande")));
+      return;
+    }
+    const d = E.sel;
+    if (+d.slice(5, 7) !== E.mois || +d.slice(0, 4) !== E.annee) {
+      pad.append(el("p", { class: "discret", style: "margin:0", text: "Touchez un jour pour voir son détail." })); return;
+    }
+    const greve = E.pl.greves.includes(d);
+    pad.append(el("div", { class: "rangee", style: "justify-content:space-between;margin-bottom:6px" },
+      el("h3", { text: M.dateLongue(d) }), greve ? el("span", { class: "badge-greve", text: "Jour de grève" }) : null));
+    const aff = M.pourAffichage(E.pl.jours)[d] || [];
+    const vrais = E.pl.jours[d] || [];
+    if (!aff.length) pad.append(el("p", { class: "discret", text: "Rien de prévu ce jour-là dans les commandes importées." }));
+    aff.forEach(sv => {
+      const i = M.infosCode(sv.code);
+      const idx = vrais.indexOf(sv);
+      const bloc = el("div", { class: "sv" });
+      const puce = el("i"); puce.style.background = i && i.fond ? rgb(i.fond) : "transparent";
+      const nom = sv.code ? M.nomAffiche(sv) : "(sans code)";
+      bloc.append(el("div", { class: "code" }, puce, el("span", { text: nom + (sv.code && nom !== sv.code ? `  ·  ${sv.code}` : "") })));
+      if (idx >= 0) {
+        const b = el("button", { class: "icone-btn", "aria-label": "Supprimer cette ligne", onclick: () => confirmerSuppr(bloc, d, idx) });
+        b.innerHTML = ICONE_POUBELLE; bloc.append(b);
+      } else bloc.append(el("span", { class: "discret", text: sv.code === "DN" ? "auto" : "" }));
+      const h = M.lignesHoraires(sv.horaires);
+      if (h.length) bloc.append(el("div", { class: "heures" }, h.map(x => el("div", { text: x.replace(/\s{2,}/g, "  ·  ") }))));
+      const src = [];
+      if (sv.libelle) src.push(sv.libelle);
+      if (sv.source === "manuel") src.push("note ajoutée à la main");
+      else if (sv.source === "auto") src.push("lendemain de nuit (automatique)");
+      else if (sv.fichier) src.push("bulletin : " + sv.fichier);
+      if (src.length) bloc.append(el("div", { class: "src", text: src.join(" — ") }));
+      pad.append(bloc);
+    });
+    pad.append(el("div", { class: "rangee", style: "margin-top:10px" },
+      el("button", { class: "btn", onclick: () => basculerGreve(d) }, greve ? "Retirer la grève" : "Jour de grève"),
+      el("button", { class: "btn", onclick: () => ajouterNote(d) }, "Ajouter une note")));
+  }
+  function confirmerSuppr(bloc, d, idx) {
+    const zone = el("div", { class: "rangee", style: "grid-column:1/-1;margin-top:6px" },
+      el("span", { text: "Supprimer cette ligne ?" }),
+      el("button", { class: "btn danger", onclick: () => {
+        E.pl.jours[d].splice(idx, 1);
+        if (!E.pl.jours[d].length) { delete E.pl.jours[d]; delete E.pl.edition[d]; }
+        Stock.marquer([d.slice(0, 7)], false); rendrePlanning(); toast("Ligne supprimée.");
+      } }, "Supprimer"),
+      el("button", { class: "btn fantome", onclick: () => zone.remove() }, "Annuler"));
+    bloc.append(zone);
+  }
+  function basculerGreve(d) {
+    const s = new Set(E.pl.greves);
+    if (s.has(d)) s.delete(d); else s.add(d);
+    E.pl.greves = [...s].sort();
+    Stock.marquer([], true); rendrePlanning();
+    toast(s.has(d) ? `Jour de grève ajouté : ${dateFr(d)}.` : `Jour de grève retiré : ${dateFr(d)}.`);
+  }
+  function ajouterNote(d) {
+    const code = el("input", { type: "text", id: "note-code", placeholder: "ex. RP, FORMATION", autocomplete: "off" });
+    const hor = el("input", { type: "text", id: "note-h", placeholder: "ex. 08:00 – 16:00", autocomplete: "off" });
+    const lib = el("input", { type: "text", id: "note-l", placeholder: "Texte libre", autocomplete: "off" });
+    const form = el("form", { class: "grille-champs", style: "grid-template-columns:1fr" },
+      el("label", { class: "champ", for: "note-code" }, "Code (facultatif)", code),
+      el("label", { class: "champ", for: "note-h" }, "Horaires (facultatif)", hor),
+      el("label", { class: "champ", for: "note-l" }, "Note", lib),
+      el("button", { class: "btn accent plein", type: "submit" }, "Ajouter"));
+    const fermer = feuille(`Note — ${M.dateLongue(d)}`, form);
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      if (!code.value.trim() && !hor.value.trim() && !lib.value.trim()) { toast("Remplissez au moins un champ."); return; }
+      const sv = { ...M.service(code.value.trim().toUpperCase(), hor.value.trim(), lib.value.trim(), "manuel"), fichier: "", empreinte: "" };
+      (E.pl.jours[d] = E.pl.jours[d] || []).push(sv);
+      if (!(d in E.pl.edition)) E.pl.edition[d] = null;
+      Stock.marquer([d.slice(0, 7)], false); fermer(); rendrePlanning(); toast("Note ajoutée.");
+    });
+    setTimeout(() => code.focus(), 50);
+  }
+
+  // glisser pour changer de mois
+  (function () {
+    let x0 = null, y0 = null;
+    const zone = $("#zone-compacte");
+    zone.addEventListener("touchstart", e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+    zone.addEventListener("touchend", e => {
+      if (x0 === null) return;
+      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) > 60 && Math.abs(dy) < 50) changerMois(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  })();
+
+  // ------------------------------------------------------------------ import des commandes
+  let pdfjsP = null;
+  function chargerPdfjs() {
+    if (!pdfjsP) {
+      pdfjsP = (async () => {
+        globalThis.pdfjsWorker = await import(CONF.pdfjsWorker);   // lecture sans « worker » séparé
+        return import(CONF.pdfjsLib);
+      })();
+      pdfjsP.catch(() => { pdfjsP = null; });
+    }
+    return pdfjsP;
+  }
+  async function empreinte(buf) {
+    try {
+      const h = await crypto.subtle.digest("SHA-256", buf);
+      return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+    } catch (e) {
+      let h = 2166136261; const v = new Uint8Array(buf);
+      for (let i = 0; i < v.length; i++) { h ^= v[i]; h = Math.imul(h, 16777619); }
+      return "f" + (h >>> 0).toString(16) + v.length;
+    }
+  }
+  function lirePieceJointe(pieces) {
+    if (!pieces) return null;
+    const pj = pieces["planning_donnees.json"];
+    if (!pj) return null;
+    try { return JSON.parse(new TextDecoder().decode(pj.content)); } catch (e) { return null; }
+  }
+
+  async function importer(fichiers) {
+    const etat = $("#etat-import"), res = $("#resultats");
+    etat.hidden = false; etat.textContent = "Préparation de la lecture des PDF…";
+    let pdfjs;
+    try { pdfjs = await chargerPdfjs(); }
+    catch (e) { etat.textContent = "Le lecteur de PDF n'a pas pu se charger." + MSG_RESEAU; return; }
+    $("#carte-resultats").hidden = false; res.replaceChildren();
+    let dernier = null;
+    for (const [k, f] of [...fichiers].entries()) {
+      etat.textContent = `Lecture ${k + 1} / ${fichiers.length} : ${f.name}`;
+      const li = el("li"); res.append(li);
+      try {
+        const buf = await f.arrayBuffer();
+        const hash = await empreinte(buf.slice(0));
+        const { pages, pieces } = await L.lireBulletinPdf(pdfjs, new Uint8Array(buf));
+        const exporte = lirePieceJointe(pieces);
+        if (exporte && exporte.jours) {
+          const r = M.fusionner(E.pl, exporte);
+          Stock.marquer([...r.touches], true);
+          li.append(el("span", { class: "ok", text: "✓" }), el("div", { class: "txt" }, el("b", { text: f.name }),
+            el("small", { text: `Planning exporté : ${r.n} jour(s) repris.` })));
+          continue;
+        }
+        const info = L.lireBulletin(pages);
+        const nbJours = Object.keys(info.jours).length;
+        if (!nbJours) throw new Error("aucun jour trouvé : ce PDF ne ressemble pas à un bulletin de commande.");
+        const deja = E.pl.importes[hash];
+        const r = M.integrer(E.pl, info, f.name, hash);
+        E.pl.importes[hash] = { nom: f.name, debut: info.debut, fin: info.fin, edition: info.edition, jours: nbJours, le: new Date().toISOString() };
+        Stock.marquer([...r.touches], true);
+        const jours = Object.keys(info.jours).sort();
+        dernier = jours[0];
+        let txt = `Du ${dateFr(info.debut || jours[0])} au ${dateFr(info.fin || jours[jours.length - 1])} · ${r.maj} jour(s) ajouté(s)`;
+        if (r.ignores) txt += ` · ${r.ignores} ignoré(s) (bulletin plus récent déjà importé)`;
+        if (deja) txt += " · déjà importé auparavant";
+        li.append(el("span", { class: "ok", text: "✓" }), el("div", { class: "txt" }, el("b", { text: f.name }), el("small", { text: txt })));
+      } catch (e) {
+        li.append(el("span", { class: "ko", text: "✕" }), el("div", { class: "txt" }, el("b", { text: f.name }),
+          el("small", { text: "Non importé : " + (e && e.message ? e.message : e) })));
+      }
+    }
+    etat.textContent = "Terminé. Le planning est à jour.";
+    if (dernier) allerA(dernier);
+    rendreListeCommandes();
+  }
+  $("#fichiers-pdf").addEventListener("change", e => { const f = e.target.files; if (f && f.length) importer(f).finally(() => { e.target.value = ""; }); });
+
+  function rendreCommandes() { rendreListeCommandes(); }
+  function rendreListeCommandes() {
+    const ul = $("#liste-commandes"); ul.replaceChildren();
+    const liste = Object.entries(E.pl.importes).sort((a, b) => (b[1].debut || "").localeCompare(a[1].debut || ""));
+    if (!liste.length) { ul.append(el("li", {}, el("div", { class: "txt discret", text: "Aucune commande importée sur cet appareil." }))); return; }
+    for (const [hash, c] of liste) {
+      const n = Object.values(E.pl.jours).reduce((s, v) => s + (v.some(sv => sv.empreinte === hash) ? 1 : 0), 0);
+      const li = el("li", {},
+        el("div", { class: "txt" }, el("b", { text: `Du ${dateFr(c.debut)} au ${dateFr(c.fin)}` }),
+          el("small", { text: `${c.nom}${c.edition ? " · édité le " + dateFr(c.edition.slice(0, 10)) + " à " + c.edition.slice(11, 16) : ""} · ${n} jour(s) au planning` })));
+      const b = el("button", { class: "icone-btn", "aria-label": "Retirer cette commande" });
+      b.innerHTML = ICONE_POUBELLE;
+      b.addEventListener("click", () => {
+        const z = el("div", { class: "rangee" },
+          el("button", { class: "btn danger", onclick: () => retirerCommande(hash) }, "Retirer ses jours"),
+          el("button", { class: "btn fantome", onclick: () => { z.remove(); b.hidden = false; } }, "Annuler"));
+        b.hidden = true; li.append(z);
+      });
+      li.append(b); ul.append(li);
+    }
+  }
+  function retirerCommande(hash) {
+    const touches = new Set();
+    for (const d of Object.keys(E.pl.jours)) {
+      const v = E.pl.jours[d];
+      if (!v.some(sv => sv.empreinte === hash)) continue;
+      E.pl.jours[d] = v.filter(sv => sv.empreinte !== hash);
+      if (!E.pl.jours[d].length) { delete E.pl.jours[d]; delete E.pl.edition[d]; }
+      touches.add(d.slice(0, 7));
+    }
+    delete E.pl.importes[hash];
+    Stock.marquer([...touches], true); rendreListeCommandes(); toast("Commande retirée du planning.");
+  }
+
+  // ------------------------------------------------------------------ FISC
+  function couleursUI() {
+    const s = getComputedStyle(document.documentElement);
+    return { fg: s.getPropertyValue("--fg").trim(), muted: s.getPropertyValue("--muted").trim(),
+      line: s.getPropertyValue("--line").trim(), surface: s.getPropertyValue("--surface").trim() };
+  }
+  function graduation(maxi) {
+    if (maxi <= 0) return 1;
+    const brut = maxi / 5, p = 10 ** Math.floor(Math.log10(brut));
+    for (const m of [1, 2, 2.5, 5, 10]) if (brut <= m * p) return m * p;
+    return 10 * p;
+  }
+  const jrs = n => `${n} jour${n > 1 ? "s" : ""}`;
+  const nb = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  function preparerToile(t, hauteurCss) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const w = t.clientWidth || 600;
+    t.width = Math.round(w * dpr); t.height = Math.round(hauteurCss * dpr);
+    const ctx = t.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return [ctx, w, hauteurCss];
+  }
+  let zonesBarres = [];
+  function dessinerBarres(cpt, annee) {
+    const t = $("#fisc-barres"), C = couleursUI();
+    const [ctx, W, H] = preparerToile(t, 260);
+    ctx.clearRect(0, 0, W, H);
+    let mois = Object.keys(cpt).sort();
+    if (mois.length && annee) { mois = Array.from({ length: 12 }, (_, i) => `${annee}-${String(i + 1).padStart(2, "0")}`); }
+    zonesBarres = [];
+    ctx.font = "13px " + getComputedStyle(document.body).fontFamily;
+    if (!mois.length) { ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.fillText("Aucun trajet compté pour cette période.", W / 2, H / 2); return; }
+    const vals = mois.map(k => M.valeursFisc(cpt[k] || {}, E.kms, E.mesure));
+    const tots = vals.map(v => Object.values(v).reduce((a, b) => a + b, 0));
+    const x0 = 44, x1 = W - 8, y0 = 18, y1 = H - 34;
+    const pas = graduation(Math.max(...tots) || 1), haut = pas * Math.ceil((Math.max(...tots) || 1) / pas);
+    const ech = (y1 - y0) / haut;
+    ctx.font = "11px " + getComputedStyle(document.body).fontFamily; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let g = 0; g <= haut + 1e-9; g += pas) {
+      const y = y1 - g * ech;
+      ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = C.muted; ctx.fillText(nb(g), x0 - 6, y);
+    }
+    const n = mois.length, caseL = (x1 - x0) / n, larg = Math.min(40, caseL * .7);
+    const plusieursAns = new Set(mois.map(k => k.slice(0, 4))).size > 1;
+    mois.forEach((k, i) => {
+      const cx = x0 + caseL * (i + .5); let y = y1;
+      for (const [serie, coul] of M.FISC_SERIES) {
+        const h = vals[i][serie] * ech;
+        if (h <= 0) continue;
+        ctx.fillStyle = coul; ctx.fillRect(cx - larg / 2, y - h, larg, h);
+        zonesBarres.push({ x: cx - larg / 2, y: y - h, w: larg, h, txt: `${M.cap(M.MOIS_LONG[+k.slice(5) - 1])} ${k.slice(0, 4)} — ${serie} : ${E.mesure === "km" ? M.kmTxt(vals[i][serie]) : vals[i][serie] + " j"}` });
+        y -= h;
+      }
+      ctx.fillStyle = C.fg; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      if (tots[i] && caseL >= 26) ctx.fillText(nb(tots[i]), cx, y - 4);
+      ctx.fillStyle = C.muted; ctx.textBaseline = "top";
+      if (caseL >= 22 || i % 2 === 0) {
+        ctx.fillText(M.MOIS_ABREGE[+k.slice(5) - 1], cx, y1 + 6);
+        if (plusieursAns) ctx.fillText(k.slice(2, 4), cx, y1 + 19);
+      }
+    });
+    ctx.strokeStyle = C.fg; ctx.beginPath(); ctx.moveTo(x0, y1 + .5); ctx.lineTo(x1, y1 + .5); ctx.stroke();
+  }
+  $("#fisc-barres").addEventListener("click", e => {
+    const r = e.currentTarget.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    const z = zonesBarres.find(z => x >= z.x - 4 && x <= z.x + z.w + 4 && y >= z.y && y <= z.y + z.h);
+    $("#fisc-info").textContent = z ? z.txt : "";
+  });
+  function dessinerAnneau(cpt) {
+    const t = $("#fisc-anneau"), C = couleursUI();
+    const [ctx, W, H] = preparerToile(t, 220);
+    ctx.clearRect(0, 0, W, H);
+    const somme = {};
+    for (const [s] of M.FISC_SERIES) somme[s] = 0;
+    for (const v of Object.values(cpt)) { const x = M.valeursFisc(v, E.kms, E.mesure); for (const s in x) somme[s] += x[s]; }
+    const total = Object.values(somme).reduce((a, b) => a + b, 0);
+    const R0 = Math.min(90, H / 2 - 10), cx = W / 2, cy = H / 2;
+    const police = getComputedStyle(document.body).fontFamily;
+    if (!total) { $("#anneau-legende").replaceChildren(); ctx.fillStyle = C.muted; ctx.font = "13px " + police; ctx.textAlign = "center"; ctx.fillText("Aucune donnée.", W / 2, H / 2); return; }
+    let a = -Math.PI / 2;
+    for (const [s, coul] of M.FISC_SERIES) {
+      if (!somme[s]) continue;
+      const ang = 2 * Math.PI * somme[s] / total;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R0, a, a + ang); ctx.closePath();
+      ctx.fillStyle = coul; ctx.fill(); ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.stroke();
+      a += ang;
+    }
+    ctx.beginPath(); ctx.arc(cx, cy, R0 * .6, 0, 2 * Math.PI); ctx.fillStyle = C.surface; ctx.fill();
+    ctx.fillStyle = C.fg; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `700 ${R0 > 70 ? 17 : 13}px ${police}`; ctx.fillText(nb(total), cx, cy - 7);
+    ctx.font = `12px ${police}`; ctx.fillStyle = C.muted; ctx.fillText(E.mesure === "km" ? "km" : "jours", cx, cy + 12);
+    $("#anneau-legende").replaceChildren(...M.FISC_SERIES.map(([s, coul]) => {
+      const pct = total ? 100 * somme[s] / total : 0;
+      return el("li", {}, el("i", { style: `background:${coul}` }), el("span", { text: s }),
+        el("span", { text: `${E.mesure === "km" ? M.kmTxt(somme[s]) : somme[s] + " j"} (${pct > 0 && pct < 1 ? "<1" : Math.round(pct)} %)` }));
+    }));
+  }
+  function rendreFisc() {
+    const sel = $("#fisc-annee");
+    const annees = [...new Set(Object.keys(E.pl.jours).map(d => +d.slice(0, 4)))].sort((a, b) => b - a);
+    if (!annees.length) annees.push(E.annee);
+    if (E.anneeFisc === null) E.anneeFisc = annees.includes(E.annee) ? E.annee : annees[0];
+    sel.replaceChildren(...annees.map(a => el("option", { value: a, text: a })), el("option", { value: "toutes", text: "Toutes" }));
+    sel.value = E.anneeFisc === "toutes" ? "toutes" : String(E.anneeFisc);
+    const an = E.anneeFisc === "toutes" ? null : E.anneeFisc;
+    const cpt = M.comptageFisc(E.pl.jours, an, E.pl.greves, E.kms);
+    const tot = Object.fromEntries(M.FISC_COLONNES.map(c => [c, 0]));
+    for (const v of Object.values(cpt)) for (const c of M.FISC_COLONNES) tot[c] += v[c];
+    const [g, km] = M.kmFisc(tot, E.kms);
+
+    const tu = $("#fisc-tuiles"); tu.replaceChildren(
+      el("div", { class: "tuile fort" }, el("div", { class: "l", text: "Total kilomètres" }), el("div", { class: "v", text: M.kmTxt(km) })),
+      el("div", { class: "tuile" }, el("div", { class: "l", text: "Jours à Givet" }), el("div", { class: "v", text: g })),
+      ...M.FISC_GARES.map(([n]) => el("div", { class: "tuile" }, el("div", { class: "l", text: n }), el("div", { class: "v", text: `${tot[n]} j` }))));
+
+    $("#mes-km").setAttribute("aria-pressed", E.mesure === "km");
+    $("#mes-j").setAttribute("aria-pressed", E.mesure === "jours");
+    $("#fisc-legende").replaceChildren(...M.FISC_SERIES.map(([s, c]) => el("span", {}, el("i", { style: `background:${c}` }), s)));
+    $("#fisc-info").textContent = "";
+    dessinerBarres(cpt, an);
+    dessinerAnneau(cpt);
+
+    // tableau
+    const tab = $("#fisc-table");
+    const cols = ["Mois", ...M.FISC_NOMS, "Givet", ...M.FISC_GARES.map(x => x[0]), "Km (A/R)"];
+    const tete = el("thead", {}, el("tr", {}, cols.map(c => el("th", { text: c }))));
+    const corps = el("tbody");
+    for (const k of Object.keys(cpt).sort()) {
+      const v = cpt[k], [gg, kk] = M.kmFisc(v, E.kms);
+      corps.append(el("tr", {}, el("td", { text: `${M.cap(M.MOIS_LONG[+k.slice(5) - 1])} ${k.slice(0, 4)}` }),
+        M.FISC_NOMS.map(n => el("td", { text: v[n] })), el("td", { text: gg }),
+        M.FISC_GARES.map(([n]) => el("td", { text: v[n] })), el("td", { text: M.kmTxt(kk) })));
+    }
+    corps.append(el("tr", { class: "total" }, el("td", { text: "TOTAL" }), M.FISC_NOMS.map(n => el("td", { text: tot[n] })),
+      el("td", { text: g }), M.FISC_GARES.map(([n]) => el("td", { text: tot[n] })), el("td", { text: M.kmTxt(km) })));
+    tab.replaceChildren(tete, corps);
+
+    // calcul détaillé + grèves décomptées
+    const calc = $("#fisc-calcul"); calc.replaceChildren();
+    const detail = M.FISC_NOMS.map(n => `${tot[n]} ${n}`).join(" + ");
+    calc.append(el("div", {}, el("b", { text: "Givet : " }), `${jrs(g)} (${detail}) × ${2 * E.kms["Givet"]} km = ${M.kmTxt(g * 2 * E.kms["Givet"])}`));
+    for (const [n] of M.FISC_GARES) calc.append(el("div", {}, el("b", { text: n + " : " }), `${jrs(tot[n])} × ${2 * E.kms[n]} km = ${M.kmTxt(tot[n] * 2 * E.kms[n])}`));
+    const sans = M.comptageFisc(E.pl.jours, an, [], E.kms);
+    const ts = Object.fromEntries(M.FISC_COLONNES.map(c => [c, 0]));
+    for (const v of Object.values(sans)) for (const c of M.FISC_COLONNES) ts[c] += v[c];
+    const gs = M.FISC_NOMS.reduce((s, n) => s + ts[n], 0);
+    const det = [];
+    if (gs !== g) det.push(`Givet : ${gs} − ${gs - g} = ${g}`);
+    for (const [n] of M.FISC_GARES) if (ts[n] !== tot[n]) det.push(`${n} : ${ts[n]} − ${ts[n] - tot[n]} = ${tot[n]}`);
+    const nbG = (gs - g) + M.FISC_GARES.reduce((s, [n]) => s + ts[n] - tot[n], 0);
+    calc.append(el("div", { class: "greves-ligne", text: nbG ? `Jours de grève décomptés : ${nbG} (${det.join(" ; ")})` : "Aucun jour de grève à décompter." }));
+    calc.append(el("div", { style: "font-size:1.05rem;margin-top:4px" }, el("b", { text: `Total : ${M.kmTxt(km)}` })));
+
+    // distances
+    const zc = $("#km-champs");
+    if (!zc.children.length) {
+      for (const n of Object.keys(M.KM_USINE)) {
+        const id = "km-" + n.normalize("NFD").replace(/\p{Mn}/gu, "");
+        const inp = el("input", { type: "number", id, min: "0", step: "1", inputmode: "decimal" });
+        inp.addEventListener("input", () => {
+          const v = parseFloat(inp.value.replace(",", "."));
+          if (!(v >= 0)) return;
+          E.kms[n] = v; Stock.marquer([], true); rendreFisc();
+        });
+        zc.append(el("label", { class: "champ", for: id }, n, inp));
+      }
+    }
+    for (const n of Object.keys(M.KM_USINE)) {
+      const inp = zc.querySelector("#km-" + n.normalize("NFD").replace(/\p{Mn}/gu, ""));
+      if (document.activeElement !== inp) inp.value = E.kms[n];
+    }
+  }
+  $("#fisc-annee").addEventListener("change", e => { E.anneeFisc = e.target.value === "toutes" ? "toutes" : +e.target.value; rendreFisc(); });
+  $("#mes-km").addEventListener("click", () => { E.mesure = "km"; rendreFisc(); });
+  $("#mes-j").addEventListener("click", () => { E.mesure = "jours"; rendreFisc(); });
+  $("#km-def").addEventListener("click", () => { E.kmsDefaut = { ...E.kms }; Stock.marquer([], true); toast("Distances actuelles enregistrées comme valeurs par défaut."); });
+  $("#km-reset").addEventListener("click", () => { E.kms = { ...(E.kmsDefaut || M.KM_USINE) }; Stock.marquer([], true); rendreFisc(); toast("Distances par défaut remises."); });
+
+  // ------------------------------------------------------------------ réglages
+  function rendreReglages() { rendreThemes(); rendreCodes(); etatStockage(); }
+  function rendreThemes() {
+    const z = $("#themes"); z.replaceChildren();
+    for (const nom of Object.keys(R.THEMES)) {
+      const c = el("canvas", { width: 480, height: 339, "aria-hidden": "true" });
+      R.dessiner(c.getContext("2d"), 480, 339, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: nom });
+      z.append(el("button", { "aria-pressed": nom === E.theme, onclick: () => { E.theme = nom; Stock.marquer([], true); rendreThemes(); toast(`Thème : ${nom}.`); } }, c, nom));
+    }
+  }
+  function listeCodes() { const r = M.lireCodes(E.codesTxt); return r.ordre.map(k => r.codes[k]); }
+  function appliquerCodes(liste) {
+    E.codesTxt = M.ecrireCodes(liste);
+    M.reglerCodes(E.codesTxt);
+    Stock.marquer([], true);
+    rendreCodes();
+  }
+  function rendreCodes() {
+    const ul = $("#liste-codes"); ul.replaceChildren();
+    const r = M.lireCodes(E.codesTxt);
+    if (r.erreurs.length) ul.append(el("li", {}, el("div", { class: "txt ko", text: "Lignes ignorées : " + r.erreurs.join(" ; ") })));
+    listeCodes().forEach((c, i) => {
+      const puce = el("span", { class: "puce", text: c.gros ? "A" : "" });
+      if (c.fond) { puce.style.background = rgb(c.fond); puce.style.color = fonce(c.fond) ? "#fff" : "#1d2530"; }
+      ul.append(el("li", {}, el("button", { class: "ligne", onclick: () => editerCode(i) }, puce,
+        el("div", { class: "txt" }, el("b", { text: c.nom.replace(/\[date\]/gi, "‹intitulé sous la date›") }), el("small", { text: c.code + (c.gros ? " · en gros" : "") })))));
+    });
+  }
+  function editerCode(i) {
+    const liste = listeCodes();
+    const nouveau = i === null;
+    const c = nouveau ? { code: "", nom: "", fond: null, gros: false } : { ...liste[i] };
+    const code = el("input", { type: "text", id: "ed-code", value: c.code, autocomplete: "off", autocapitalize: "characters" });
+    const nom = el("input", { type: "text", id: "ed-nom", value: c.nom, autocomplete: "off" });
+    const gros = el("input", { type: "checkbox", id: "ed-gros" }); gros.checked = c.gros;
+    const apercu = el("span", { class: "puce", style: "width:44px;height:44px" });
+    const majApercu = () => { apercu.style.background = c.fond ? rgb(c.fond) : "transparent"; };
+    majApercu();
+    const pal = el("div", { class: "palette" });
+    const boutons = [];
+    for (const ligneC of M.paletteCouleurs()) for (const col of ligneC) {
+      const b = el("button", { type: "button", "aria-label": M.nomCouleur(col), "aria-pressed": !!(c.fond && c.fond.join() === col.join()), style: `background:${rgb(col)}` });
+      b.addEventListener("click", () => { c.fond = col; boutons.forEach(x => x.setAttribute("aria-pressed", x === b)); majApercu(); });
+      boutons.push(b); pal.append(b);
+    }
+    const nommees = el("div", { class: "rangee", style: "margin-top:8px" });
+    for (const n of ["bleu", "vert", "violet", "orange", "jaune", "rose", "rouge", "turquoise", "gris", "noir"]) {
+      const col = M.COULEURS[n];
+      const b = el("button", { type: "button", class: "btn", style: `padding:5px 10px;background:${rgb(col)};color:${fonce(col) ? "#fff" : "#1d2530"}` }, n);
+      b.addEventListener("click", () => { c.fond = col.slice(); boutons.forEach(x => x.setAttribute("aria-pressed", "false")); majApercu(); });
+      nommees.append(b);
+    }
+    nommees.append(el("button", { type: "button", class: "btn fantome", onclick: () => { c.fond = null; boutons.forEach(x => x.setAttribute("aria-pressed", "false")); majApercu(); } }, "Sans couleur"));
+    const form = el("form", {},
+      el("div", { class: "grille-champs" },
+        el("label", { class: "champ", for: "ed-code" }, "Code du bulletin", code),
+        el("label", { class: "champ", for: "ed-nom" }, "Nom affiché", nom)),
+      el("p", { class: "discret", style: "margin:6px 0 12px", text: "[date] affiche l'intitulé écrit sous la date dans le bulletin (ex. « [date] Vireux »)." }),
+      el("div", { class: "rangee", style: "margin-bottom:8px" }, apercu, el("b", { text: "Couleur de la case" })),
+      pal, nommees,
+      el("label", { class: "case-a-cocher", style: "margin:14px 0" }, gros, "Écrire le nom en très gros au centre de la case (comme RP)"),
+      el("div", { class: "rangee" },
+        el("button", { class: "btn accent", type: "submit" }, "Enregistrer"),
+        nouveau ? null : el("button", { class: "btn danger", type: "button", onclick: () => { liste.splice(i, 1); appliquerCodes(liste); fermer(); toast("Code supprimé."); } }, "Supprimer")));
+    const fermer = feuille(nouveau ? "Nouveau code" : `Code ${c.code}`, form);
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const k = code.value.trim();
+      if (!k || k.includes(";")) { toast("Indiquez le code tel qu'il est écrit dans la colonne Utilisation."); return; }
+      const n = nom.value.trim().replace(/;/g, ",") || k;
+      const entree = { code: k, nom: n, fond: c.fond, gros: gros.checked };
+      let res;
+      if (nouveau) res = liste.filter(x => x.code.toUpperCase() !== k.toUpperCase()).concat([entree]);
+      else res = liste.map((x, j) => j === i ? entree : x).filter((x, j) => j === i || x.code.toUpperCase() !== k.toUpperCase());
+      appliquerCodes(res); fermer(); toast("Code enregistré.");
+    });
+  }
+  $("#code-ajout").addEventListener("click", () => editerCode(null));
+  $("#fichier-codes").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    const buf = await f.arrayBuffer();
+    let txt = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+    if (txt.includes("\uFFFD")) txt = new TextDecoder("windows-1252").decode(buf);
+    const r = M.lireCodes(txt);
+    if (!r.ordre.length) { toast("Ce fichier ne contient aucun code lisible."); return; }
+    E.codesTxt = txt; M.reglerCodes(txt); Stock.marquer([], true); rendreCodes();
+    toast(`${r.ordre.length} codes importés${r.erreurs.length ? `, ${r.erreurs.length} ligne(s) ignorée(s)` : ""}.`);
+  });
+
+  // ------------------------------------------------------------------ fichiers à enregistrer
+  // Application Android : passerelle native (choix de l'emplacement, impression)
+  const attentes = {};
+  window.__retourAndroid = (id, ok) => { const f = attentes[id]; delete attentes[id]; if (f) f(!!ok); };
+  async function enBase64(data) {
+    const octets = new Uint8Array(data instanceof Blob ? await data.arrayBuffer() : data);
+    let bin = "";
+    for (let i = 0; i < octets.length; i += 0x8000) bin += String.fromCharCode.apply(null, octets.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  async function enregistrer(nom, data) {
+    if (ANDROID) {
+      const id = "e" + Date.now() + Math.random().toString(36).slice(2, 6);
+      const mime = /\.pdf$/i.test(nom) ? "application/pdf" : /\.json$/i.test(nom) ? "application/json" : "text/plain";
+      const b64 = await enBase64(data);
+      return new Promise(ok => { attentes[id] = ok; window.Android.enregistrer(id, nom, mime, b64); });
+    }
+    let dl = null;
+    try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }
+    if (dl) {
+      try { await dl.save({ filename: nom, data }); return true; }
+      catch (e) {
+        if (e && e.code === "declined") return false;
+        toast(e && e.code === "rate_limited" ? "Une demande d'enregistrement est déjà ouverte." : "L'enregistrement du fichier n'est pas disponible ici.");
+        return false;
+      }
+    }
+    if (window.claude) { toast("L'enregistrement de fichiers n'est pas disponible dans cet affichage."); return false; }
+    const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+    const a = el("a", { href: url, download: nom }); document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return true;
+  }
+  $("#codes-export").addEventListener("click", () => enregistrer("codes.txt", new Blob(["﻿" + E.codesTxt], { type: "text/plain" })));
+  function donneesSauvegarde() {
+    return { ...M.versDict(E.pl), mobile: { codesTxt: E.codesTxt, kms: E.kms, kmsDefaut: E.kmsDefaut, theme: E.theme, importes: E.pl.importes } };
+  }
+  $("#sauv-export").addEventListener("click", () => {
+    const d = new Date(), nom = `planning ${M.iso(d.getFullYear(), d.getMonth() + 1, d.getDate())}.json`;
+    enregistrer(nom, new Blob([JSON.stringify(donneesSauvegarde(), null, 1)], { type: "application/json" }));
+  });
+  $("#fichier-sauv").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    try {
+      let data;
+      if (/\.pdf$/i.test(f.name)) {
+        const pdfjs = await chargerPdfjs();
+        const { pieces } = await L.lireBulletinPdf(pdfjs, new Uint8Array(await f.arrayBuffer()));
+        data = lirePieceJointe(pieces);
+        if (!data) throw new Error("ce PDF ne contient pas de planning (seuls les PDF créés par le programme en contiennent). Pour un bulletin, utilisez l'onglet Commandes.");
+      } else data = JSON.parse(await f.text());
+      if (!data || typeof data.jours !== "object") throw new Error("fichier non reconnu.");
+      const r = M.fusionner(E.pl, data);
+      if (data.mobile) {
+        const m = data.mobile;
+        if (m.codesTxt) { E.codesTxt = m.codesTxt; M.reglerCodes(m.codesTxt); }
+        if (m.kms) E.kms = { ...E.kms, ...m.kms };
+        if ("kmsDefaut" in m) E.kmsDefaut = m.kmsDefaut;
+        if (m.theme) E.theme = m.theme;
+        if (m.importes) E.pl.importes = { ...E.pl.importes, ...m.importes };
+      }
+      Stock.marquer([...r.touches], true); rendre();
+      toast(`Copie reprise : ${r.n} jour(s) mis à jour${data.mobile ? ", réglages restaurés" : ""}.`);
+    } catch (err) { toast("Impossible de reprendre ce fichier : " + (err.message || err)); }
+  });
+  $("#confirm-effacer").addEventListener("input", e => { $("#btn-effacer").disabled = e.target.value.trim() !== "EFFACER"; });
+  $("#btn-effacer").addEventListener("click", () => {
+    const mois = new Set(Object.keys(E.pl.jours).map(d => d.slice(0, 7)));
+    E.pl = M.planningVide();
+    Stock.marquer([...mois], true);
+    $("#confirm-effacer").value = ""; $("#btn-effacer").disabled = true;
+    rendre(); toast("Planning effacé.");
+  });
+
+  // ------------------------------------------------------------------ export PDF
+  let pdfLibP = null;
+  function chargerPdfLib() {
+    if (!pdfLibP) {
+      pdfLibP = new Promise((ok, ko) => {
+        if (window.PDFLib) return ok(window.PDFLib);
+        const s = el("script", { src: CONF.pdflib });
+        s.onload = () => ok(window.PDFLib); s.onerror = () => { pdfLibP = null; ko(new Error("chargement impossible")); };
+        document.head.append(s);
+      });
+    }
+    return pdfLibP;
+  }
+  function feuilleExport() {
+    const moisDispo = [...new Set(Object.keys(E.pl.jours).map(d => d.slice(0, 7)))].sort();
+    const courant = M.iso(E.annee, E.mois, 1).slice(0, 7);
+    if (!moisDispo.includes(courant)) moisDispo.push(courant), moisDispo.sort();
+    const choix = new Set([courant]);
+    const liste = el("div", { style: "display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin:6px 0 12px" });
+    const cases = [];
+    for (const k of moisDispo) {
+      const id = "exp-" + k;
+      const c = el("input", { type: "checkbox", id }); c.checked = choix.has(k);
+      c.addEventListener("change", () => { if (c.checked) choix.add(k); else choix.delete(k); maj(); });
+      cases.push([k, c]);
+      liste.append(el("label", { class: "case-a-cocher", for: id }, c, `${M.cap(M.MOIS_LONG[+k.slice(5) - 1])} ${k.slice(0, 4)}`));
+    }
+    const tout = (v, filtre) => { cases.forEach(([k, c]) => { if (!filtre || filtre(k)) { c.checked = v; if (v) choix.add(k); else choix.delete(k); } }); maj(); };
+    const annees = [...new Set(moisDispo.map(k => k.slice(0, 4)))];
+    const go = el("button", { class: "btn accent plein" });
+    const imp = ANDROID ? el("button", { class: "btn plein", style: "margin-top:8px" }) : null;
+    const etat = el("p", { class: "discret", style: "margin:10px 0 0" });
+    const maj = () => {
+      go.textContent = ANDROID ? `Enregistrer le PDF (${choix.size} mois)` : `Créer le PDF (${choix.size} mois)`;
+      go.disabled = !choix.size;
+      if (imp) { imp.textContent = `Imprimer (${choix.size} mois)`; imp.disabled = !choix.size; }
+    };
+    maj();
+    const contenu = el("div", {},
+      el("p", { style: "margin:0 0 8px", text: `Une page A4 paysage par mois, au thème « ${E.theme} ». Le PDF contient aussi les données du planning : le programme PC peut le rouvrir.` }),
+      el("div", { class: "rangee" }, el("button", { class: "btn", onclick: () => tout(true) }, "Tout"),
+        annees.map(a => el("button", { class: "btn", onclick: () => { tout(false); tout(true, k => k.startsWith(a)); } }, a)),
+        el("button", { class: "btn fantome", onclick: () => tout(false) }, "Aucun")),
+      liste, go, imp, etat,
+      ANDROID ? null : el("p", { class: "discret", style: "margin:8px 0 0", text: "Pour imprimer : ouvrez le PDF enregistré puis utilisez la fonction Imprimer du téléphone." }));
+    feuille("Exporter en PDF", contenu);
+    async function fabriquer() {
+      const PDFLib = await chargerPdfLib();
+      const doc = await PDFLib.PDFDocument.create();
+      const liste = [...choix].sort();
+      const toile = document.createElement("canvas"); toile.width = 3508; toile.height = 2480;
+      const ctx = toile.getContext("2d");
+      for (const [i, k] of liste.entries()) {
+        etat.textContent = `Page ${i + 1} / ${liste.length}…`;
+        await new Promise(r => setTimeout(r, 0));
+        R.dessiner(ctx, 3508, 2480, +k.slice(0, 4), +k.slice(5), E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: E.theme });
+        const blob = await new Promise(r => toile.toBlob(r, "image/jpeg", 0.9));
+        const img = await doc.embedJpg(await blob.arrayBuffer());
+        const page = doc.addPage([841.89, 595.28]);
+        page.drawImage(img, { x: 0, y: 0, width: 841.89, height: 595.28 });
+      }
+      toile.width = toile.height = 1;
+      await doc.attach(new TextEncoder().encode(JSON.stringify(M.versDict(E.pl))), "planning_donnees.json",
+        { mimeType: "application/json", description: "Données du planning" });
+      doc.setTitle("Planning"); doc.setAuthor(E.pl.agent || ""); doc.setCreator("Planning PDF");
+      const octets = await doc.save();
+      const nom = liste.length === 1 ? `Planning ${M.MOIS_LONG[+liste[0].slice(5) - 1]} ${liste[0].slice(0, 4)}.pdf` : `Planning ${liste[0]} au ${liste[liste.length - 1]}.pdf`;
+      return { octets, nom };
+    }
+    const occupe = v => { go.disabled = v || !choix.size; if (imp) imp.disabled = v || !choix.size; };
+    go.addEventListener("click", async () => {
+      occupe(true);
+      try {
+        const { octets, nom } = await fabriquer();
+        etat.textContent = "PDF prêt.";
+        const ok = await enregistrer(nom, new Blob([octets], { type: "application/pdf" }));
+        etat.textContent = ok ? "PDF enregistré." : "PDF non enregistré.";
+      } catch (e) {
+        etat.textContent = "Création du PDF impossible : " + (e.message || e) + "." + MSG_RESEAU;
+      } finally { occupe(false); }
+    });
+    if (imp) imp.addEventListener("click", async () => {
+      occupe(true);
+      try {
+        const { octets, nom } = await fabriquer();
+        etat.textContent = "Ouverture de l'impression…";
+        window.Android.imprimer(nom, await enBase64(octets));
+        etat.textContent = "";
+      } catch (e) {
+        etat.textContent = "Création du PDF impossible : " + (e.message || e) + ".";
+      } finally { occupe(false); }
+    });
+  }
+
+  // ------------------------------------------------------------------ branchements
+  $("#mois-prec").addEventListener("click", () => changerMois(-1));
+  $("#mois-suiv").addEventListener("click", () => changerMois(1));
+  $("#btn-auj").addEventListener("click", () => { allerA(auj); rendrePlanning(); });
+  $("#vue-compacte").addEventListener("click", () => { E.vue = "compacte"; rendrePlanning(); });
+  $("#vue-a4").addEventListener("click", () => { E.vue = "a4"; rendrePlanning(); });
+  $("#a4").addEventListener("dblclick", () => { E.zoom = !E.zoom; rendreA4(); });
+  $("#btn-pdf").addEventListener("click", feuilleExport);
+  document.querySelectorAll("[data-onglet]").forEach(b => b.addEventListener("click", () => montrerOnglet(b.dataset.onglet)));
+  document.addEventListener("keydown", e => {
+    if (ongletActif !== "planning" || e.target.closest("input,textarea,select") || $(".voile")) return;
+    if (e.key === "ArrowLeft" || e.key === "PageUp") changerMois(-1);
+    if (e.key === "ArrowRight" || e.key === "PageDown") changerMois(1);
+  });
+  let minuterieRedim = null;
+  window.addEventListener("resize", () => { clearTimeout(minuterieRedim); minuterieRedim = setTimeout(rendre, 150); });
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => { if (ongletActif === "planning" && E.vue === "a4") rendreA4(); });
+  window.addEventListener("beforeunload", () => Stock.vider());
+  document.addEventListener("visibilitychange", () => { if (document.hidden) Stock.vider(); });
+
+  // ------------------------------------------------------------------ démarrage
+  async function demarrer() {
+    M.reglerCodes(E.codesTxt);
+    const h = (location.hash || "").slice(1);
+    montrerOnglet(["planning", "commandes", "fisc", "reglages"].includes(h) ? h : "planning");
+    await Stock.init();
+    try {
+      const { reg, moisDocs } = await Stock.charger();
+      if (reg) {
+        E.pl.agent = reg.agent || ""; E.pl.greves = reg.greves || []; E.pl.importes = reg.importes || {};
+        if (reg.codesTxt) E.codesTxt = reg.codesTxt;
+        if (reg.kms) E.kms = { ...E.kms, ...reg.kms };
+        E.kmsDefaut = reg.kmsDefaut || null;
+        if (reg.theme && R.THEMES[reg.theme]) E.theme = reg.theme;
+      }
+      for (const m of moisDocs) {
+        Object.assign(E.pl.jours, m.jours || {});
+        Object.assign(E.pl.edition, m.edition || {});
+      }
+      // copie modifiable (les données lues peuvent être figées)
+      E.pl.jours = JSON.parse(JSON.stringify(E.pl.jours));
+      E.pl.importes = JSON.parse(JSON.stringify(E.pl.importes));
+      E.pl.greves = [...E.pl.greves];
+      M.reglerCodes(E.codesTxt);
+    } catch (e) {
+      toast("Le planning enregistré n'a pas pu être lu : " + (e && e.message || e));
+    }
+    rendre();
+    etatStockage();
+  }
+  // Application Android : bouton Retour, PDF ouvert depuis une autre appli (mail, fichiers…)
+  window.__retourArriere = () => {
+    const v = $(".voile");
+    if (v) { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); return true; }
+    if (ongletActif !== "planning") { montrerOnglet("planning"); return true; }
+    return false;
+  };
+  window.__importerAndroid = async (nom, b64) => {
+    await pret;
+    const bin = atob(b64), octets = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) octets[i] = bin.charCodeAt(i);
+    montrerOnglet("commandes");
+    importer([new File([octets], nom || "bulletin.pdf", { type: "application/pdf" })]);
+  };
+  window.__sauverMaintenant = () => { Stock.vider(); };
+  const pret = demarrer();
+})();
+
+</script>
+</body></html>

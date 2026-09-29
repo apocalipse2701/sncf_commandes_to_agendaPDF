@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'fr.planning.commandes'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "fr.planning.commandes"
+        minSdk 24
+        targetSdk 34
+        // numéro de version = numéro de fabrication GitHub (chaque mise à jour s'installe par-dessus)
+        versionCode Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
+        versionName "1." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+    }
+
+    // Clé de signature fixe : les mises à jour s'installent sans effacer le planning.
+    signingConfigs {
+        release {
+            storeFile file('planning.keystore')
+            storePassword 'planning2026'
+            keyAlias 'planning'
+            keyPassword 'planning2026'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
