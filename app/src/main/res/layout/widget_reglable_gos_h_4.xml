@@ -73,6 +73,12 @@
             android:textColor="@color/widget_gos_texte"
             android:textSize="14sp"
             android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/w_moitie0"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
         <TextView
             android:id="@+id/w_h0"
             android:layout_width="wrap_content"
@@ -115,6 +121,12 @@
             android:textColor="@color/widget_gos_texte"
             android:textSize="14sp"
             android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/w_moitie1"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
         <TextView
             android:id="@+id/w_h1"
             android:layout_width="wrap_content"
@@ -157,6 +169,12 @@
             android:textColor="@color/widget_gos_texte"
             android:textSize="14sp"
             android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/w_moitie2"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
         <TextView
             android:id="@+id/w_h2"
             android:layout_width="wrap_content"
@@ -199,6 +217,12 @@
             android:textColor="@color/widget_gos_texte"
             android:textSize="14sp"
             android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/w_moitie3"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
         <TextView
             android:id="@+id/w_h3"
             android:layout_width="wrap_content"
