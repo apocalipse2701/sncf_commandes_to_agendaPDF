@@ -30,9 +30,60 @@ import java.util.Locale;
 final class DessinCalendrier {
 
     // Géométrie en millièmes : identique aux poids de res/layout/widget_calendrier.xml (cases touchables).
-    static final float H_TITRE = 130f, H_ENTETE = 56f, H_LIGNE = 130f, H_BAS = 34f;   // 130 + 56 + 6 × 130 + 34 = 1000
+    // Mois : 6 lignes de 130 ; 15 jours : 3 lignes de 260 (widget_calendrier_15.xml).
+    static final float H_TITRE = 130f, H_ENTETE = 56f, H_GRILLE = 780f, H_BAS = 34f;  // 130 + 56 + 780 + 34 = 1000
     static final float MARGE = 25f, COL = 950f / 7f;                                    // 25 + 7 × COL + 25 = 1000
-    static final int NB_LIGNES = 6;
+    static final int NB_LIGNES = 6, LIGNES_15 = 3;
+    static final String[] MOIS_COURTS = {"janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
+            "oct.", "nov.", "déc."};
+
+    /** Ce que montre le widget : les cases (date ISO, ou null = vide), le nombre de lignes, le titre. */
+    static final class Periode {
+        final String[] cases;
+        final int lignes;
+        final String titreA, titreB;        // titreA dans la couleur du titre, titreB (année) dans celle de l'année
+        final boolean quinzaine;
+
+        Periode(String[] cases, int lignes, String titreA, String titreB, boolean quinzaine) {
+            this.cases = cases;
+            this.lignes = lignes;
+            this.titreA = titreA;
+            this.titreB = titreB;
+            this.quinzaine = quinzaine;
+        }
+
+        String description() {
+            return "Calendrier " + titreA + " " + titreB;
+        }
+    }
+
+    /** Le mois entier (6 semaines, cases hors du mois vides), comme la page du PDF. */
+    static Periode mois(int annee, int mois) {
+        return new Periode(cases(annee, mois), NB_LIGNES, MOIS[mois - 1], String.valueOf(annee), false);
+    }
+
+    /** 15 jours : 3 semaines complètes à partir du lundi « lundi ». */
+    static Periode quinzaine(Calendar lundi) {
+        String[] r = new String[7 * LIGNES_15];
+        Calendar d = (Calendar) lundi.clone();
+        Calendar debut = (Calendar) d.clone();
+        for (int k = 0; k < r.length; k++) {
+            r[k] = iso(d);
+            if (k < r.length - 1) d.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        boolean memeAnnee = debut.get(Calendar.YEAR) == d.get(Calendar.YEAR);
+        String a = debut.get(Calendar.DAY_OF_MONTH) + " " + MOIS_COURTS[debut.get(Calendar.MONTH)]
+                + (memeAnnee ? "" : " " + debut.get(Calendar.YEAR)) + " – "
+                + d.get(Calendar.DAY_OF_MONTH) + " " + MOIS_COURTS[d.get(Calendar.MONTH)];
+        return new Periode(r, LIGNES_15, a, String.valueOf(d.get(Calendar.YEAR)), true);
+    }
+
+    /** Lundi de la semaine de « jour », décalé de « semaines » semaines. */
+    static Calendar lundi(Calendar jour, int semaines) {
+        Calendar d = new GregorianCalendar(jour.get(Calendar.YEAR), jour.get(Calendar.MONTH), jour.get(Calendar.DAY_OF_MONTH));
+        d.add(Calendar.DAY_OF_MONTH, -((d.get(Calendar.DAY_OF_WEEK) + 5) % 7) + 7 * semaines);
+        return d;
+    }
 
     static final String[] MOIS = {"Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août",
             "Septembre", "Octobre", "Novembre", "Décembre"};
@@ -44,6 +95,13 @@ final class DessinCalendrier {
             {"trait", "#555555"}, {"grille", "#bebebe"}, {"weekend", "#fce2e2"}, {"weekend_entete", "#f8d0d0"},
             {"entete_txt", "#555555"}, {"entete_txt_we", "#af4b4b"}, {"chiffre", "#505050"}, {"chiffre_we", "#af4b4b"},
             {"txt", "#232323"}, {"txt_doux", "#5f5f5f"}, {"txt_repos", "#969696"}, {"gros", "#8c5019"}};
+
+    /** Style GrapheneOS : toujours sombre, comme les autres widgets GrapheneOS (couleurs_widget_gos.xml) :
+     *  fond anthracite #212121, texte blanc cassé #FAFAFA, gris #A8A8A8, bleu éclairci #7FB2EE, rouge doux #F2B8B5. */
+    private static final String[][] GOS = {{"fond", "#212121"}, {"titre", "#7fb2ee"}, {"annee", "#fafafa"},
+            {"trait", "#5a5a5a"}, {"grille", "#3c3c3c"}, {"weekend", "#2b2b2b"}, {"weekend_entete", "#333333"},
+            {"hors_mois", "#1a1a1a"}, {"entete_txt", "#a8a8a8"}, {"entete_txt_we", "#f2b8b5"}, {"chiffre", "#a8a8a8"},
+            {"chiffre_we", "#f2b8b5"}, {"txt", "#fafafa"}, {"txt_doux", "#a8a8a8"}, {"txt_repos", "#8a8a8a"}, {"gros", "#fafafa"}};
 
     private final Canvas cv;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -75,9 +133,17 @@ final class DessinCalendrier {
     }
 
     static JSONObject paletteDefaut() {
+        return palette(BASE);
+    }
+
+    static JSONObject paletteGos() {
+        return palette(GOS);
+    }
+
+    private static JSONObject palette(String[][] valeurs) {
         JSONObject o = new JSONObject();
         try {
-            for (String[] kv : BASE) o.put(kv[0], kv[1]);
+            for (String[] kv : valeurs) o.put(kv[0], kv[1]);
         } catch (org.json.JSONException e) {
             // impossible
         }
@@ -193,15 +259,35 @@ final class DessinCalendrier {
      * @param cal        {"t": palette du thème, "c": palette Classique, "j": {date: case}} ou null
      * @param aujourdhui date ISO du jour (encadrée)
      * @param message    texte d'alerte en rouge à côté du titre, ou null
+     * @param gos        style GrapheneOS (toujours sombre) au lieu du thème du planning
      */
-    static Bitmap dessiner(int W, int H, float dp, int annee, int mois, JSONObject cal, String aujourdhui, String message) {
+    static Bitmap dessiner(int W, int H, float dp, Periode v, JSONObject cal, String aujourdhui, String message,
+                           boolean gos) {
         Bitmap bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
-        new DessinCalendrier(new Canvas(bmp), dp).page(W, H, dp, annee, mois, cal, aujourdhui, message);
+        new DessinCalendrier(new Canvas(bmp), dp).page(W, H, dp, v, cal, aujourdhui, message, gos);
         return bmp;
     }
 
-    private void page(int W, int H, float dp, int annee, int mois, JSONObject cal, String aujourdhui, String message) {
-        JSONObject P = cal == null ? null : cal.optJSONObject("t");
+    static Bitmap dessiner(int W, int H, float dp, int annee, int mois, JSONObject cal, String aujourdhui, String message,
+                           boolean gos) {
+        return dessiner(W, H, dp, mois(annee, mois), cal, aujourdhui, message, gos);
+    }
+
+    static Bitmap dessiner(int W, int H, float dp, int annee, int mois, JSONObject cal, String aujourdhui, String message) {
+        return dessiner(W, H, dp, annee, mois, cal, aujourdhui, message, false);
+    }
+
+    /** Couleur des flèches ‹ › (= couleur du titre). */
+    static int couleurTitre(JSONObject cal, boolean gos) {
+        JSONObject P = gos ? paletteGos() : cal == null ? null : cal.optJSONObject("t");
+        Integer c = couleur(P == null ? paletteDefaut() : P, "titre");
+        return c == null ? 0xFF5A5A5A : c;
+    }
+
+    private void page(int W, int H, float dp, Periode v, JSONObject cal, String aujourdhui, String message,
+                      boolean gos) {
+        final int NB = v.lignes;
+        JSONObject P = gos ? paletteGos() : cal == null ? null : cal.optJSONObject("t");
         if (P == null) P = paletteDefaut();
         JSONObject cl = cal == null ? null : cal.optJSONObject("c");
         if (cl == null) cl = paletteDefaut();
@@ -215,17 +301,18 @@ final class DessinCalendrier {
         // fond arrondi (les lanceurs récents arrondissent aussi les widgets)
         p.setColor(fond);
         p.setStyle(Paint.Style.FILL);
-        cv.drawRoundRect(new RectF(0, 0, W, H), 16 * dp, 16 * dp, p);
+        float rayon = (gos ? 14 : 16) * dp;                 // GrapheneOS : angles un peu plus nets (comme widget_gos_fond)
+        cv.drawRoundRect(new RectF(0, 0, W, H), rayon, rayon, p);
 
         float x0 = W * MARGE / 1000f, x1 = W - x0, col = W * COL / 1000f;
         float yTrait = H * H_TITRE / 1000f, yGrille = yTrait + H * H_ENTETE / 1000f;
-        float lig = H * H_LIGNE / 1000f, yFin = yGrille + NB_LIGNES * lig;
+        float lig = H * H_GRILLE / NB / 1000f, yFin = yGrille + NB * lig;
         float hEntete = yGrille - yTrait;
         // unité de taille des textes : celle de la page A4 qui aurait des cases de cette taille
         float u = Math.min(col / 0.13429f, lig / 0.0965f);
         float finT = Math.max(1f, 0.5f * dp), ep = Math.max(1.5f, 1.1f * dp);
 
-        String[] cases = cases(annee, mois);
+        String[] cases = v.cases;
 
         if (entete != null) rect(x0, yTrait, x1, yGrille, entete);
         for (int c = 5; c <= 6; c++) {
@@ -244,7 +331,7 @@ final class DessinCalendrier {
             if (f == null && c < 5 && j != null && !j.optString("fe", "").isEmpty()) f = weekend;  // férié
             if (f != null) rect(bx0, by0, bx1, by1, f);
         }
-        for (int r = 1; r < NB_LIGNES; r++) ligne(x0, yGrille + r * lig, x1, yGrille + r * lig, grille, finT);
+        for (int r = 1; r < NB; r++) ligne(x0, yGrille + r * lig, x1, yGrille + r * lig, grille, finT);
         for (int c = 1; c < 7; c++) ligne(x0 + c * col, yGrille, x0 + c * col, yFin, grille, finT);
         for (float y : new float[]{yTrait, yGrille, yFin}) ligne(x0, y, x1, y, trait, ep);
 
@@ -267,10 +354,10 @@ final class DessinCalendrier {
             String m = message;
             if (larg(m, sansGras, tm) > limite * 0.5f) m = "⚠ Ouvrez l'appli";
             while (larg(m, sansGras, tm) > limite * 0.5f && reel(tm * 0.95f) < reel(tm)) tm *= 0.95f;
-            texte(m, limite, yTitre, sansGras, tm, Color.rgb(176, 40, 40), "rs");
+            texte(m, limite, yTitre, sansGras, tm, gos ? Color.rgb(242, 184, 181) : Color.rgb(176, 40, 40), "rs");
             limite -= larg(m, sansGras, tm) + 8 * dp;
         }
-        String nomMois = MOIS[mois - 1];
+        String nomMois = v.titreA, annee = v.titreB;
         float tTitre = Math.min(yTrait * 0.58f, 30 * dp);
         while (larg(nomMois + " " + annee, serif, tTitre) > limite - x0 && tTitre > minPx) tTitre *= 0.95f;
         texte(nomMois, x0, yTitre, serif, tTitre, titre, "ls");
@@ -309,7 +396,10 @@ final class DessinCalendrier {
                 cNum = we ? val(q, "chiffre_we", noir) : val(q, "chiffre", noir);
             }
             float base = cy0 + pad + ascNum;
-            String numTxt = String.valueOf(Integer.parseInt(cases[k].substring(8)));
+            int numero = Integer.parseInt(cases[k].substring(8));
+            String numTxt = String.valueOf(numero);
+            if (v.quinzaine && (numero == 1 || k == 0))       // 15 jours : le mois au 1er et sur la 1re case
+                numTxt += " " + MOIS_COURTS[Integer.parseInt(cases[k].substring(5, 7)) - 1];
             texte(numTxt, cx0 + pad, base, serif, tNum, cNum, "ls");
             float largFerie = 0;
             if (!ferie.isEmpty()) {                                    // nom du férié, en haut à droite

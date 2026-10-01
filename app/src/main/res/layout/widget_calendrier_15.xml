@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget « Calendrier » (style du PDF). Fichier produit par un générateur : les poids (millièmes) doivent
+<!-- Widget « Calendrier », durée 15 jours (3 semaines). Fichier produit par un générateur : les poids (millièmes) doivent
      rester ceux de DessinCalendrier (H_TITRE 130, H_ENTETE 56, H_GRILLE 780 = 6 lignes de 130 (mois) ou 3 lignes de 260 (15 jours, widget_calendrier_15.xml), H_BAS 34 ; MARGE 25, COL 950/7)
      pour que les cases touchables tombent sur les cases dessinées. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -60,7 +60,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="130"
+            android:layout_weight="260"
             android:orientation="horizontal">
             <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
             <FrameLayout android:id="@+id/w_c0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
@@ -75,7 +75,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="130"
+            android:layout_weight="260"
             android:orientation="horizontal">
             <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
             <FrameLayout android:id="@+id/w_c7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
@@ -90,7 +90,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="130"
+            android:layout_weight="260"
             android:orientation="horizontal">
             <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
             <FrameLayout android:id="@+id/w_c14" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
@@ -100,51 +100,6 @@
             <FrameLayout android:id="@+id/w_c18" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
             <FrameLayout android:id="@+id/w_c19" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
             <FrameLayout android:id="@+id/w_c20" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="130"
-            android:orientation="horizontal">
-            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
-            <FrameLayout android:id="@+id/w_c21" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c22" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c23" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c24" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c25" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c26" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c27" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="130"
-            android:orientation="horizontal">
-            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
-            <FrameLayout android:id="@+id/w_c28" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c29" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c30" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c31" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c32" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c33" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c34" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="130"
-            android:orientation="horizontal">
-            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
-            <FrameLayout android:id="@+id/w_c35" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c36" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c37" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c38" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c39" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c40" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
-            <FrameLayout android:id="@+id/w_c41" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="135.7143" />
             <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="25" />
         </LinearLayout>
 

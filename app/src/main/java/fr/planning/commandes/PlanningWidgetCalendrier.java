@@ -22,7 +22,10 @@ import java.util.Calendar;
  *   - ‹ › : mois précédent / suivant (du mois précédent à deux mois plus loin, les jours envoyés par l'appli).
  *     Retour au mois en cours chaque nuit (WidgetBase.nouveauJour).
  *   - Le jour J est encadré.
- * Aucun réglage à la pose : le thème est celui du planning.
+ * Réglé à la pose (WidgetReglages, aussi par appui long → Réglages) :
+ *   - style d'origine = thème du planning choisi dans l'application (comme le PDF), ou GrapheneOS (toujours sombre) ;
+ *   - durée : le mois entier (6 lignes), ou 15 jours = 3 semaines à partir de la semaine en cours
+ *     (widget_calendrier_15.xml, cases deux fois plus hautes ; ‹ › avancent de 2 semaines).
  */
 public class PlanningWidgetCalendrier extends WidgetBase {
 
@@ -99,18 +102,30 @@ public class PlanningWidgetCalendrier extends WidgetBase {
         return new int[]{largeur > 0 ? largeur : 320, hauteur > 0 ? hauteur : 300};
     }
 
+    /** Réglage « durée » : 15 jours (sinon le mois entier). */
+    static boolean quinzaine(Context contexte, int id) {
+        return prefs(contexte).getInt(WidgetReglages.DUREE + id, 0) == 15;
+    }
+
+    /** Période affichée : mois en cours + dec mois, ou 3 semaines à partir de la semaine en cours + 2 × dec semaines. */
+    static DessinCalendrier.Periode periode(Calendar auj, int dec, boolean quinzaine) {
+        if (quinzaine) return DessinCalendrier.quinzaine(DessinCalendrier.lundi(auj, 2 * dec));
+        Calendar m = (Calendar) auj.clone();
+        m.set(Calendar.DAY_OF_MONTH, 1);
+        m.add(Calendar.MONTH, dec);
+        return DessinCalendrier.mois(m.get(Calendar.YEAR), m.get(Calendar.MONTH) + 1);
+    }
+
     @Override
     RemoteViews construire(Context contexte, int idWidget) {
-        RemoteViews vue = new RemoteViews(contexte.getPackageName(), R.layout.widget_calendrier);
+        boolean q = quinzaine(contexte, idWidget);
+        RemoteViews vue = new RemoteViews(contexte.getPackageName(), q ? R.layout.widget_calendrier_15 : R.layout.widget_calendrier);
         JSONObject donnees = donnees(contexte);
         JSONObject cal = donnees == null ? null : donnees.optJSONObject("cal");
 
         int dec = decalage(contexte, idWidget);
         Calendar auj = Calendar.getInstance();
-        Calendar m = (Calendar) auj.clone();
-        m.set(Calendar.DAY_OF_MONTH, 1);
-        m.add(Calendar.MONTH, dec);
-        int annee = m.get(Calendar.YEAR), mois = m.get(Calendar.MONTH) + 1;
+        DessinCalendrier.Periode v = periode(auj, dec, q);
 
         String message;
         if (cal == null) message = "Ouvrez l'application";
@@ -121,24 +136,25 @@ public class PlanningWidgetCalendrier extends WidgetBase {
         float echelle = (float) Math.min(densite, Math.sqrt(PIXELS_MAX / ((double) t[0] * t[1])));
         echelle = Math.max(1f, echelle);
         int W = Math.round(t[0] * echelle), H = Math.round(t[1] * echelle);
-        Bitmap image = DessinCalendrier.dessiner(W, H, echelle, annee, mois, cal, DessinCalendrier.iso(auj), message);
+        boolean gos = prefs(contexte).getInt(WidgetReglages.STYLE + idWidget, WidgetReglages.STYLE_ORIGINE)
+                == WidgetReglages.STYLE_GOS;
+        Bitmap image = DessinCalendrier.dessiner(W, H, echelle, v, cal, DessinCalendrier.iso(auj), message, gos);
         vue.setImageViewBitmap(R.id.w_image, image);
 
-        String[] cases = DessinCalendrier.cases(annee, mois);
-        for (int k = 0; k < CASES.length; k++) {
+        String[] cases = v.cases;
+        for (int k = 0; k < cases.length; k++) {
             if (cases[k] != null) vue.setOnClickPendingIntent(CASES[k], ouvrirJour(contexte, cases[k]));
         }
         vue.setOnClickPendingIntent(R.id.w_titre_zone, ouvrirAppli(contexte));
 
-        Integer coul = DessinCalendrier.couleur(cal == null ? null : cal.optJSONObject("t"), "titre");
-        int fleches = coul == null ? 0xFF5A5A5A : coul;
+        int fleches = DessinCalendrier.couleurTitre(cal, gos);
         vue.setTextColor(R.id.w_prec, fleches);
         vue.setTextColor(R.id.w_suiv, fleches);
         vue.setViewVisibility(R.id.w_prec, dec > MOIS_MIN ? View.VISIBLE : View.INVISIBLE);
         vue.setViewVisibility(R.id.w_suiv, dec < MOIS_MAX ? View.VISIBLE : View.INVISIBLE);
         vue.setOnClickPendingIntent(R.id.w_prec, changerMois(contexte, idWidget, -1));
         vue.setOnClickPendingIntent(R.id.w_suiv, changerMois(contexte, idWidget, 1));
-        vue.setContentDescription(R.id.w_image, "Calendrier " + DessinCalendrier.MOIS[mois - 1] + " " + annee);
+        vue.setContentDescription(R.id.w_image, v.description());
         return vue;
     }
 }

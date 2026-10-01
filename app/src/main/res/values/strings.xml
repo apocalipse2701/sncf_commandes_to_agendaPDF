@@ -16,8 +16,8 @@
     <string name="widget_reglable_description">7 ou 14 jours, avec ou sans horaires, style d\'origine ou GrapheneOS : réglé à la pose, s\'adapte à la taille.</string>
     <string name="widget_prochain_nom">Prochain service</string>
     <string name="widget_prochain_description">Le service en cours ou le prochain, avec ses horaires.</string>
-    <string name="widget_calendrier_nom">Calendrier du mois</string>
-    <string name="widget_calendrier_description">Le mois en grille, comme la page du PDF, aux couleurs du thème du planning. ‹ › pour changer de mois.</string>
+    <string name="widget_calendrier_nom">Calendrier</string>
+    <string name="widget_calendrier_description">Le mois ou 15 jours en grille, comme la page du PDF, au thème du planning ou aux couleurs de GrapheneOS.</string>
     <string name="mois_precedent">Mois précédent</string>
     <string name="mois_suivant">Mois suivant</string>
     <string name="reglages_widget_titre">Réglages du widget</string>

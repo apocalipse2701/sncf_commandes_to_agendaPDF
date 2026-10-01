@@ -12,4 +12,6 @@
     android:initialLayout="@layout/widget_calendrier"
     android:previewImage="@drawable/widget_apercu_calendrier"
     android:description="@string/widget_calendrier_description"
-    android:widgetCategory="home_screen" />
+    android:configure="fr.planning.commandes.WidgetReglages"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable" />

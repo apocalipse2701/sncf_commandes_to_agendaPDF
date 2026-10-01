@@ -19,9 +19,10 @@ import android.widget.TextView;
 
 /**
  * Écran de réglage d'un widget, ouvert à la pose (et par appui long → « Réglages » sur Android 12+) :
- *   - Style : d'origine (suit le thème du téléphone) ou GrapheneOS (toujours sombre) ;
+ *   - Style : d'origine (suit le thème du téléphone ; pour le calendrier, le thème du planning) ou GrapheneOS (toujours sombre) ;
  *   - Horaires : automatique (selon la largeur), toujours, jamais    } widget « Planning »
  *   - Durée : 7 jours ou 14 jours (2 pages)                           } seulement
+ *   Calendrier : style + durée (le mois entier ou 15 jours = 3 semaines).
  * Les choix sont gardés dans les préférences « widget » (clés + numéro du widget).
  */
 public class WidgetReglages extends Activity {
@@ -44,28 +45,41 @@ public class WidgetReglages extends Activity {
             return;
         }
         AppWidgetProviderInfo info = AppWidgetManager.getInstance(this).getAppWidgetInfo(id);
-        final boolean planning = info == null || info.provider == null
-                || !info.provider.getClassName().endsWith("PlanningWidgetProchain");
+        String classe = info == null || info.provider == null ? "" : info.provider.getClassName();
+        final boolean calendrier = classe.endsWith("PlanningWidgetCalendrier");
+        final boolean planning = !calendrier && !classe.endsWith("PlanningWidgetProchain");
         SharedPreferences p = WidgetBase.prefs(this);
 
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         int m = dp(20);
         col.setPadding(m, m, m, m);
-        titre(col, planning ? "Widget « Planning »" : "Widget « Prochain service »", 20);
+        titre(col, calendrier ? "Widget « Calendrier du mois »" : planning ? "Widget « Planning »" : "Widget « Prochain service »", 20);
 
         final RadioGroup style = groupe(col, "Style",
-                new String[]{"D'origine (suit le thème clair ou sombre du téléphone)", "GrapheneOS (toujours sombre)"},
+                calendrier ? new String[]{"D'origine : comme le PDF, au thème du planning choisi dans l'application",
+                        "GrapheneOS (toujours sombre)"}
+                        : new String[]{"D'origine (suit le thème clair ou sombre du téléphone)", "GrapheneOS (toujours sombre)"},
                 p.getInt(STYLE + id, STYLE_ORIGINE));
         final RadioGroup heures = planning ? groupe(col, "Horaires",
                 new String[]{"Automatique : affichés si le widget est assez large", "Toujours", "Jamais"},
                 p.getInt(HEURES + id, HEURES_AUTO)) : null;
         final RadioGroup duree = planning ? groupe(col, "Durée",
                 new String[]{"7 jours", "14 jours (2 pages, bouton « Suite »)"},
-                p.getInt(DUREE + id, 7) == 14 ? 1 : 0) : null;
+                p.getInt(DUREE + id, 7) == 14 ? 1 : 0)
+                : calendrier ? groupe(col, "Durée",
+                new String[]{"Le mois entier", "15 jours : les 3 semaines à partir de cette semaine (cases plus grandes)"},
+                p.getInt(DUREE + id, 0) == 15 ? 1 : 0) : null;
         if (planning) {
             TextView aide = new TextView(this);
             aide.setText("Si le widget est peu haut, il affiche 4 jours par page. Toucher un jour l'ouvre dans l'application.");
+            aide.setAlpha(0.7f);
+            aide.setPadding(0, dp(12), 0, 0);
+            col.addView(aide);
+        }
+        if (calendrier) {
+            TextView aide = new TextView(this);
+            aide.setText("‹ › changent de mois (de 2 semaines en « 15 jours »). Toucher un jour l'ouvre dans l'application.");
             aide.setAlpha(0.7f);
             aide.setPadding(0, dp(12), 0, 0);
             col.addView(aide);
@@ -81,7 +95,7 @@ public class WidgetReglages extends Activity {
             SharedPreferences.Editor ed = WidgetBase.prefs(this).edit();
             ed.putInt(STYLE + id, indice(style));
             if (heures != null) ed.putInt(HEURES + id, indice(heures));
-            if (duree != null) ed.putInt(DUREE + id, indice(duree) == 1 ? 14 : 7);
+            if (duree != null) ed.putInt(DUREE + id, calendrier ? (indice(duree) == 1 ? 15 : 0) : indice(duree) == 1 ? 14 : 7);
             ed.remove("p_" + id);
             ed.apply();
             WidgetBase.majTous(this);

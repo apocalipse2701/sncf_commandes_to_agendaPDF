@@ -51,9 +51,13 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 
 *« Planning » (style d'origine ou GrapheneOS, 7 ou 14 jours) et « Prochain service » (aperçus dessinés).*
 
-<img src="docs/captures/widget-calendrier.png" alt="Widget Calendrier du mois, en thèmes Classique, Bleu moderne et Sombre" width="820">
+<img src="docs/captures/widget-calendrier.png" alt="Widget Calendrier : thèmes Classique et Bleu moderne, style GrapheneOS" width="820">
 
-*« Calendrier du mois » : la page du PDF sur l'écran d'accueil, au thème du planning (ici Classique, Bleu moderne, Sombre).*
+*« Calendrier » : la page du PDF sur l'écran d'accueil. Style d'origine = thème du planning (ici Classique et Bleu moderne), ou style GrapheneOS (à droite).*
+
+<img src="docs/captures/widget-calendrier-15.png" alt="Widget Calendrier sur 15 jours, styles d'origine et GrapheneOS" width="820">
+
+*Le même widget réglé sur **15 jours** : 3 semaines à partir de la semaine en cours, cases plus grandes.*
 
 ---
 
@@ -78,7 +82,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 **Au quotidien sur Android**
 - **Apparence GrapheneOS** (Réglages) : toute l'application aux couleurs de GrapheneOS (anthracite, blanc cassé, bleu, toujours en sombre), barres du téléphone comprises. Sinon, elle suit le thème clair ou sombre du téléphone.
 - **Widget « Planning »** : une ligne par jour, le service en couleur ; réglé à la pose (style d'origine ou **GrapheneOS**, horaires, **7 ou 14 jours**), il s'adapte à sa taille. Toucher un jour l'ouvre dans l'application.
-- **Widget « Calendrier du mois »** : la grille du PDF sur l'écran d'accueil, au thème du planning, jour J encadré, **‹ ›** pour changer de mois.
+- **Widget « Calendrier »** : la grille du PDF sur l'écran d'accueil, **le mois ou 15 jours**, au thème du planning ou en style **GrapheneOS** (réglé à la pose), jour J encadré, **‹ ›** pour changer de période.
 - **Widget « Prochain service »** (2 × 1) : « Demain · 04:40–12:40 » et le service en couleur ; une nuit reste « En cours » jusqu'au matin.
 - Les widgets changent de jour tout seuls, même téléphone en veille ou après un redémarrage.
 
