@@ -1,103 +1,137 @@
 # Planning Commandes
 
-Application Android personnelle qui transforme les **bulletins de commande (PDF)** en **planning mensuel** et produit un **PDF A4** du planning.
+**Vos bulletins de commande deviennent un planning clair, en couleurs, sur le téléphone et sur le PC.**
 
-L'application est indépendante : elle ne demande pas de compte, marche **sans Internet** (Internet ne sert qu'à vérifier s'il existe une nouvelle version), et le planning reste **dans le téléphone**.
+Chaque semaine arrive un nouveau *bulletin de commande* en PDF : un long tableau de codes (GIV001, RP, ZREVIN…) et d'horaires (« AUTO 03:50 – 04:40 / PS 04:40 / FS 12:40… »), difficile à lire d'un coup d'œil. Planning Commandes lit ces PDF et en fait **un calendrier du mois** :
 
-C'est la version téléphone et tablette du programme PC *Planning PDF* : les deux lisent les bulletins de la même façon, et un PDF créé sur le téléphone se rouvre dans le programme PC.
+- chaque jour affiche **le service sous un nom parlant** (M-GIV, S-GIV, DISPO Revin…), **dans sa couleur**, avec les **heures de prise et de fin de service** ;
+- ajoutez les bulletins au fil des semaines : pour chaque jour, **le plus récent l'emporte**, et l'application liste **ce qui a changé** (« Mer 21/10 : S-GIV → RP ») ;
+- le mois se lit d'un regard : **repos en gros**, nuits et **lendemains de nuit (DN)**, **jours fériés**, **grèves** en filigrane, et un récapitulatif (**heures de service, nuits, dimanches et fériés travaillés, repos**).
+
+Il existe en deux versions qui lisent les bulletins exactement de la même façon :
+
+| | 📱 Application Android | 💻 Programme PC (Windows) |
+|---|---|---|
+| Fichier | `PlanningCommandes.apk` | `PlanningPDF.exe` |
+| En plus | widgets pour l'écran d'accueil, « Partager » un bulletin depuis un mail | dossier `commande` lu automatiquement, sauvegardes automatiques |
+| Données | dans le téléphone | sur le PC |
+
+Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un PDF créé par une version se rouvre dans l'autre.
+
+> Les captures ci-dessous montrent un **planning fictif** (« Agent Exemple »).
+
+---
+
+## 📸 Aperçu
+
+### Sur le téléphone
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/captures/telephone-planning.png" width="210" alt="Planning du mois sur le téléphone"><br><sub>Le mois en un coup d'œil</sub></td>
+    <td align="center"><img src="docs/captures/telephone-detail.png" width="210" alt="Détail d'un jour"><br><sub>Détail d'un jour, notes</sub></td>
+    <td align="center"><img src="docs/captures/telephone-page-a4.png" width="210" alt="Vue page A4"><br><sub>Vue « page A4 » (= le PDF)</sub></td>
+    <td align="center"><img src="docs/captures/telephone-sombre.png" width="210" alt="Thème sombre"><br><sub>Thème sombre du téléphone</sub></td>
+  </tr>
+</table>
+
+### Sur le PC
+
+<img src="docs/captures/pc-planning.png" alt="Planning du mois dessiné par le programme PC" width="820">
+
+*Le planning tel que le programme PC le dessine : c'est la même image à l'écran, dans le PDF et à l'impression (une page A4 paysage par mois).*
+
+### 7 thèmes, à l'écran comme dans le PDF
+
+<img src="docs/captures/themes.png" alt="Les 7 thèmes du planning" width="820">
+
+### Widgets de l'écran d'accueil
+
+<img src="docs/captures/widgets.png" alt="Aperçu des widgets" width="820">
+
+*« Planning » (style d'origine ou GrapheneOS, 7 ou 14 jours) et « Prochain service » (aperçus dessinés).*
+
+---
+
+## ✨ Ce que fait l'application
+
+**Lire les commandes**
+- Import d'un ou plusieurs bulletins PDF (Android : bouton **Ajouter une commande**, ou **Partager / Ouvrir avec** depuis un mail ; PC : déposer les PDF dans le dossier `commande`).
+- Fusion intelligente : le bulletin le plus récent l'emporte jour par jour ; les notes ajoutées à la main sont conservées.
+- Liste des jours modifiés par une nouvelle commande.
+
+**Lire le planning**
+- Grille compacte ou page A4, mois précédent / suivant d'un glissement de doigt.
+- Codes renommés et colorés à votre goût (éditeur **Codes et couleurs**), repos en gros, « DN » ajouté automatiquement après une série de nuits.
+- Jours fériés (Pâques, Ascension, Pentecôte calculés), jours de grève, notes personnelles.
+- Récapitulatif du mois : heures de service, nuits, dimanches et fériés travaillés, repos.
+
+**Garder, partager, imprimer**
+- **PDF** du planning (A4 paysage, un mois par page) à enregistrer ou **imprimer**.
+- **Export vers l'agenda** (.ics) : un rendez-vous par service dans Google Agenda, Outlook ou l'agenda du téléphone.
+- **Échange PC ↔ téléphone** et copies de sauvegarde.
+
+**Au quotidien sur Android**
+- **Widget « Planning »** : une ligne par jour, le service en couleur ; réglé à la pose (style d'origine ou **GrapheneOS**, horaires, **7 ou 14 jours**), il s'adapte à sa taille. Toucher un jour l'ouvre dans l'application.
+- **Widget « Prochain service »** (2 × 1) : « Demain · 04:40–12:40 » et le service en couleur ; une nuit reste « En cours » jusqu'au matin.
+- Les widgets changent de jour tout seuls, même téléphone en veille ou après un redémarrage.
+
+**Toujours à jour**
+- Une fois par jour, l'application et l'exe regardent la page **Releases** de ce dépôt. S'il y a une nouvelle version, ils proposent de **la télécharger et l'installer** sans passer par le navigateur. Le planning est conservé.
 
 ---
 
 ## 📲 Installer sur le téléphone
 
-1. Sur le téléphone, ouvrez la page **[Releases → dernière version](../../releases/latest)**.
-2. Touchez **`PlanningCommandes.apk`** pour le télécharger.
-3. Ouvrez le fichier téléchargé. Autorisez l'installation depuis cette source si Android le demande, puis touchez **Installer**.
-4. Si Play Protect signale une « appli inconnue » (normal pour une appli hors Play Store) : **Plus de détails → Installer quand même**.
+1. Sur le téléphone, ouvrez **[Releases → dernière version](../../releases/latest)**.
+2. Touchez **`PlanningCommandes.apk`**, puis ouvrez le fichier téléchargé.
+3. Autorisez l'installation depuis cette source si Android le demande, puis **Installer**.
+4. Si Play Protect signale une « appli inconnue » (normal hors Play Store) : **Plus de détails → Installer quand même**.
 
-Configuration requise : Android 7.0 ou plus récent.
+Android 7.0 ou plus récent. Les versions suivantes se proposent toutes seules (bandeau **Installer**, ou **Réglages → Mise à jour de l'application**).
 
----
+## 💻 Installer sur le PC
 
-## 💻 Programme PC (Windows)
+1. Ouvrez **[Releases → exe](../../releases/tag/exe)** et téléchargez **`PlanningPDF.exe`**.
+2. Placez-le dans un dossier à vous (par exemple `Documents\PlanningPDF`) et double-cliquez dessus. Si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires → Exécuter quand même**.
 
-Le même dépôt fabrique aussi le programme PC **`PlanningPDF.exe`** (dossier `pc/`).
-
-1. Ouvrez la page **[Releases → exe](../../releases/tag/exe)** et téléchargez **`PlanningPDF.exe`**.
-2. Remplacez l'ancien `PlanningPDF.exe` dans votre dossier PlanningPDF (à côté de `codes.txt` et du dossier `commande`). Vos réglages et votre planning sont conservés.
+Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une mise à jour…**) : l'exe se remplace à la fermeture et se relance.
 
 ---
 
-## ✨ Fonctions
+## 💾 Vos données
 
-| Onglet | Ce qu'il fait |
-|---|---|
-| **Planning** | Mois en grille compacte ou en page A4. Couleurs et noms des codes, heures de prise et de fin de service, « DN » automatique le lendemain d'une série de nuits, filigrane GRÈVE, **jours fériés**. Récapitulatif du mois : **heures de service, nuits, dimanches et fériés travaillés, repos**. Toucher un jour pour son détail (notes, jour de grève, suppression d'une ligne). |
-| **Commandes** | Import d'un ou plusieurs bulletins PDF. Pour chaque jour, le bulletin le plus récent l'emporte ; les notes ajoutées à la main sont conservées. **Liste des jours modifiés** par une nouvelle commande (ex. « Lun 09/03 : DISPO 08:00–16:45 → RP »). |
-| **Réglages** | **mise à jour de l'application** (recherche et installation de la nouvelle version), 7 thèmes, éditeur des codes et couleurs, **export vers l'agenda** (.ics : agenda du téléphone, Google Agenda), copie de sauvegarde et **échange avec le PC**, rappel de sauvegarde, remise à zéro protégée. |
-
-Autres possibilités :
-
-- **Mise à jour automatique** : une fois par jour, l'application (et `PlanningPDF.exe`) regarde la page « Releases » de ce dépôt. S'il y a une nouvelle version, un bandeau propose **Installer** : elle est téléchargée et installée sans passer par le navigateur (Android demande de confirmer ; la 1re fois, autoriser « Planning Commandes » à installer des applications). Le planning est conservé. Aussi dans **Réglages → Mise à jour de l'application** et, sur le PC, **Aide → Rechercher une mise à jour…** (l'exe se remplace à la fermeture et se relance).
-- **Widgets** pour l'écran d'accueil :
-  - **Planning** : une ligne par jour, le service en couleur. Réglé à la pose : style d'origine ou **GrapheneOS** (toujours sombre), horaires (automatique selon la largeur / toujours / jamais), **7 ou 14 jours**. Il s'adapte à sa taille (4 jours par page s'il est peu haut, bouton **Suite ▶**). Appui long → **Réglages** pour le changer.
-  - **Prochain service** (2 × 1) : le service en cours ou le prochain (« Demain · 04:35–13:38 » + M-GIV en couleur).
-
-  Toucher un jour **l'ouvre dans l'application**. Les widgets passent au jour suivant tout seuls (même après un redémarrage ou un changement d'heure) et préviennent si les données ont plus de 3 semaines (« ⚠ Données du … : ouvrez l'appli »). Appui long sur l'écran d'accueil → **Widgets** → **Planning Commandes**.
-
-- **Bouton PDF** : enregistrer le PDF (une page A4 paysage par mois) ou **l'imprimer** directement.
-- **« Ouvrir avec » / « Partager »** un bulletin PDF depuis un mail ou l'appli Fichiers : il est importé directement.
-- **Échange avec le PC** : l'application reprend un `planning.json` ou un PDF créé par le programme PC, et ses PDF contiennent les données du planning.
-
----
-
-## 🔄 Mettre à jour l'application
-
-1. Modifiez ou remplacez les fichiers du dépôt (**Add file → Upload files**), puis **Commit changes**.
-2. L'onglet **Actions** fabrique automatiquement un nouvel APK (environ 5 minutes).
-3. Installez-le depuis la page [Releases](../../releases/latest), par-dessus l'ancienne version. **Le planning est conservé.**
-
-> ⚠️ Ne supprimez pas `app/planning.keystore` : c'est la clé de signature. Sans elle, une nouvelle version ne pourrait plus s'installer par-dessus l'ancienne.
-
----
-
-## 💾 Données et sauvegarde
-
-- Le planning est enregistré dans l'application, sur le téléphone. Rien n'est envoyé sur Internet : l'application lit seulement, une fois par jour, le numéro de la dernière version publiée dans ce dépôt.
-- **Désinstaller l'application efface le planning.** Faites de temps en temps **Réglages → Sauvegarde → Enregistrer une copie (.json)**, puis « Reprendre une copie… » pour la restaurer.
-- Ce dépôt ne contient que le code de l'application, aucune donnée personnelle.
+- Le planning reste **sur l'appareil** : rien n'est envoyé sur Internet. La seule connexion sert à lire, une fois par jour, le numéro de la dernière version publiée ici.
+- **Désinstaller l'application efface le planning** : faites de temps en temps **Réglages → Sauvegarde → Enregistrer une copie**, et « Reprendre une copie… » pour la restaurer. L'application vous le rappelle.
+- Ce dépôt ne contient que le code, aucune donnée personnelle.
 
 ---
 
 ## 🛠️ Fabrication (pour information)
 
-L'APK et l'exe sont fabriqués par GitHub Actions (`.github/workflows/apk.yml`) à chaque envoi de fichiers.
-L'exe Windows : Python 3.12 + PyInstaller à partir de `pc/planning_pdf.py` et `pc/regles.json`, publié dans la release `exe`.
-L'APK :
+À chaque envoi de fichiers, GitHub Actions (`.github/workflows/apk.yml`) fabrique et publie :
 
-- Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 24
-- le numéro de version suit le numéro de fabrication GitHub
-- l'APK signé est publié dans la release `apk`
+- **l'APK** (release `apk`) : Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 24 ; numéro de version = numéro de fabrication ; signé avec `app/planning.keystore` ;
+- **l'exe Windows** (release `exe`) : Python 3.12 + PyInstaller à partir de `pc/planning_pdf.py` et `pc/regles.json`.
 
-Pour une fabrication manuelle : `gradle assembleRelease`, puis récupérez `app/build/outputs/apk/release/app-release.apk`.
+Chaque release contient aussi `version.json`, lu par la mise à jour automatique.
 
-### Organisation du projet
+> ⚠️ Ne supprimez pas `app/planning.keystore` : sans cette clé, une nouvelle version ne pourrait plus s'installer par-dessus l'ancienne.
 
 ```
 app/
-├── build.gradle                      configuration Android, signature
+├── build.gradle                      configuration Android, signature, numéro de version
 ├── planning.keystore                 clé de signature (à conserver)
 └── src/main/
     ├── AndroidManifest.xml
-    ├── java/fr/planning/commandes/
-    │   └── MainActivity.java         fenêtre de l'appli, choix de fichiers, enregistrement, impression
-    ├── assets/
-    │   ├── index.html                l'application (lecture des bulletins, planning, réglages)
-    │   └── lib/                      pdf.js (lecture des PDF) et pdf-lib (création des PDF)
-    └── res/                          icône et thèmes clair / sombre
+    ├── java/fr/planning/commandes/   fenêtre de l'appli, widgets, mise à jour automatique
+    ├── assets/index.html             l'application (lecture des bulletins, planning, réglages)
+    ├── assets/lib/                   pdf.js (lecture des PDF) et pdf-lib (création des PDF)
+    └── res/                          icône, thèmes, widgets
 pc/
 ├── planning_pdf.py                   programme PC
-└── regles.json                       règles communes PC / mobile (codes de repos, thèmes, couleurs)
+└── regles.json                       règles communes PC / mobile (codes de repos, couleurs, thèmes)
+docs/captures/                        images de ce README
 ```
 
 Bibliothèques incluses : [pdf.js](https://github.com/mozilla/pdf.js) (Apache 2.0), [pdf-lib](https://github.com/Hopding/pdf-lib) (MIT), [AndroidX WebKit](https://developer.android.com/jetpack/androidx/releases/webkit) (Apache 2.0).
