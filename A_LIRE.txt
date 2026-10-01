@@ -48,11 +48,12 @@ Tout le contenu du dépôt est dans « depot-github.zip » (dossier PlanningPDF)
    - Play Protect « appli inconnue » : « Plus de détails » > « Installer quand même ».
    - Mise à jour : même adresse, installez par-dessus : le planning est conservé.
    - Widgets : appui long sur l'écran d'accueil > « Widgets » >
-     « Planning Commandes » > faites glisser celui de votre choix :
-       « Planning de la semaine »                 7 jours avec les horaires
-       « Planning de la semaine (sans horaires) » 7 jours, plus lisible
-       « Planning sur 15 jours »                  2 pages de 7 jours, bouton « Suite »
-     Les trois existent aussi aux couleurs de GrapheneOS (« … · GrapheneOS »).
+     « Planning Commandes » > faites glisser :
+       « Planning »          réglé à la pose : style (d'origine / GrapheneOS),
+                             horaires (auto / toujours / jamais), 7 ou 14 jours
+       « Prochain service »  mini-widget : le service en cours ou le prochain
+     Appui long sur un widget posé > « Réglages » pour le modifier.
+     Les anciens widgets déjà posés continuent de marcher.
 
 
 5. RÉCUPÉRER LE PROGRAMME PC

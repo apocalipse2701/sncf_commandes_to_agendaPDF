@@ -5,4 +5,8 @@
         <item name="android:statusBarColor">#FF1C4F8F</item>
         <item name="android:navigationBarColor">#FFFFFFFF</item>
     </style>
+    <style name="Theme.Reglages" parent="@android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
 </resources>

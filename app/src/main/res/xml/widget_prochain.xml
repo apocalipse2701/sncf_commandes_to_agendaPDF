@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mini-widget « Prochain service » (2 × 1) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_prochain"
+    android:previewImage="@drawable/widget_apercu_prochain"
+    android:description="@string/widget_prochain_description"
+    android:configure="fr.planning.commandes.WidgetReglages"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable" />

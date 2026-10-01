@@ -1679,8 +1679,9 @@ PGVRVSD    ; [date]
     if (!ANDROID || typeof window.Android.majWidget !== "function") return;
     const aff = M.pourAffichage(E.pl.jours), greves = new Set(E.pl.greves), jours = {};
     const hex = c => "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
+    const du = M.aujourdhui();                    // date d'envoi : le widget prévient si elle devient ancienne
     for (let k = -1; k <= 62; k++) {
-      const d = M.decaler(auj, k);
+      const d = M.decaler(du, k);
       const x = infosCase(d, aff);
       const principal = x.special || x.gros || x.services.find(sv => sv.code);
       const nom = principal ? M.nomAffiche(principal) : "";
@@ -1692,7 +1693,7 @@ PGVRVSD    ; [date]
       if (x.fond) { j.f = hex(x.fond); j.s = fonce(x.fond) ? 1 : 0; }
       jours[d] = j;
     }
-    const texte = JSON.stringify({ jours });
+    const texte = JSON.stringify({ du, jours });
     if (texte === dernierWidget) return;
     dernierWidget = texte;
     try { window.Android.majWidget(texte); } catch (e) { /* widget indisponible */ }
@@ -2046,6 +2047,18 @@ PGVRVSD    ; [date]
     importer([new File([octets], nom || "bulletin.pdf", { type: "application/pdf" })]);
   };
   window.__sauverMaintenant = () => { Stock.vider(); };
+  // Widget Android : un jour touché ouvre ce jour (onglet Planning, détail du jour)
+  window.__ouvrirJour = async d => {
+    await pret;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+    const v = $(".voile");
+    if (v) document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    allerA(d);
+    montrerOnglet("planning");
+    setTimeout(() => { const z = $("#detail"); if (z) z.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 80);
+  };
+  // retour dans l'application (elle a pu rester ouverte plusieurs jours) : le widget reçoit des données fraîches
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") envoyerWidget(); });
   const pret = demarrer();
 })();
 

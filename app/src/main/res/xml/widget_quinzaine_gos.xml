@@ -11,4 +11,5 @@
     android:initialLayout="@layout/widget_quinzaine_gos"
     android:previewImage="@drawable/widget_apercu_quinzaine_gos"
     android:description="@string/widget_quinzaine_gos_description"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="hide_from_picker" />

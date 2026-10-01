@@ -12,4 +12,9 @@
     <string name="widget_simple_gos_description">Les 7 jours, le service seulement, en plus gros, aux couleurs sombres de GrapheneOS.</string>
     <string name="widget_quinzaine_nom_gos">Planning sur 15 jours · GrapheneOS</string>
     <string name="widget_quinzaine_gos_description">Deux pages de 7 jours (bouton « Suite »), aux couleurs sombres de GrapheneOS.</string>
+    <string name="widget_reglable_nom">Planning</string>
+    <string name="widget_reglable_description">7 ou 14 jours, avec ou sans horaires, style d\'origine ou GrapheneOS : réglé à la pose, s\'adapte à la taille.</string>
+    <string name="widget_prochain_nom">Prochain service</string>
+    <string name="widget_prochain_description">Le service en cours ou le prochain, avec ses horaires.</string>
+    <string name="reglages_widget_titre">Réglages du widget</string>
 </resources>

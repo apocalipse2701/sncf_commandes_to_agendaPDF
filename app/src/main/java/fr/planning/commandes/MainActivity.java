@@ -181,10 +181,19 @@ public class MainActivity extends Activity {
         traiterIntent(intent);
     }
 
-    /** Bulletin PDF reçu d'une autre appli (« Ouvrir avec » ou « Partager »). */
+    /** Bulletin PDF reçu d'une autre appli (« Ouvrir avec » ou « Partager »), ou jour touché dans un widget. */
     @SuppressWarnings("deprecation")
     private void traiterIntent(Intent intent) {
         if (intent == null) return;
+        if (WidgetBase.ACTION_JOUR.equals(intent.getAction())) {
+            String jour = intent.getStringExtra(WidgetBase.EXTRA_JOUR);
+            if (jour != null && jour.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                final String js = "window.__ouvrirJour && window.__ouvrirJour('" + jour + "')";
+                if (pageChargee) web.evaluateJavascript(js, null);
+                else importEnAttente = js;
+            }
+            return;
+        }
         Uri u = null;
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             u = intent.getData();
@@ -256,7 +265,8 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void majWidget(final String json) {
             if (json == null || json.length() > 500000) return;
-            getSharedPreferences(WidgetBase.PREFS, MODE_PRIVATE).edit().putString(WidgetBase.CLE, json).apply();
+            getSharedPreferences(WidgetBase.PREFS, MODE_PRIVATE).edit().putString(WidgetBase.CLE, json)
+                    .putLong(WidgetBase.CLE_MAJ, System.currentTimeMillis()).apply();
             WidgetBase.majTous(MainActivity.this);
         }
 

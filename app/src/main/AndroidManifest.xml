@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- redessiner les widgets après un redémarrage du téléphone -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:label="Planning Commandes"
         android:icon="@mipmap/ic_launcher"
@@ -104,6 +107,55 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_quinzaine_gos" />
+        </receiver>
+        <!-- Widget « Planning » réglable (le seul proposé dans la liste, avec « Prochain service ») -->
+        <receiver
+            android:name=".PlanningWidgetReglable"
+            android:exported="true"
+            android:label="@string/widget_reglable_nom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_reglable" />
+        </receiver>
+
+        <!-- Mini-widget « Prochain service » -->
+        <receiver
+            android:name=".PlanningWidgetProchain"
+            android:exported="true"
+            android:label="@string/widget_prochain_nom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_prochain" />
+        </receiver>
+
+        <!-- Réglages d'un widget (à la pose, et appui long → Réglages) -->
+        <activity
+            android:name=".WidgetReglages"
+            android:exported="true"
+            android:label="@string/reglages_widget_titre"
+            android:theme="@style/Theme.Reglages"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Redémarrage, changement d'heure, mise à jour de l'appli : les widgets se redessinent -->
+        <receiver
+            android:name=".WidgetReveil"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
         </receiver>
     </application>
 </manifest>

@@ -38,14 +38,11 @@ Le même dépôt fabrique aussi le programme PC **`PlanningPDF.exe`** (dossier `
 
 Autres possibilités :
 
-- **Trois widgets** pour l'écran d'accueil, une ligne par jour avec le service en couleur :
-  - **Planning de la semaine** : aujourd'hui et les 6 jours suivants, avec les horaires ;
-  - **Planning de la semaine (sans horaires)** : les mêmes 7 jours, en plus gros, pour une lecture d'un coup d'œil ;
-  - **Planning sur 15 jours** : deux pages de 7 jours (aujourd'hui + 6 jours, puis la semaine suivante), le bouton **Suite ▶ / ◀ Retour** change de page.
+- **Widgets** pour l'écran d'accueil :
+  - **Planning** : une ligne par jour, le service en couleur. Réglé à la pose : style d'origine ou **GrapheneOS** (toujours sombre), horaires (automatique selon la largeur / toujours / jamais), **7 ou 14 jours**. Il s'adapte à sa taille (4 jours par page s'il est peu haut, bouton **Suite ▶**). Appui long → **Réglages** pour le changer.
+  - **Prochain service** (2 × 1) : le service en cours ou le prochain (« Demain · 04:35–13:38 » + M-GIV en couleur).
 
-  Chacun existe aussi **aux couleurs de GrapheneOS**, toujours en sombre (anthracite, blanc cassé, bleu) : « … · GrapheneOS » dans la liste des widgets.
-
-  Appui long sur l'écran d'accueil → **Widgets** → **Planning Commandes**. Ils se mettent à jour à chaque changement du planning et passent au jour suivant tout seuls ; les toucher ouvre l'application.
+  Toucher un jour **l'ouvre dans l'application**. Les widgets passent au jour suivant tout seuls (même après un redémarrage ou un changement d'heure) et préviennent si les données ont plus de 3 semaines (« ⚠ Données du … : ouvrez l'appli »). Appui long sur l'écran d'accueil → **Widgets** → **Planning Commandes**.
 
 - **Bouton PDF** : enregistrer le PDF (une page A4 paysage par mois) ou **l'imprimer** directement.
 - **« Ouvrir avec » / « Partager »** un bulletin PDF depuis un mail ou l'appli Fichiers : il est importé directement.
