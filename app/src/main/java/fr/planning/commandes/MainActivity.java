@@ -53,12 +53,17 @@ public class MainActivity extends Activity {
     private String idEnAttente;
     private String importEnAttente;
     private boolean pageChargee = false;
+    // couleurs d'origine des barres du téléphone (thème Android), pour revenir à l'apparence « Automatique »
+    private int barreEtatOrigine, barreNavOrigine, drapeauxOrigine;
 
     @Override
     protected void onCreate(Bundle etat) {
         super.onCreate(etat);
         web = new WebView(this);
         setContentView(web);
+        barreEtatOrigine = getWindow().getStatusBarColor();
+        barreNavOrigine = getWindow().getNavigationBarColor();
+        drapeauxOrigine = getWindow().getDecorView().getSystemUiVisibility();
 
         final WebViewAssetLoader chargeur = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -268,6 +273,34 @@ public class MainActivity extends Activity {
     }
 
     private class Passerelle {
+        /** Apparence « GrapheneOS » : barres d'état et de navigation à la couleur du fond (« #212121 ») ;
+         *  texte vide = couleurs du thème Android d'origine. */
+        @JavascriptInterface
+        @SuppressWarnings("deprecation")
+        public void couleursBarres(final String hex) {
+            runOnUiThread(() -> {
+                android.view.Window w = getWindow();
+                android.view.View decor = w.getDecorView();
+                if (hex == null || hex.trim().isEmpty()) {
+                    w.setStatusBarColor(barreEtatOrigine);
+                    w.setNavigationBarColor(barreNavOrigine);
+                    decor.setSystemUiVisibility(drapeauxOrigine);
+                    return;
+                }
+                int c;
+                try {
+                    c = android.graphics.Color.parseColor(hex.trim());
+                } catch (IllegalArgumentException e) {
+                    return;
+                }
+                w.setStatusBarColor(c);
+                w.setNavigationBarColor(c);
+                int f = decor.getSystemUiVisibility() & ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                if (Build.VERSION.SDK_INT >= 26) f &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                decor.setSystemUiVisibility(f);                    // icônes claires sur fond sombre
+            });
+        }
+
         // ---- mise à jour de l'application (release « apk » du dépôt GitHub, voir MiseAJour) ----
 
         /** Numéro de la version installée (numéro de fabrication GitHub) et dépôt, en JSON. */

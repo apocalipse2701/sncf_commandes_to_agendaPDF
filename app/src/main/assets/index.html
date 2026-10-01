@@ -21,6 +21,13 @@
   --line: #2e3744; --accent: #7fb0ec; --accent-fg: #0d1a2b; --accent-soft: #22344c;
   --danger: #ff8a80; --danger-soft: #3a1f1d; --ok: #7fd49a; --we: #3a2629; --today: #7fb0ec;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4); color-scheme: dark }
+/* Apparence « GrapheneOS » (Réglages) : toujours sombre, anthracite #212121, blanc cassé #FAFAFA,
+   bleu GrapheneOS #0053A3 éclairci en #7FB2EE pour rester lisible sur fond sombre (comme les widgets GrapheneOS). */
+:root[data-apparence="gos"] {
+  --bg: #212121; --surface: #2a2a2a; --surface-2: #323232; --fg: #fafafa; --muted: #a8a8a8;
+  --line: #3d3d3d; --accent: #7fb2ee; --accent-fg: #0b1a2e; --accent-soft: #1f3550;
+  --danger: #ff8a80; --danger-soft: #3a1f1d; --ok: #7fd49a; --we: #33292a; --today: #7fb2ee;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45); --r: 10px; color-scheme: dark }
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -225,6 +232,14 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
   <!-- RÉGLAGES -->
   <section id="v-reglages" data-vue="reglages" hidden>
     <div class="entete"><h1>Réglages</h1></div>
+    <div class="bloc"><h2>Apparence de l'application</h2>
+      <div class="carte"><div class="pad">
+        <div class="seg" id="apparences" role="group" aria-label="Apparence">
+          <button data-apparence="auto">Automatique</button>
+          <button data-apparence="gos">GrapheneOS</button>
+        </div>
+        <p class="discret" id="apparence-aide" style="margin:10px 0 0"></p>
+      </div></div></div>
     <div class="bloc"><h2>Thème du planning</h2>
       <div class="carte"><div class="pad">
         <div class="themes" id="themes"></div>
@@ -1195,7 +1210,7 @@ PGVRVSD    ; [date]
   const auj = M.aujourdhui();
   const E = {
     pl: M.planningVide(), codesTxt: M.CODES_TXT_DEFAUT, derniereCopie: null, rappelReporte: null,
-    majVerifieeLe: null, majReportee: null,
+    majVerifieeLe: null, majReportee: null, apparence: "auto",
     theme: "Classique", annee: +auj.slice(0, 4), mois: +auj.slice(5, 7), sel: auj,
     vue: window.innerWidth >= 900 ? "a4" : "compacte", zoom: false,
   };
@@ -1272,7 +1287,7 @@ PGVRVSD    ; [date]
     reglages() {
       return { agent: E.pl.agent, greves: [...E.pl.greves].sort(), importes: E.pl.importes, codesTxt: E.codesTxt,
         theme: E.theme, derniereCopie: E.derniereCopie, rappelReporte: E.rappelReporte,
-        majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee };
+        majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee, apparence: E.apparence };
     },
     async ecrireReglages() {
       if (this.mode === "db") await this.db.doc(this.base).set(this.reglages());
@@ -1792,12 +1807,35 @@ PGVRVSD    ; [date]
 
   // ------------------------------------------------------------------ réglages
   function rendreReglages() {
-    rendreThemes(); rendreCodes(); etatStockage(); rendreMaj();
+    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj();
     const web = !ANDROID && !!window.claude;
     $("#ics-futur").disabled = $("#ics-tout").disabled = web;
     $("#ics-note").textContent = web ? "L'export vers l'agenda est disponible dans l'application Android et sur le PC (menu Fichier)."
       : "Ouvrez ensuite le fichier « Planning.ics » enregistré : l'agenda propose d'ajouter les rendez-vous.";
   }
+  // ------------------------------------------------------------------ apparence de l'application
+  // « auto » : suit le thème clair / sombre du téléphone ; « gos » : couleurs GrapheneOS, toujours sombre.
+  function appliquerApparence() {
+    const gos = E.apparence === "gos";
+    if (gos) document.documentElement.dataset.apparence = "gos"; else delete document.documentElement.dataset.apparence;
+    const fond = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", gos ? "#212121" : "#1c4f8f");
+    // barres du téléphone (état, navigation) aux mêmes couleurs ; vide = celles du thème Android
+    if (ANDROID && typeof window.Android.couleursBarres === "function") {
+      try { window.Android.couleursBarres(gos ? fond : ""); } catch (e) { /* ignoré */ }
+    }
+  }
+  function rendreApparence() {
+    document.querySelectorAll("#apparences [data-apparence]").forEach(b => b.setAttribute("aria-pressed", b.dataset.apparence === E.apparence));
+    $("#apparence-aide").textContent = E.apparence === "gos"
+      ? "Couleurs de GrapheneOS : anthracite, blanc cassé et bleu, toujours en sombre. Le thème du planning (ci-dessous) et le PDF ne changent pas."
+      : "Suit le thème clair ou sombre du téléphone.";
+  }
+  document.querySelectorAll("#apparences [data-apparence]").forEach(b => b.addEventListener("click", () => {
+    E.apparence = b.dataset.apparence; Stock.marquer([], true); appliquerApparence(); rendreApparence(); rendre();
+  }));
+
   function rendreThemes() {
     const z = $("#themes"); z.replaceChildren();
     for (const nom of Object.keys(R.THEMES)) {
@@ -2092,6 +2130,7 @@ PGVRVSD    ; [date]
         if (reg.theme && R.THEMES[reg.theme]) E.theme = reg.theme;
         E.derniereCopie = reg.derniereCopie || null; E.rappelReporte = reg.rappelReporte || null;
         E.majVerifieeLe = reg.majVerifieeLe || null; E.majReportee = reg.majReportee || null;
+        E.apparence = reg.apparence === "gos" ? "gos" : "auto"; appliquerApparence();
       }
       for (const m of moisDocs) {
         Object.assign(E.pl.jours, m.jours || {});

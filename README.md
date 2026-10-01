@@ -72,6 +72,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 - **Échange PC ↔ téléphone** et copies de sauvegarde.
 
 **Au quotidien sur Android**
+- **Apparence GrapheneOS** (Réglages) : toute l'application aux couleurs de GrapheneOS (anthracite, blanc cassé, bleu, toujours en sombre), barres du téléphone comprises. Sinon, elle suit le thème clair ou sombre du téléphone.
 - **Widget « Planning »** : une ligne par jour, le service en couleur ; réglé à la pose (style d'origine ou **GrapheneOS**, horaires, **7 ou 14 jours**), il s'adapte à sa taille. Toucher un jour l'ouvre dans l'application.
 - **Widget « Prochain service »** (2 × 1) : « Demain · 04:40–12:40 » et le service en couleur ; une nuit reste « En cours » jusqu'au matin.
 - Les widgets changent de jour tout seuls, même téléphone en veille ou après un redémarrage.
