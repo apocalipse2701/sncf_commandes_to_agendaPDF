@@ -2,7 +2,8 @@
 ===========================================================
 
 GitHub (gratuit) fabrique automatiquement :
-  - PlanningCommandes.apk : l'application Android (indépendante, sans Internet),
+  - PlanningCommandes.apk : l'application Android (indépendante ; Internet sert
+    seulement à chercher une nouvelle version),
   - PlanningPDF.exe       : le programme PC pour Windows.
 Tout le contenu du dépôt est dans « depot-github.zip » (dossier PlanningPDF).
 
@@ -46,7 +47,11 @@ Tout le contenu du dépôt est dans « depot-github.zip » (dossier PlanningPDF)
    - Touchez « PlanningCommandes.apk », ouvrez le fichier téléchargé, autorisez
      l'installation depuis cette source, puis « Installer ».
    - Play Protect « appli inconnue » : « Plus de détails » > « Installer quand même ».
-   - Mise à jour : même adresse, installez par-dessus : le planning est conservé.
+   - Mise à jour : AUTOMATIQUE à partir de cette version. Une fois par jour,
+     l'application regarde la page Releases ; s'il y a mieux, un bandeau propose
+     « Installer » (téléchargement + installation, Android demande de confirmer ;
+     la 1re fois : autoriser « Planning Commandes » à installer des applications).
+     Le planning est conservé. Sinon : même adresse, installez par-dessus.
    - Widgets : appui long sur l'écran d'accueil > « Widgets » >
      « Planning Commandes » > faites glisser :
        « Planning »          réglé à la pose : style (d'origine / GrapheneOS),
@@ -62,6 +67,11 @@ Tout le contenu du dépôt est dans « depot-github.zip » (dossier PlanningPDF)
    - Téléchargez « PlanningPDF.exe » et remplacez l'ancien dans le dossier
      PlanningPDF (à côté de codes.txt et du dossier commande).
    - Plus besoin de lancer « Creer l'exe (Windows).bat » (il marche toujours).
+   - Mise à jour : AUTOMATIQUE pour l'exe téléchargé ici. Une fois par jour, il
+     regarde la page Releases ; s'il y a mieux, il propose de la télécharger,
+     se remplace à la fermeture et se relance (aussi : Aide > Rechercher une
+     mise à jour…). Un exe fabriqué avec « Creer l'exe » ne se met pas à jour
+     tout seul : téléchargez une fois celui de GitHub.
    - Windows peut avertir « Windows a protégé votre ordinateur » :
      « Informations complémentaires » > « Exécuter quand même ».
 

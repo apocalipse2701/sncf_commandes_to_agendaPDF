@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
@@ -260,8 +261,90 @@ public class MainActivity extends Activity {
     }
 
     /** Fonctions appelées par la page : window.Android.enregistrer(…) et window.Android.imprimer(…). */
+    /** Exécute window.<fonction>(texte JSON) dans la page (depuis n'importe quel fil). */
+    private void appelerPage(String fonction, String json) {
+        final String js = "window." + fonction + " && window." + fonction + "(" + json + ")";
+        runOnUiThread(() -> web.evaluateJavascript(js, null));
+    }
+
     private class Passerelle {
-        /** Jours à afficher dans les widgets (7 jours, 7 jours sans horaires, 15 jours) : JSON préparé par la page. */
+        // ---- mise à jour de l'application (release « apk » du dépôt GitHub, voir MiseAJour) ----
+
+        /** Numéro de la version installée (numéro de fabrication GitHub) et dépôt, en JSON. */
+        @JavascriptInterface
+        public String versionAppli() {
+            try {
+                return new JSONObject().put("version", MiseAJour.versionInstallee(MainActivity.this))
+                        .put("depot", MiseAJour.depot(MainActivity.this)).toString();
+            } catch (org.json.JSONException e) {
+                return "{}";
+            }
+        }
+
+        /** Compare avec la dernière version publiée ; réponse : window.__retourMaj({ok, installee, publiee, erreur}). */
+        @JavascriptInterface
+        public void verifierMaj() {
+            new Thread(() -> {
+                JSONObject r = new JSONObject();
+                try {
+                    r.put("installee", MiseAJour.versionInstallee(MainActivity.this));
+                    try {
+                        r.put("publiee", MiseAJour.versionPubliee(MainActivity.this));
+                        r.put("ok", true);
+                    } catch (java.net.UnknownHostException e) {
+                        r.put("ok", false).put("erreur", "pas de connexion Internet");
+                    } catch (java.net.SocketTimeoutException e) {
+                        r.put("ok", false).put("erreur", "GitHub ne répond pas");
+                    } catch (IOException e) {
+                        r.put("ok", false).put("erreur", e.getMessage() != null ? e.getMessage() : "connexion impossible");
+                    }
+                } catch (org.json.JSONException e) {
+                    // ne peut pas arriver
+                }
+                appelerPage("__retourMaj", r.toString());
+            }).start();
+        }
+
+        /** Télécharge et installe la nouvelle version ; étapes : window.__etatMaj({texte, fini, erreur}). */
+        @JavascriptInterface
+        public void installerMaj() {
+            if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+                // 1re fois : autoriser « Installer des applis inconnues » pour Planning Commandes
+                runOnUiThread(() -> {
+                    try {
+                        startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                Uri.parse("package:" + getPackageName())));
+                    } catch (Exception e) {
+                        // réglage introuvable : le message suffit
+                    }
+                });
+                etat("Autorisez « Planning Commandes » à installer des applications, revenez ici puis touchez à nouveau « Installer ».", true, false);
+                return;
+            }
+            new Thread(() -> {
+                try {
+                    etat("Téléchargement…", false, false);
+                    java.io.File apk = MiseAJour.telecharger(MainActivity.this, t -> etat(t, false, false));
+                    etat("Préparation de l'installation…", false, false);
+                    MiseAJour.installer(MainActivity.this, apk);
+                    etat("Confirmez l'installation dans la fenêtre d'Android. Le planning est conservé.", true, false);
+                } catch (java.net.UnknownHostException e) {
+                    etat("Mise à jour impossible : pas de connexion Internet.", true, true);
+                } catch (Exception e) {
+                    etat("Mise à jour impossible : " + (e.getMessage() != null ? e.getMessage() : "erreur inconnue") + ".", true, true);
+                }
+            }).start();
+        }
+
+        private void etat(String texte, boolean fini, boolean erreur) {
+            try {
+                appelerPage("__etatMaj", new JSONObject().put("texte", texte).put("fini", fini).put("erreur", erreur).toString());
+            } catch (org.json.JSONException e) {
+                // ne peut pas arriver
+            }
+        }
+
+        /** Jours à afficher dans les widgets : JSON {du, jours} préparé par la page. */
         @JavascriptInterface
         public void majWidget(final String json) {
             if (json == null || json.length() > 500000) return;

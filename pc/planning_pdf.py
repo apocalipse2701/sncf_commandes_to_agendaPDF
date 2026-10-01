@@ -154,6 +154,109 @@ FICHIER_ETAT = "planning.json"
 FICHIER_PREFS = "preferences.json"
 
 
+# ---------------------------------------------------------------------------
+#  Mise à jour automatique de PlanningPDF.exe (release « exe » du dépôt GitHub)
+#  La recette GitHub intègre version_build.json : {"version": N, "depot": "pseudo/planning-commandes"}
+#  et publie version.json ({"version": N}) à côté de PlanningPDF.exe dans la release « exe ».
+# ---------------------------------------------------------------------------
+FICHIER_VERSION = "version_build.json"
+
+
+def version_build():
+    """(numéro de fabrication GitHub, dépôt) de cet exe, ou (None, "") s'il n'a pas été fabriqué par GitHub."""
+    for base in (getattr(sys, "_MEIPASS", None), os.path.dirname(os.path.abspath(__file__))):
+        if not base:
+            continue
+        try:
+            with open(os.path.join(base, FICHIER_VERSION), encoding="utf-8") as f:
+                d = json.load(f)
+            v, depot = d.get("version"), str(d.get("depot") or "").strip()
+            if isinstance(v, int) and re.fullmatch(r"[\w.-]+/[\w.-]+", depot):
+                return v, depot
+        except (OSError, ValueError, AttributeError):
+            pass
+    return None, ""
+
+
+def _adresse_release(depot, fichier):
+    return f"https://github.com/{depot}/releases/download/exe/{fichier}"
+
+
+def _ouvrir_url(adresse, delai=20):
+    """Réponse HTTP (redirections suivies) ; essaie aussi les certificats de « certifi » si présents."""
+    import ssl
+    import urllib.error
+    import urllib.request
+    contextes = [ssl.create_default_context()]
+    try:
+        import certifi
+        contextes.append(ssl.create_default_context(cafile=certifi.where()))
+    except ImportError:
+        pass
+    req = urllib.request.Request(adresse, headers={"User-Agent": "PlanningPDF"})
+    derniere = None
+    for ctx in contextes:
+        try:
+            return urllib.request.urlopen(req, timeout=delai, context=ctx)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                raise OSError("aucune version publiée trouvée (dépôt privé ou release « exe » absente)")
+            raise OSError(f"réponse {e.code} de GitHub")
+        except urllib.error.URLError as e:
+            derniere = e
+            if not isinstance(getattr(e, "reason", None), ssl.SSLError):
+                break
+    raison = getattr(derniere, "reason", derniere)
+    if isinstance(raison, ssl.SSLError):
+        raise OSError("connexion sécurisée impossible")
+    if "timed out" in str(raison):
+        raise OSError("GitHub ne répond pas (délai dépassé)")
+    raise OSError("pas de connexion Internet")
+
+
+def version_publiee(depot):
+    """Numéro de la dernière version de l'exe publiée sur GitHub."""
+    with _ouvrir_url(_adresse_release(depot, "version.json")) as r:
+        try:
+            return int(json.loads(r.read(65536).decode("utf-8")).get("version"))
+        except (ValueError, TypeError, AttributeError):
+            raise OSError("fichier de version illisible")
+
+
+def telecharger_exe(depot, destination, progression=None):
+    """Télécharge la nouvelle PlanningPDF.exe dans « destination » (vérifie que c'est bien un programme Windows)."""
+    with _ouvrir_url(_adresse_release(depot, "PlanningPDF.exe"), delai=60) as r:
+        total = int(r.headers.get("Content-Length") or 0)
+        lu, dernier = 0, -1
+        with open(destination + ".tmp", "wb") as f:
+            while True:
+                bloc = r.read(1 << 16)
+                if not bloc:
+                    break
+                f.write(bloc)
+                lu += len(bloc)
+                pct = lu * 100 // total if total else -1
+                if progression and pct != dernier and pct % 10 == 0:
+                    dernier = pct
+                    progression(pct)
+    with open(destination + ".tmp", "rb") as f:
+        if f.read(2) != b"MZ" or lu < 1_000_000:
+            os.remove(destination + ".tmp")
+            raise OSError("le fichier téléchargé n'est pas un programme Windows")
+    os.replace(destination + ".tmp", destination)
+
+
+def script_remplacement(exe, nouveau, pids):
+    """Petit .bat qui attend la fermeture du programme, remplace l'exe et le relance."""
+    attente = "\r\n".join(
+        f'tasklist /FI "PID eq {p}" 2>nul | find "{p}" >nul && (ping -n 2 127.0.0.1 >nul & goto attente)' for p in pids)
+    return ("@echo off\r\nchcp 65001 >nul\r\n:attente\r\n" + attente + "\r\n"
+            "set /a essais=0\r\n:remplacer\r\n"
+            f'move /y "{nouveau}" "{exe}" >nul 2>nul && goto relancer\r\n'
+            "set /a essais+=1\r\nif %essais% geq 20 goto fin\r\nping -n 2 127.0.0.1 >nul\r\ngoto remplacer\r\n"
+            f':relancer\r\nstart "" "{exe}"\r\n:fin\r\n(goto) 2>nul & del "%~f0"\r\n')
+
+
 def lire_prefs():
     try:
         with open(os.path.join(dossier_donnees(), FICHIER_PREFS), encoding="utf-8") as f:
@@ -1799,6 +1902,8 @@ def lancer_interface():
             self.bind("<FocusIn>", self.verifier_codes)     # codes.txt modifié pendant ce temps ?
             codes_a_jour()
             self.after(300, lambda: self.actualiser(silencieux=True))   # range + lit le dossier « commande »
+            self._maj_prete = False                                     # nouvelle version téléchargée ?
+            self.after(4000, lambda: self.verifier_maj(manuel=False))    # nouvelle version de l'exe ? (1 fois/jour)
             self.tout_rafraichir(sauver=False)
             self.afficher_sortie()
             self.appliquer_panneau()                  # cadre « Informations extraites » masqué par défaut
@@ -2554,9 +2659,11 @@ def lancer_interface():
                              command=lambda: self.ouvrir_fichier(os.path.join(APP_DIR, "LISEZMOI.txt")))
             aide.add_command(label="Notice des codes",
                              command=lambda: self.ouvrir_fichier(os.path.join(APP_DIR, "NOTICE_CODES.txt")))
+            aide.add_command(label="Rechercher une mise à jour…", command=lambda: self.verifier_maj(manuel=True))
             aide.add_separator()
             aide.add_command(label="À propos", command=lambda: messagebox.showinfo(
-                "À propos", "Planning PDF\n\nTransforme les bulletins de commande (PDF) en planning mensuel."))
+                "À propos", "Planning PDF" + (f" — version {version_build()[0]}" if version_build()[0] else "")
+                + "\n\nTransforme les bulletins de commande (PDF) en planning mensuel."))
             barre.add_cascade(label="Aide", menu=aide)
             self.config(menu=barre)
 
@@ -3142,6 +3249,106 @@ def lancer_interface():
                 else:
                     self.statut.config(text="Codes mis à jour. Cliquez sur « Mettre à jour le PDF » "
                                             "pour les reporter dans le PDF de sortie.")
+
+        # ---- mise à jour automatique de l'exe -------------------------------------
+        def verifier_maj(self, manuel=False):
+            """Cherche une nouvelle PlanningPDF.exe sur GitHub (automatique : une fois par jour, en silence)."""
+            import threading
+            version, depot = version_build()
+            fige = getattr(sys, "frozen", False) and sys.platform.startswith("win")
+            if not fige or version is None:
+                if manuel:
+                    messagebox.showinfo("Mise à jour", (
+                        "La mise à jour automatique concerne PlanningPDF.exe téléchargé depuis GitHub.\n\n"
+                        + ("Ce programme a été lancé sans l'exe (planning_pdf.py)."
+                           if not fige else
+                           "Cet exe a été fabriqué sur ce PC (« Creer l'exe ») : il ne connaît pas votre dépôt GitHub. "
+                           "Téléchargez une fois PlanningPDF.exe depuis la page « Releases » de GitHub : "
+                           "les versions suivantes s'installeront ensuite toutes seules.")))
+                return
+            if self._maj_prete:
+                if manuel:
+                    messagebox.showinfo("Mise à jour", "La nouvelle version est déjà téléchargée : "
+                                                       "elle s'installera à la fermeture du programme.")
+                return
+            aujourdhui = dt.date.today().isoformat()
+            if not manuel and lire_prefs().get("maj_verifiee_le") == aujourdhui:
+                return
+            if manuel:
+                self.statut.config(text="Recherche d'une nouvelle version…")
+
+            def travail():
+                try:
+                    publiee = version_publiee(depot)
+                    erreur = None
+                except OSError as ex:
+                    publiee, erreur = None, str(ex)
+                self.after(0, lambda: self._resultat_maj(manuel, version, publiee, erreur))
+
+            threading.Thread(target=travail, daemon=True).start()
+
+        def _resultat_maj(self, manuel, version, publiee, erreur):
+            if erreur:
+                if manuel:
+                    self.statut.config(text="")
+                    messagebox.showwarning("Mise à jour", f"Vérification impossible : {erreur}.")
+                return
+            ecrire_pref("maj_verifiee_le", dt.date.today().isoformat())
+            if publiee <= version:
+                if manuel:
+                    self.statut.config(text="")
+                    messagebox.showinfo("Mise à jour", f"Vous avez la dernière version (n° {version}).")
+                return
+            if not messagebox.askyesno("Mise à jour disponible",
+                                       f"Une nouvelle version de Planning PDF est disponible : n° {publiee} "
+                                       f"(vous avez le n° {version}).\n\nLa télécharger et l'installer maintenant ?\n"
+                                       "Votre planning, vos codes et vos réglages sont conservés."):
+                return
+            self._installer_maj(publiee)
+
+        def _installer_maj(self, publiee):
+            import subprocess
+            import threading
+            _, depot = version_build()
+            exe = os.path.abspath(sys.executable)
+            nouveau = os.path.join(os.path.dirname(exe), "PlanningPDF.nouveau.exe")
+
+            def progression(pct):
+                self.after(0, lambda: self.statut.config(
+                    text=f"Téléchargement de la version {publiee}… {pct} %" if pct >= 0 else f"Téléchargement de la version {publiee}…"))
+
+            def travail():
+                try:
+                    telecharger_exe(depot, nouveau, progression)
+                    erreur = None
+                except OSError as ex:
+                    erreur = str(ex)
+                self.after(0, lambda: fini(erreur))
+
+            def fini(erreur):
+                if erreur:
+                    self.statut.config(text="")
+                    messagebox.showerror("Mise à jour", f"Téléchargement impossible : {erreur}.")
+                    return
+                # PyInstaller « onefile » : deux processus (lanceur + programme) gardent l'exe ouvert
+                pids = sorted({os.getpid(), os.getppid()})
+                bat = os.path.join(tempfile.gettempdir(), "PlanningPDF_mise_a_jour.bat")
+                try:
+                    with open(bat, "w", encoding="utf-8", newline="") as f:
+                        f.write(script_remplacement(exe, nouveau, pids))
+                    subprocess.Popen(["cmd", "/c", bat], creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                                     close_fds=True)
+                except OSError as ex:
+                    messagebox.showerror("Mise à jour", f"Installation impossible : {ex}")
+                    return
+                self._maj_prete = True
+                self.statut.config(text=f"Version {publiee} prête : elle s'installera à la fermeture du programme.")
+                if messagebox.askyesno("Mise à jour", f"La version {publiee} est téléchargée.\n\n"
+                                                      "Fermer le programme maintenant pour l'installer ? "
+                                                      "Il se relancera tout seul."):
+                    self.quitter()
+
+            threading.Thread(target=travail, daemon=True).start()
 
         def quitter(self):
             # reporte les dernières modifications (notes…) dans le PDF de sortie

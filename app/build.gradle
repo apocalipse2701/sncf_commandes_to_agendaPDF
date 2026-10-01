@@ -13,6 +13,8 @@ android {
         // numéro de version = numéro de fabrication GitHub (chaque mise à jour s'installe par-dessus)
         versionCode Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
         versionName "1." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+        // dépôt GitHub (ex. « pseudo/planning-commandes ») : l'appli y cherche les nouvelles versions
+        resValue "string", "depot_github", (System.getenv("GITHUB_REPOSITORY") ?: "")
     }
 
     // Clé de signature fixe : les mises à jour s'installent sans effacer le planning.

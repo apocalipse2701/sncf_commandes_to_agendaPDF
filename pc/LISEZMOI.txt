@@ -39,7 +39,7 @@ MENUS
               mois en cours (Début)
               Informations extraites (Ctrl+L) : affiche / masque la liste de
               droite (masquée par défaut, choix mémorisé)
-  Aide      : Lisez-moi, Notice des codes
+  Aide      : Lisez-moi, Notice des codes, Rechercher une mise à jour
   Bandeau du haut : ◀ ▶, le mois en grand, « Aujourd'hui », et les actions
   rapides (Ouvrir, Imprimer, Mettre à jour le PDF).
   Dessous, le résumé du mois en pastilles (nombre de S-GIV, M-GIV, RP…,
@@ -153,6 +153,11 @@ POLICES
 
 NOUVEAUTÉS
 ----------
+  • Mise à jour automatique de PlanningPDF.exe (exe téléchargé depuis
+    GitHub) : une fois par jour, il regarde s'il existe une nouvelle version ;
+    si oui, il propose de la télécharger, elle s'installe à la fermeture et le
+    programme se relance. Aide > « Rechercher une mise à jour… ». Un exe
+    fabriqué avec « Creer l'exe (Windows).bat » ne se met pas à jour seul.
   • FISC retiré (fenêtres FISC et FISC 2, frais réels, barème, tableur,
     menu Outils > Configuration), sur le PC et sur le téléphone, le temps de
     repenser son fonctionnement. La version qui le contenait est gardée dans

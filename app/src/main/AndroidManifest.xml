@@ -3,6 +3,9 @@
 
     <!-- redessiner les widgets après un redémarrage du téléphone -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- mise à jour de l'application : lire la dernière version sur GitHub, la télécharger et l'installer -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:label="Planning Commandes"
@@ -157,5 +160,10 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- réponse d'Android pendant l'installation d'une mise à jour -->
+        <receiver
+            android:name=".RecepteurInstallation"
+            android:exported="false" />
     </application>
 </manifest>

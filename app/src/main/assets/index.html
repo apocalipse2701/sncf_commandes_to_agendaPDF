@@ -198,6 +198,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         <button class="btn" id="btn-pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>PDF</button>
       </div>
     </div>
+    <div class="carte rappel" id="maj" hidden></div>
     <div class="carte rappel" id="rappel" hidden></div>
     <div class="pastilles" id="pastilles"></div>
     <div id="zone-compacte"><div class="grille" id="grille"></div></div>
@@ -245,6 +246,15 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
           <button class="btn" id="ics-tout">Tout le planning</button>
         </div>
         <p class="discret" id="ics-note" style="margin:10px 0 0">Ouvrez ensuite le fichier « Planning.ics » enregistré : l'agenda propose d'ajouter les rendez-vous.</p>
+      </div></div></div>
+    <div class="bloc" id="bloc-maj" hidden><h2>Mise à jour de l'application</h2>
+      <div class="carte"><div class="pad">
+        <p id="maj-version" style="margin:0 0 10px"></p>
+        <div class="rangee">
+          <button class="btn" id="maj-verifier">Rechercher une mise à jour</button>
+          <button class="btn accent" id="maj-installer" hidden>Installer</button>
+        </div>
+        <p class="discret" id="maj-etat" style="margin:10px 0 0"></p>
       </div></div></div>
     <div class="bloc"><h2>Sauvegarde et échange avec le PC</h2>
       <div class="carte"><div class="pad">
@@ -1185,6 +1195,7 @@ PGVRVSD    ; [date]
   const auj = M.aujourdhui();
   const E = {
     pl: M.planningVide(), codesTxt: M.CODES_TXT_DEFAUT, derniereCopie: null, rappelReporte: null,
+    majVerifieeLe: null, majReportee: null,
     theme: "Classique", annee: +auj.slice(0, 4), mois: +auj.slice(5, 7), sel: auj,
     vue: window.innerWidth >= 900 ? "a4" : "compacte", zoom: false,
   };
@@ -1260,7 +1271,8 @@ PGVRVSD    ; [date]
     },
     reglages() {
       return { agent: E.pl.agent, greves: [...E.pl.greves].sort(), importes: E.pl.importes, codesTxt: E.codesTxt,
-        theme: E.theme, derniereCopie: E.derniereCopie, rappelReporte: E.rappelReporte };
+        theme: E.theme, derniereCopie: E.derniereCopie, rappelReporte: E.rappelReporte,
+        majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee };
     },
     async ecrireReglages() {
       if (this.mode === "db") await this.db.doc(this.base).set(this.reglages());
@@ -1335,6 +1347,7 @@ PGVRVSD    ; [date]
     $("#vue-a4").setAttribute("aria-pressed", E.vue === "a4");
     $("#zone-compacte").hidden = E.vue !== "compacte";
     $("#zone-a4").hidden = E.vue !== "a4";
+    rendreMaj();
     rendreRappel();
     rendrePastilles();
     if (E.vue === "compacte") rendreGrille(); else rendreA4();
@@ -1714,9 +1727,72 @@ PGVRVSD    ; [date]
       el("button", { class: "btn fantome", onclick: () => { E.rappelReporte = M.decaler(auj, 7); Stock.marquer([], true); rendreRappel(); } }, "Plus tard"));
   }
 
+  // ------------------------------------------------------------------ mise à jour de l'application (Android)
+  // L'application lit la dernière version publiée sur GitHub (release « apk », fichier version.json),
+  // la télécharge et l'installe (MiseAJour.java) : Android demande toujours une confirmation.
+  const MAJ = { installee: 0, publiee: 0, depot: "", etat: "", enCours: false, erreur: false };
+  const majPossible = () => ANDROID && typeof window.Android.verifierMaj === "function";
+  if (majPossible()) {
+    try { const v = JSON.parse(window.Android.versionAppli()); MAJ.installee = +v.version || 0; MAJ.depot = v.depot || ""; } catch (e) { /* ignoré */ }
+  }
+  const nouvelle = () => MAJ.publiee > MAJ.installee;
+  let majManuelle = false;
+  function verifierMaj(manuel) {
+    if (!majPossible() || MAJ.enCours) return;
+    majManuelle = manuel;
+    if (!MAJ.depot) { MAJ.etat = "Version fabriquée hors GitHub : mise à jour automatique indisponible."; MAJ.erreur = true; rendreMaj(); return; }
+    MAJ.etat = "Recherche d'une nouvelle version…"; MAJ.erreur = false; rendreMaj();
+    window.Android.verifierMaj();
+  }
+  window.__retourMaj = r => {
+    if (r.installee) MAJ.installee = r.installee;
+    if (r.ok) {
+      MAJ.publiee = r.publiee || 0;
+      MAJ.etat = nouvelle() ? `Nouvelle version 1.${MAJ.publiee} disponible.` : "Vous avez la dernière version.";
+      MAJ.erreur = false;
+      E.majVerifieeLe = M.aujourdhui(); Stock.marquer([], true);
+    } else {
+      MAJ.etat = majManuelle ? "Vérification impossible : " + (r.erreur || "erreur inconnue") + "." : "";
+      MAJ.erreur = majManuelle;
+    }
+    rendreMaj();
+  };
+  window.__etatMaj = e => { MAJ.etat = e.texte || ""; MAJ.enCours = !e.fini; MAJ.erreur = !!e.erreur; rendreMaj(); };
+  function installerMaj() {
+    if (!majPossible() || MAJ.enCours) return;
+    MAJ.enCours = true; MAJ.etat = "Téléchargement…"; MAJ.erreur = false; rendreMaj();
+    window.Android.installerMaj();
+  }
+  function rendreMaj() {
+    const b = $("#maj");
+    const montrer = majPossible() && nouvelle() && (MAJ.enCours || !(E.majReportee && E.majReportee > M.aujourdhui()));
+    b.hidden = !montrer;
+    if (montrer) {
+      b.replaceChildren(...[
+        el("p", { text: `Nouvelle version de l'application disponible : 1.${MAJ.publiee} (installée : 1.${MAJ.installee}).` }),
+        MAJ.etat && !/^(Nouvelle version|Recherche)/.test(MAJ.etat) ? el("p", { class: MAJ.erreur ? "ko" : "discret", text: MAJ.etat }) : null,
+        el("button", { class: "btn accent", disabled: MAJ.enCours || null, onclick: installerMaj }, MAJ.enCours ? "Installation…" : "Installer"),
+        MAJ.enCours ? null : el("button", { class: "btn fantome", onclick: () => { E.majReportee = M.decaler(M.aujourdhui(), 3); Stock.marquer([], true); rendreMaj(); } }, "Plus tard")].filter(Boolean));
+    }
+    const bloc = $("#bloc-maj");
+    bloc.hidden = !majPossible();
+    if (bloc.hidden) return;
+    $("#maj-version").textContent = MAJ.installee ? `Version installée : 1.${MAJ.installee}` : "Version installée : inconnue";
+    $("#maj-verifier").disabled = MAJ.enCours;
+    const bi = $("#maj-installer");
+    bi.hidden = !nouvelle();
+    bi.disabled = MAJ.enCours;
+    bi.textContent = MAJ.enCours ? "Installation…" : `Installer la version 1.${MAJ.publiee}`;
+    const z = $("#maj-etat");
+    z.textContent = MAJ.etat;
+    z.className = MAJ.erreur ? "ko" : "discret";
+  }
+  $("#maj-verifier").addEventListener("click", () => verifierMaj(true));
+  $("#maj-installer").addEventListener("click", installerMaj);
+
   // ------------------------------------------------------------------ réglages
   function rendreReglages() {
-    rendreThemes(); rendreCodes(); etatStockage();
+    rendreThemes(); rendreCodes(); etatStockage(); rendreMaj();
     const web = !ANDROID && !!window.claude;
     $("#ics-futur").disabled = $("#ics-tout").disabled = web;
     $("#ics-note").textContent = web ? "L'export vers l'agenda est disponible dans l'application Android et sur le PC (menu Fichier)."
@@ -2015,6 +2091,7 @@ PGVRVSD    ; [date]
         if (reg.codesTxt) E.codesTxt = reg.codesTxt;
         if (reg.theme && R.THEMES[reg.theme]) E.theme = reg.theme;
         E.derniereCopie = reg.derniereCopie || null; E.rappelReporte = reg.rappelReporte || null;
+        E.majVerifieeLe = reg.majVerifieeLe || null; E.majReportee = reg.majReportee || null;
       }
       for (const m of moisDocs) {
         Object.assign(E.pl.jours, m.jours || {});
@@ -2060,6 +2137,7 @@ PGVRVSD    ; [date]
   // retour dans l'application (elle a pu rester ouverte plusieurs jours) : le widget reçoit des données fraîches
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") envoyerWidget(); });
   const pret = demarrer();
+  pret.then(() => { if (majPossible() && E.majVerifieeLe !== M.aujourdhui()) verifierMaj(false); });
 })();
 
 </script>

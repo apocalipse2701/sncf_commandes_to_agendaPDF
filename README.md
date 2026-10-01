@@ -2,7 +2,7 @@
 
 Application Android personnelle qui transforme les **bulletins de commande (PDF)** en **planning mensuel** et produit un **PDF A4** du planning.
 
-L'application est indépendante : elle ne demande pas de compte, marche **sans Internet**, et le planning reste **dans le téléphone**.
+L'application est indépendante : elle ne demande pas de compte, marche **sans Internet** (Internet ne sert qu'à vérifier s'il existe une nouvelle version), et le planning reste **dans le téléphone**.
 
 C'est la version téléphone et tablette du programme PC *Planning PDF* : les deux lisent les bulletins de la même façon, et un PDF créé sur le téléphone se rouvre dans le programme PC.
 
@@ -34,10 +34,11 @@ Le même dépôt fabrique aussi le programme PC **`PlanningPDF.exe`** (dossier `
 |---|---|
 | **Planning** | Mois en grille compacte ou en page A4. Couleurs et noms des codes, heures de prise et de fin de service, « DN » automatique le lendemain d'une série de nuits, filigrane GRÈVE, **jours fériés**. Récapitulatif du mois : **heures de service, nuits, dimanches et fériés travaillés, repos**. Toucher un jour pour son détail (notes, jour de grève, suppression d'une ligne). |
 | **Commandes** | Import d'un ou plusieurs bulletins PDF. Pour chaque jour, le bulletin le plus récent l'emporte ; les notes ajoutées à la main sont conservées. **Liste des jours modifiés** par une nouvelle commande (ex. « Lun 09/03 : DISPO 08:00–16:45 → RP »). |
-| **Réglages** | 7 thèmes, éditeur des codes et couleurs, **export vers l'agenda** (.ics : agenda du téléphone, Google Agenda), copie de sauvegarde et **échange avec le PC**, rappel de sauvegarde, remise à zéro protégée. |
+| **Réglages** | **mise à jour de l'application** (recherche et installation de la nouvelle version), 7 thèmes, éditeur des codes et couleurs, **export vers l'agenda** (.ics : agenda du téléphone, Google Agenda), copie de sauvegarde et **échange avec le PC**, rappel de sauvegarde, remise à zéro protégée. |
 
 Autres possibilités :
 
+- **Mise à jour automatique** : une fois par jour, l'application (et `PlanningPDF.exe`) regarde la page « Releases » de ce dépôt. S'il y a une nouvelle version, un bandeau propose **Installer** : elle est téléchargée et installée sans passer par le navigateur (Android demande de confirmer ; la 1re fois, autoriser « Planning Commandes » à installer des applications). Le planning est conservé. Aussi dans **Réglages → Mise à jour de l'application** et, sur le PC, **Aide → Rechercher une mise à jour…** (l'exe se remplace à la fermeture et se relance).
 - **Widgets** pour l'écran d'accueil :
   - **Planning** : une ligne par jour, le service en couleur. Réglé à la pose : style d'origine ou **GrapheneOS** (toujours sombre), horaires (automatique selon la largeur / toujours / jamais), **7 ou 14 jours**. Il s'adapte à sa taille (4 jours par page s'il est peu haut, bouton **Suite ▶**). Appui long → **Réglages** pour le changer.
   - **Prochain service** (2 × 1) : le service en cours ou le prochain (« Demain · 04:35–13:38 » + M-GIV en couleur).
@@ -62,7 +63,7 @@ Autres possibilités :
 
 ## 💾 Données et sauvegarde
 
-- Le planning est enregistré dans l'application, sur le téléphone. Rien n'est envoyé sur Internet.
+- Le planning est enregistré dans l'application, sur le téléphone. Rien n'est envoyé sur Internet : l'application lit seulement, une fois par jour, le numéro de la dernière version publiée dans ce dépôt.
 - **Désinstaller l'application efface le planning.** Faites de temps en temps **Réglages → Sauvegarde → Enregistrer une copie (.json)**, puis « Reprendre une copie… » pour la restaurer.
 - Ce dépôt ne contient que le code de l'application, aucune donnée personnelle.
 
