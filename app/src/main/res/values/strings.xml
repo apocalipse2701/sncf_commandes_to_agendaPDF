@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_nom">Planning de la semaine</string>
+    <string name="widget_description">Aujourd\'hui et les 6 jours suivants : service, couleur et horaires.</string>
+    <string name="widget_simple_nom">Planning de la semaine (sans horaires)</string>
+    <string name="widget_simple_description">Aujourd\'hui et les 6 jours suivants : le service et sa couleur, en plus gros.</string>
+    <string name="widget_quinzaine_nom">Planning sur 15 jours</string>
+    <string name="widget_quinzaine_description">Deux pages de 7 jours : touchez « Suite » pour voir la semaine d\'après.</string>
+    <string name="widget_nom_gos">Planning de la semaine · GrapheneOS</string>
+    <string name="widget_gos_description">Aujourd\'hui et les 6 jours suivants, avec les horaires, aux couleurs sombres de GrapheneOS.</string>
+    <string name="widget_simple_nom_gos">Planning de la semaine (sans horaires) · GrapheneOS</string>
+    <string name="widget_simple_gos_description">Les 7 jours, le service seulement, en plus gros, aux couleurs sombres de GrapheneOS.</string>
+    <string name="widget_quinzaine_nom_gos">Planning sur 15 jours · GrapheneOS</string>
+    <string name="widget_quinzaine_gos_description">Deux pages de 7 jours (bouton « Suite »), aux couleurs sombres de GrapheneOS.</string>
+</resources>

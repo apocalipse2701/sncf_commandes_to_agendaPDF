@@ -1,83 +1,74 @@
-﻿PLANNING COMMANDES — APPLICATION ANDROID
-=======================================
+﻿PLANNING COMMANDES — GITHUB (APPLI ANDROID + PROGRAMME PC)
+===========================================================
 
-Application indépendante : pas de compte Claude, fonctionne sans Internet.
-Le planning est enregistré dans le téléphone.
-
-GitHub (gratuit) sert uniquement à FABRIQUER le fichier d'installation (APK)
-à partir de ce dossier. Rien à installer sur le PC.
-
-
-1. CRÉER UN COMPTE GITHUB (une seule fois)
------------------------------------------
-   - Sur le PC, allez sur https://github.com/signup et créez un compte gratuit.
+GitHub (gratuit) fabrique automatiquement :
+  - PlanningCommandes.apk : l'application Android (indépendante, sans Internet),
+  - PlanningPDF.exe       : le programme PC pour Windows.
+Tout le contenu du dépôt est dans « depot-github.zip » (dossier PlanningPDF).
 
 
-2. CRÉER UN DÉPÔT (une seule fois)
----------------------------------
-   - En haut à droite : « + » puis « New repository ».
-   - Repository name :  planning-commandes
-   - Choisissez « Public » (le plus simple : l'APK se télécharge sans se
-     connecter sur le téléphone ; ce dossier ne contient aucune donnée
-     personnelle, votre planning reste dans le téléphone).
-     « Private » marche aussi, mais il faudra se connecter à GitHub dans le
-     navigateur du téléphone pour télécharger l'APK.
-   - Ne cochez rien d'autre, puis « Create repository ».
+1. PREMIÈRE FOIS : COMPTE ET DÉPÔT
+----------------------------------
+   - Créez un compte gratuit sur https://github.com/signup
+   - « + » en haut à droite > « New repository », nom : planning-commandes,
+     « Public », puis « Create repository ».
 
 
-3. DÉPOSER CE DOSSIER
----------------------
-   - Sur la page du dépôt, cliquez sur le lien « uploading an existing file ».
-   - Ouvrez le dossier « android-app » dans l'Explorateur Windows,
-     sélectionnez TOUT son contenu (Ctrl+A) et faites-le glisser dans la
-     page GitHub. (Glissez le CONTENU du dossier, pas le dossier lui-même.)
-   - En bas, cliquez sur « Commit changes ».
+2. DÉPOSER LES FICHIERS (première fois ET à chaque mise à jour)
+---------------------------------------------------------------
+   - Clic droit sur « depot-github.zip » > « Extraire tout… » > « Extraire ».
+   - Ouvrez le dossier « planning-commandes » obtenu.
+   - Sur la page du dépôt : « Add file » > « Upload files »
+     (première fois : lien « uploading an existing file »).
+   - Sélectionnez tout le contenu du dossier (Ctrl+A) et glissez-le dans la page.
+     Les fichiers déjà présents sont remplacés.
+   - « Commit changes ».
 
 
-4. AJOUTER LA « RECETTE » DE FABRICATION (une seule fois)
----------------------------------------------------------
-   - Ouvrez le fichier « apk.yml » de ce dossier avec le Bloc-notes,
-     Ctrl+A puis Ctrl+C pour tout copier.
-   - Sur GitHub : « Add file » > « Create new file ».
-   - Dans la case du nom, tapez exactement :
-         .github/workflows/apk.yml
-     (les « / » créent les dossiers automatiquement).
-   - Collez le contenu (Ctrl+V) dans la grande zone, puis « Commit changes ».
-   - GitHub fabrique alors l'APK (environ 5 minutes) : onglet « Actions »,
-     « Fabriquer l'APK » tourne (rond jaune), puis coche verte = APK prêt.
-   - Croix rouge : cliquez dessus et envoyez une capture de l'erreur à Claude.
+3. LA RECETTE DE FABRICATION (une fois, puis quand Claude le demande)
+---------------------------------------------------------------------
+   GitHub ignore le dossier « .github » au glisser-déposer : la recette se colle
+   à la main.
+   - Ouvrez « apk.yml » (dans le dossier extrait) avec le Bloc-notes,
+     Ctrl+A puis Ctrl+C.
+   - Si le fichier n'existe pas encore sur GitHub :
+       « Add file » > « Create new file », nom exact :  .github/workflows/apk.yml
+   - S'il existe déjà : ouvrez .github > workflows > apk.yml, cliquez sur le
+     crayon (Edit), Ctrl+A puis Ctrl+V pour remplacer tout le texte.
+   - « Commit changes ».
+   - Onglet « Actions » : « Fabriquer l'APK et l'exe » tourne (environ 5 à 10
+     minutes). Coche verte = c'est prêt. Croix rouge : envoyez une capture à Claude.
 
 
-5. INSTALLER SUR LE TÉLÉPHONE
+4. INSTALLER SUR LE TÉLÉPHONE
 -----------------------------
-   - Sur le téléphone, ouvrez dans le navigateur :
-         https://github.com/VOTRE-PSEUDO/planning-commandes/releases/latest
-     (remplacez VOTRE-PSEUDO par votre nom d'utilisateur GitHub).
-   - Touchez « PlanningCommandes.apk » : il se télécharge.
-   - Ouvrez le fichier téléchargé. Android demande d'autoriser l'installation
-     depuis cette source (Chrome, Fichiers…) : autorisez, puis « Installer ».
-   - Si Play Protect avertit d'une « appli inconnue » : c'est normal pour une
-     appli personnelle hors Play Store. « Plus de détails » > « Installer quand même ».
-   - L'icône « Planning Commandes » apparaît avec les autres applis.
+   - Sur le téléphone : https://github.com/VOTRE-PSEUDO/planning-commandes/releases/latest
+   - Touchez « PlanningCommandes.apk », ouvrez le fichier téléchargé, autorisez
+     l'installation depuis cette source, puis « Installer ».
+   - Play Protect « appli inconnue » : « Plus de détails » > « Installer quand même ».
+   - Mise à jour : même adresse, installez par-dessus : le planning est conservé.
+   - Widgets : appui long sur l'écran d'accueil > « Widgets » >
+     « Planning Commandes » > faites glisser celui de votre choix :
+       « Planning de la semaine »                 7 jours avec les horaires
+       « Planning de la semaine (sans horaires) » 7 jours, plus lisible
+       « Planning sur 15 jours »                  2 pages de 7 jours, bouton « Suite »
+     Les trois existent aussi aux couleurs de GrapheneOS (« … · GrapheneOS »).
 
 
-UTILISATION
------------
-   - Onglet Commandes > « Ajouter une commande » : choisissez les bulletins PDF.
-   - Depuis un mail ou l'appli Fichiers : « Ouvrir avec » ou « Partager » un
-     bulletin PDF vers Planning Commandes l'importe directement.
-   - Bouton PDF : « Enregistrer le PDF » (vous choisissez où) ou « Imprimer »
-     (imprimante Wi-Fi ou « Enregistrer au format PDF »).
-   - Le PDF créé sur le téléphone contient les données du planning : le
-     programme PC peut le rouvrir.
-   - Réglages > Sauvegarde > « Enregistrer une copie (.json) » de temps en temps :
-     désinstaller l'application efface le planning.
+5. RÉCUPÉRER LE PROGRAMME PC
+----------------------------
+   - Sur le PC : https://github.com/VOTRE-PSEUDO/planning-commandes/releases/tag/exe
+   - Téléchargez « PlanningPDF.exe » et remplacez l'ancien dans le dossier
+     PlanningPDF (à côté de codes.txt et du dossier commande).
+   - Plus besoin de lancer « Creer l'exe (Windows).bat » (il marche toujours).
+   - Windows peut avertir « Windows a protégé votre ordinateur » :
+     « Informations complémentaires » > « Exécuter quand même ».
 
 
-METTRE À JOUR L'APPLICATION
----------------------------
-   - Redéposez les fichiers modifiés sur GitHub (même méthode qu'à l'étape 3,
-     « Add file » > « Upload files ») puis « Commit changes ».
-   - Une nouvelle version se fabrique toute seule ; installez-la par-dessus
-     l'ancienne depuis la même adresse : le planning est conservé
-     (la clé de signature planning.keystore ne change pas — ne la supprimez pas).
+À SAVOIR
+--------
+   - Désinstaller l'application Android efface son planning : Réglages >
+     « Enregistrer une copie / envoyer vers le PC » de temps en temps
+     (l'appli le rappelle tous les 30 jours).
+   - Ne supprimez jamais app/planning.keystore (clé de signature) : sans elle,
+     les mises à jour ne s'installent plus par-dessus l'ancienne version.

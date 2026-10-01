@@ -1,0 +1,191 @@
+PLANNING PDF
+============
+
+Transforme les « Bulletins de commande » (PDF) en planning mensuel.
+
+INSTALLATION
+  Windows : rien à faire, Python est installé automatiquement si besoin.
+  Mac     : Python 3.9+ depuis https://www.python.org/downloads/
+  Linux   : sudo apt install python3 python3-venv python3-tk
+
+VERSION .EXE POUR WINDOWS (recommandé)
+  1. Double-cliquez sur « Creer l'exe (Windows).bat » (une seule fois,
+     2 à 3 minutes). Si Python n'est pas installé, il est téléchargé et
+     installé automatiquement (connexion Internet requise, sans droits
+     administrateur). Python ne sert qu'à cette étape.
+  2. PlanningPDF.exe apparaît dans le dossier : double-cliquez dessus.
+     Il peut être copié sur n'importe quel PC Windows, sans Python.
+  Si Windows affiche « Windows a protégé votre ordinateur » :
+  cliquez sur « Informations complémentaires » puis « Exécuter quand même »
+  (l'exe n'est pas signé numériquement, c'est normal).
+
+LANCEMENT SANS EXE
+  Windows : double-cliquez sur « Lancer (Windows).bat »
+  Mac     : double-cliquez sur « Lancer (Mac).command »
+            (la 1re fois : clic droit > Ouvrir, si macOS bloque le fichier)
+  Linux   : ./"Lancer (Linux).sh"
+  Au premier lancement, les composants nécessaires sont installés
+  automatiquement (connexion Internet requise, environ 1 minute).
+
+MENUS
+  Fichier   : Ajouter une commande (Ctrl+O), Dossier commande (Ctrl+D),
+              Exporter (Ctrl+E), Exporter vers l'agenda (.ics),
+              Envoyer vers le téléphone / Reprendre une copie du téléphone,
+              Mettre à jour le PDF (Ctrl+S), Imprimer (Ctrl+P), Sauvegardes,
+              Nouveau planning, Quitter (Ctrl+Q)
+  Édition   : Ajouter une note (Ctrl+N), Modifier / Supprimer la ligne
+              sélectionnée, Codes et couleurs (Ctrl+K), codes.txt en texte
+  Affichage : mois précédent / suivant (Page préc. / Page suiv.),
+              mois en cours (Début)
+              Informations extraites (Ctrl+L) : affiche / masque la liste de
+              droite (masquée par défaut, choix mémorisé)
+  Aide      : Lisez-moi, Notice des codes
+  Bandeau du haut : ◀ ▶, le mois en grand, « Aujourd'hui », et les actions
+  rapides (Ouvrir, Imprimer, Mettre à jour le PDF).
+  Dessous, le résumé du mois en pastilles (nombre de S-GIV, M-GIV, RP…,
+  jours de grève, heures de service, nuits, dimanches, fériés, repos).
+  Planning : la case survolée est surlignée, aujourd'hui est encadré en
+  bleu, une info-bulle détaille le jour, la molette change de mois.
+  Affichage > « Basculer thème clair / sombre » (thème Windows 11).
+  Affichage > « Thème du planning » : Classique, Bleu moderne, Minimal,
+  Contraste (impression), Vert sauge, Sépia, Sombre. « Aperçu des
+  thèmes… » les montre tous sur le mois affiché : un clic applique.
+  « Utiliser aussi pour le PDF et l'impression » (coché par défaut) :
+  décochez pour garder le PDF en Classique. Après un changement,
+  cliquez sur « Mettre à jour le PDF ». Les couleurs des codes
+  (codes.txt) restent les mêmes dans tous les thèmes.
+  (Les « boutons » cités plus bas se trouvent dans ces menus.)
+
+UTILISATION
+  • « Ajouter une commande » : choisissez un ou plusieurs bulletins PDF (Ctrl/Cmd-clic
+    pour en sélectionner plusieurs). Vous pouvez en ouvrir d'autres ensuite
+    pour compléter le mois.
+  • Pour chaque jour sont repris : le code (GIV002, RP, ZREVIN…) et
+    TOUTES les lignes horaires du bulletin (AUTO, PS, FS, K, DAT…). Le libellé n'est pas affiché dans le planning
+    (il reste visible dans la liste de droite). Les horaires sont
+    toujours affichés en entier : le texte se réduit si la case est pleine.
+  • Si deux bulletins couvrent le même jour, c'est celui dont la date
+    d'édition est la plus récente qui est retenu.
+  • Codes renommés / colorés (S-GIV, M-GIV, DISPO, RP…) : voir
+    « CODES SPÉCIAUX » plus bas.
+  • ◀ ▶ : changer de mois.
+  • Clic DROIT sur un jour : « Ajouter un jour de grève » (filigrane GRÈVE
+    en diagonale, aussi dans le PDF et à l'impression) ou « Retirer le jour
+    de grève ».
+  • Clic sur un jour du planning : fenêtre de détail (code, horaires,
+    libellé) avec le bulletin PDF d'où vient l'information et un bouton
+    « Ouvrir le PDF ». Bouton « Ajouter une note » dans cette fenêtre.
+  • Liste de droite : double-clic pour modifier, touche Suppr pour effacer.
+  • « Exporter… » en PDF : crée VOTRE PDF de sortie (une page par mois,
+    A4 paysage). Il est ensuite COMPLÉTÉ AUTOMATIQUEMENT : à chaque
+    nouveau bulletin ouvert, les jours s'ajoutent dans ce même PDF
+    (et une nouvelle page apparaît quand on change de mois).
+    Bouton « Mettre à jour le PDF » : reporte tout de suite vos notes
+    et corrections (sinon c'est proposé en quittant le programme).
+  • Le planning est mémorisé : en relançant le programme la semaine
+    suivante, tout est encore là, il suffit d'ouvrir le nouveau bulletin.
+  • Le PDF de sortie contient ses propres données : on peut le rouvrir
+    avec « Ouvrir… » (même sur un autre PC) pour continuer à le compléter.
+  • Le PDF de sortie doit être fermé (pas ouvert dans Acrobat ou autre)
+    au moment de sa mise à jour.
+  • Export PNG / JPEG : le mois affiché uniquement.
+  • « Imprimer… » : cochez le ou les mois à imprimer (le mois affiché est
+    coché d'office), puis « Imprimer » (imprimante par défaut, A4 paysage)
+    ou « Aperçu » (ouvre le PDF pour choisir l'imprimante avec Ctrl+P).
+  • « Nouveau » : vide le planning (le PDF déjà créé n'est pas effacé ;
+    le prochain export créera un nouveau PDF).
+
+DOSSIER « commande »
+  Un dossier « commande » est créé à côté du programme.
+  • Déposez-y vos bulletins PDF (noms quelconques, même en vrac).
+  • Tous les bulletins du dossier sont AJOUTÉS AU PLANNING automatiquement
+    (au lancement et en revenant dans la fenêtre). Chaque fichier n'est
+    lu qu'une fois ; pour un même jour, l'édition la plus récente gagne.
+  • « Nouveau » (zone de danger, il faut taper EFFACER) vide le planning et
+    le reconstruit à partir du dossier. Une sauvegarde est faite avant.
+  • « Sauvegardes… » : liste des sauvegardes, « Restaurer » pour revenir à
+    l'une d'elles, « Créer une sauvegarde » à tout moment. Elles sont dans
+    %APPDATA%\PlanningPDF\sauvegardes (les 40 plus récentes sont gardées).
+  • Le programme les range par année puis par mois de début de période,
+    avec la date inversée en tête du nom (tri chronologique) :
+        commande\2026\10 - Octobre\2026-10-02 au 2026-10-13 - Commande.pdf
+  • Un PDF dont le nom contient « Contrairement » est renommé
+        Contrairement Commande allant du 29-09-2026 au 29-09-2026.pdf
+    (rangé lui aussi dans son dossier année / mois).
+  • Un bulletin sur deux mois (ex. 11/08 au 03/09) est rangé dans le mois
+    où il commence (08 - Août).
+  • Le rangement se fait au lancement du programme, en revenant dans sa
+    fenêtre, ou avec le bouton « Dossier commande » (qui ouvre aussi le
+    dossier dans l'explorateur).
+  • Deux bulletins de même période (éditions différentes) : le second
+    reçoit l'édition dans son nom, ex.
+        2026-10-02 au 2026-10-13 - Commande (édition du 2026-09-22 15h05).pdf
+  • Un fichier identique à un bulletin déjà rangé, ou un PDF qui n'est
+    pas un bulletin, est laissé tel quel (signalé par un message).
+  • « Ajouter une commande » s'ouvre dans ce dossier. Un bulletin ouvert depuis un
+    autre endroit y est COPIÉ et rangé automatiquement (l'original reste
+    en place ; pas de copie en double).
+
+CODES SPÉCIAUX (fichier codes.txt)
+  Le fichier codes.txt, à côté du programme (ou de PlanningPDF.exe),
+  dit comment afficher chaque code : nom affiché, couleur de la case,
+  et « gros » pour l'écrire en très gros au centre (comme RP).
+  • Bouton « Codes… » : éditeur intégré (liste colorée, Ajouter / Modifier /
+    Supprimer, palette de couleurs + « Autre… », aperçu, case « gros »), puis
+    « Enregistrer ». « Éditer en texte… » ouvre codes.txt dans l'éditeur de texte.
+  • Modifiez, enregistrez, revenez dans le programme : le planning est
+    mis à jour aussitôt. Inutile de refaire l'exe.
+  • Exemple de ligne :   CA ; CONGÉ ; jaune ; gros
+  • Couleurs : bleu, vert, violet, orange, jaune, rose, rouge, turquoise,
+    gris, beige, marron, blanc — ou R,V,B (ex. 255,240,200) ou #FFF0C8.
+  • Le changement s'applique aussi aux jours déjà enregistrés. Cliquez
+    « Mettre à jour le PDF » pour le reporter dans le PDF de sortie.
+  • Si codes.txt est supprimé, il est recréé avec les réglages d'origine.
+  • Si vous déplacez PlanningPDF.exe, déplacez codes.txt avec lui.
+  • Notice détaillée : NOTICE_CODES.txt
+
+POLICES
+  Le programme utilise les polices déjà présentes sur l'ordinateur.
+  Pour obtenir exactement le style du modèle, déposez dans le dossier
+  « polices » un fichier titre.ttf (police du mois, ex. Cormorant Garamond)
+  et/ou texte.ttf (jours et chiffres).
+
+
+NOUVEAUTÉS
+----------
+  • FISC retiré (fenêtres FISC et FISC 2, frais réels, barème, tableur,
+    menu Outils > Configuration), sur le PC et sur le téléphone, le temps de
+    repenser son fonctionnement. La version qui le contenait est gardée dans
+    « archive\version-avec-FISC-2026-10-01.zip ». Le fichier fisc.json n'est
+    plus utilisé (il peut rester dans le dossier).
+  • Jours fériés : teintés comme le week-end, nom écrit en haut à droite de
+    la case (Pâques, Ascension et Pentecôte calculés chaque année).
+  • Récapitulatif du mois (bandeau sous le mois) : heures de service
+    (de la prise à la fin de service), nuits, dimanches et fériés travaillés,
+    repos. Les jours de grève ne comptent pas comme travaillés.
+  • Changements : quand une nouvelle commande modifie des jours déjà connus,
+    une fenêtre les liste (ex. « Lun 09/03/2026 : DISPO Revin 08:00–16:45 → RP »).
+  • Agenda : Fichier > « Exporter vers l'agenda (.ics) » : un rendez-vous par
+    service, pour Outlook, Google Agenda ou l'agenda du téléphone.
+  • Téléphone : Fichier > « Envoyer vers le téléphone (.json) » (planning,
+    codes, thème) et « Reprendre une copie du téléphone » (ajoute au
+    planning les jours saisis sur le téléphone ; codes du PC inchangés).
+  • regles.json : règles communes au PC et au téléphone (codes de repos,
+    couleurs, thèmes). À garder à côté de planning_pdf.py ; il est
+    intégré dans PlanningPDF.exe.
+  • PlanningPDF.exe peut aussi être fabriqué par GitHub : voir
+    android-app\A_LIRE.txt (étape 5).
+
+
+VERSION MOBILE (TÉLÉPHONE, TABLETTE)
+------------------------------------
+  Le même programme existe pour téléphone et tablette, avec les mêmes règles
+  (lecture des bulletins, codes, nuits, thèmes, PDF) :
+  • « mobile\Planning Commandes (mobile).html » : version web (page claude.ai).
+  • « android-app » et « depot-github.zip » : application Android
+    indépendante (et exe du PC), fabriqués par GitHub (voir android-app\A_LIRE.txt).
+  • Les sources du mobile sont dans « mobile\src » ; « mobile\construire.py »
+    régénère la page web, l'appli Android et le zip.
+  • CLAUDE.md décrit comment faire chaque modification sur les deux versions.
+  Un PDF créé sur le téléphone se rouvre dans ce programme (et inversement).
+

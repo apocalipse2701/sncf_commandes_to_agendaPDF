@@ -29,5 +29,81 @@
                 <data android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
+
+        <!-- Widget « Planning de la semaine » -->
+        <receiver
+            android:name=".PlanningWidget"
+            android:exported="true"
+            android:label="@string/widget_nom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_semaine" />
+        </receiver>
+        <!-- Widget « Planning de la semaine (sans horaires) » -->
+        <receiver
+            android:name=".PlanningWidgetSimple"
+            android:exported="true"
+            android:label="@string/widget_simple_nom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_semaine_simple" />
+        </receiver>
+
+        <!-- Widget « Planning sur 15 jours » (deux pages) -->
+        <receiver
+            android:name=".PlanningWidgetQuinzaine"
+            android:exported="true"
+            android:label="@string/widget_quinzaine_nom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quinzaine" />
+        </receiver>
+        <!-- Widget « Planning de la semaine » aux couleurs de GrapheneOS -->
+        <receiver
+            android:name=".PlanningWidgetGos"
+            android:exported="true"
+            android:label="@string/widget_nom_gos">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_semaine_gos" />
+        </receiver>
+
+        <!-- Widget « Planning de la semaine (sans horaires) » aux couleurs de GrapheneOS -->
+        <receiver
+            android:name=".PlanningWidgetSimpleGos"
+            android:exported="true"
+            android:label="@string/widget_simple_nom_gos">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_semaine_simple_gos" />
+        </receiver>
+
+        <!-- Widget « Planning sur 15 jours » aux couleurs de GrapheneOS -->
+        <receiver
+            android:name=".PlanningWidgetQuinzaineGos"
+            android:exported="true"
+            android:label="@string/widget_quinzaine_nom_gos">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quinzaine_gos" />
+        </receiver>
     </application>
 </manifest>

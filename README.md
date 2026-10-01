@@ -1,6 +1,6 @@
 # Planning Commandes
 
-Application Android personnelle qui transforme les **bulletins de commande (PDF)** en **planning mensuel**, calcule le **FISC** (jours et kilomètres) et produit un **PDF A4** du planning.
+Application Android personnelle qui transforme les **bulletins de commande (PDF)** en **planning mensuel** et produit un **PDF A4** du planning.
 
 L'application est indépendante : elle ne demande pas de compte, marche **sans Internet**, et le planning reste **dans le téléphone**.
 
@@ -19,16 +19,33 @@ Configuration requise : Android 7.0 ou plus récent.
 
 ---
 
+## 💻 Programme PC (Windows)
+
+Le même dépôt fabrique aussi le programme PC **`PlanningPDF.exe`** (dossier `pc/`).
+
+1. Ouvrez la page **[Releases → exe](../../releases/tag/exe)** et téléchargez **`PlanningPDF.exe`**.
+2. Remplacez l'ancien `PlanningPDF.exe` dans votre dossier PlanningPDF (à côté de `codes.txt` et du dossier `commande`). Vos réglages et votre planning sont conservés.
+
+---
+
 ## ✨ Fonctions
 
 | Onglet | Ce qu'il fait |
 |---|---|
-| **Planning** | Mois en grille compacte ou en page A4. Couleurs et noms des codes, heures de prise et de fin de service, « DN » automatique le lendemain d'une série de nuits, filigrane GRÈVE. Glisser le doigt pour changer de mois ; toucher un jour pour son détail (notes, jour de grève, suppression d'une ligne). |
-| **Commandes** | Import d'un ou plusieurs bulletins PDF. Pour chaque jour, le bulletin le plus récent l'emporte ; les notes ajoutées à la main sont conservées. Liste des commandes importées, avec possibilité d'en retirer une. |
-| **FISC** | Jours S-GIV, M-GIV, N-GIV et travaux à Givet, jours par gare (Vireux, Monthermé, Nouzonville, Deville), en AUTO uniquement, grèves déduites. Total en km, graphiques mensuels et répartition, tableau mois par mois. Distances modifiables. |
-| **Réglages** | 7 thèmes de planning, éditeur des codes et couleurs (compatible `codes.txt`), copie de sauvegarde, remise à zéro protégée. |
+| **Planning** | Mois en grille compacte ou en page A4. Couleurs et noms des codes, heures de prise et de fin de service, « DN » automatique le lendemain d'une série de nuits, filigrane GRÈVE, **jours fériés**. Récapitulatif du mois : **heures de service, nuits, dimanches et fériés travaillés, repos**. Toucher un jour pour son détail (notes, jour de grève, suppression d'une ligne). |
+| **Commandes** | Import d'un ou plusieurs bulletins PDF. Pour chaque jour, le bulletin le plus récent l'emporte ; les notes ajoutées à la main sont conservées. **Liste des jours modifiés** par une nouvelle commande (ex. « Lun 09/03 : DISPO 08:00–16:45 → RP »). |
+| **Réglages** | 7 thèmes, éditeur des codes et couleurs, **export vers l'agenda** (.ics : agenda du téléphone, Google Agenda), copie de sauvegarde et **échange avec le PC**, rappel de sauvegarde, remise à zéro protégée. |
 
 Autres possibilités :
+
+- **Trois widgets** pour l'écran d'accueil, une ligne par jour avec le service en couleur :
+  - **Planning de la semaine** : aujourd'hui et les 6 jours suivants, avec les horaires ;
+  - **Planning de la semaine (sans horaires)** : les mêmes 7 jours, en plus gros, pour une lecture d'un coup d'œil ;
+  - **Planning sur 15 jours** : deux pages de 7 jours (aujourd'hui + 6 jours, puis la semaine suivante), le bouton **Suite ▶ / ◀ Retour** change de page.
+
+  Chacun existe aussi **aux couleurs de GrapheneOS**, toujours en sombre (anthracite, blanc cassé, bleu) : « … · GrapheneOS » dans la liste des widgets.
+
+  Appui long sur l'écran d'accueil → **Widgets** → **Planning Commandes**. Ils se mettent à jour à chaque changement du planning et passent au jour suivant tout seuls ; les toucher ouvre l'application.
 
 - **Bouton PDF** : enregistrer le PDF (une page A4 paysage par mois) ou **l'imprimer** directement.
 - **« Ouvrir avec » / « Partager »** un bulletin PDF depuis un mail ou l'appli Fichiers : il est importé directement.
@@ -56,7 +73,9 @@ Autres possibilités :
 
 ## 🛠️ Fabrication (pour information)
 
-L'APK est fabriqué par GitHub Actions (`.github/workflows/apk.yml`) à chaque envoi de fichiers :
+L'APK et l'exe sont fabriqués par GitHub Actions (`.github/workflows/apk.yml`) à chaque envoi de fichiers.
+L'exe Windows : Python 3.12 + PyInstaller à partir de `pc/planning_pdf.py` et `pc/regles.json`, publié dans la release `exe`.
+L'APK :
 
 - Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 24
 - le numéro de version suit le numéro de fabrication GitHub
@@ -75,9 +94,12 @@ app/
     ├── java/fr/planning/commandes/
     │   └── MainActivity.java         fenêtre de l'appli, choix de fichiers, enregistrement, impression
     ├── assets/
-    │   ├── index.html                l'application (lecture des bulletins, planning, FISC, réglages)
+    │   ├── index.html                l'application (lecture des bulletins, planning, réglages)
     │   └── lib/                      pdf.js (lecture des PDF) et pdf-lib (création des PDF)
     └── res/                          icône et thèmes clair / sombre
+pc/
+├── planning_pdf.py                   programme PC
+└── regles.json                       règles communes PC / mobile (codes de repos, thèmes, couleurs)
 ```
 
 Bibliothèques incluses : [pdf.js](https://github.com/mozilla/pdf.js) (Apache 2.0), [pdf-lib](https://github.com/Hopding/pdf-lib) (MIT), [AndroidX WebKit](https://developer.android.com/jetpack/androidx/releases/webkit) (Apache 2.0).

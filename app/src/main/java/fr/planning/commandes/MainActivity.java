@@ -252,6 +252,14 @@ public class MainActivity extends Activity {
 
     /** Fonctions appelées par la page : window.Android.enregistrer(…) et window.Android.imprimer(…). */
     private class Passerelle {
+        /** Jours à afficher dans les widgets (7 jours, 7 jours sans horaires, 15 jours) : JSON préparé par la page. */
+        @JavascriptInterface
+        public void majWidget(final String json) {
+            if (json == null || json.length() > 500000) return;
+            getSharedPreferences(WidgetBase.PREFS, MODE_PRIVATE).edit().putString(WidgetBase.CLE, json).apply();
+            WidgetBase.majTous(MainActivity.this);
+        }
+
         @JavascriptInterface
         public void enregistrer(final String id, final String nom, final String type, final String base64) {
             runOnUiThread(() -> {
