@@ -335,6 +335,19 @@ RVN302T    ; [date] Vireux ;
 
 COULEURS = _tuples(REGLES["couleurs"])   # voir regles.json
 
+# codes dont la couleur de fond est imposée (regles.json, « fond_bloque ») : repos, congés, fêtes…
+_FB = REGLES["fond_bloque"]
+FOND_BLOQUE = tuple(COULEURS[_FB["couleur"]])
+CODES_FOND_BLOQUE = frozenset(c.upper() for c in list(_FB["codes"]) + list(CODES_REPOS))
+_MOTIF_FOND_BLOQUE = re.compile(_FB["motif"], re.I) if _FB.get("motif") else None
+
+
+def fond_bloque(code):
+    """Vrai si la couleur de fond de ce code est imposée (non modifiable)."""
+    c = (code or "").strip().upper()
+    return bool(c) and (c in CODES_FOND_BLOQUE or bool(_MOTIF_FOND_BLOQUE and _MOTIF_FOND_BLOQUE.match(c)))
+
+
 # code du bulletin (MAJUSCULES) -> {"nom": str, "fond": (r,v,b)|None, "gros": bool}
 CODES = {}
 _codes_etat = {"mtime": None, "erreurs": []}
@@ -371,6 +384,8 @@ def lire_codes(texte):
             nom = cols[1] if len(cols) > 1 and cols[1] else cols[0]
             fond = _couleur(cols[2]) if len(cols) > 2 else None
             gros = len(cols) > 3 and cols[3].lower() in ("gros", "oui", "x", "1")
+            if fond_bloque(cols[0]):
+                fond = FOND_BLOQUE                       # couleur imposée, quoi qu'en dise codes.txt
             codes[cols[0].upper()] = {"nom": nom, "fond": fond, "gros": gros}
         except Exception as ex:
             erreurs.append(f"ligne {n} : {ex}")
@@ -451,6 +466,8 @@ def ecrire_codes_fichier(lignes):
     entete = "".join(l + "\n" for l in CODES_TXT_DEFAUT.splitlines() if l.startswith("#"))
     corps = []
     for code, nom, fond, gros in lignes:
+        if fond_bloque(code):
+            fond = FOND_BLOQUE
         cols = [f"{code:<10}", f"{nom:<16}", f"{nom_couleur(fond):<10}"]
         if gros:
             cols.append("gros")
@@ -469,7 +486,10 @@ def infos_code(code):
     c = code.upper()
     if c in CODES:
         return CODES[c]
-    return next((v for v in CODES.values() if v["nom"].upper() == c), None)
+    v = next((v for v in CODES.values() if v["nom"].upper() == c), None)
+    if v is None and fond_bloque(c):                     # absent de codes.txt : couleur imposée quand même
+        v = {"nom": code.strip(), "fond": FOND_BLOQUE, "gros": False}
+    return v
 
 
 def code_affiche(code):
@@ -2948,7 +2968,8 @@ def lancer_interface():
                 for k, (code, nom, fond, gros) in enumerate(lignes):
                     tag = f"t{k}"
                     arbre.insert("", "end", iid=str(k), tags=(tag,),
-                                 values=(code, nom, nom_couleur(fond) or "—", "oui" if gros else ""))
+                                 values=(code, nom, (nom_couleur(fond) or "—")
+                                         + (" (fixe)" if fond_bloque(code) else ""), "oui" if gros else ""))
                     if fond:
                         sombre = (0.299 * fond[0] + 0.587 * fond[1] + 0.114 * fond[2]) < 140
                         arbre.tag_configure(tag, background=hexa(fond),
@@ -2988,6 +3009,8 @@ def lancer_interface():
                 pastilles = {}
 
                 def choisir(rvb):
+                    if fond_bloque(v_code.get()):            # couleur imposée : pas de choix
+                        return
                     v_coul.set("" if rvb is None else "#%02X%02X%02X" % tuple(rvb))
 
                 for r_, rangee in enumerate(palette_couleurs()):
@@ -3012,10 +3035,30 @@ def lancer_interface():
                     if rvb:
                         choisir(tuple(int(x) for x in rvb))
 
-                ttk.Button(cote, text="Aucune", command=lambda: choisir(None)).pack(anchor="w", fill="x")
-                ttk.Button(cote, text="Autre…", command=autre_couleur).pack(anchor="w", fill="x", pady=(4, 0))
+                b_aucune = ttk.Button(cote, text="Aucune", command=lambda: choisir(None))
+                b_aucune.pack(anchor="w", fill="x")
+                b_autre = ttk.Button(cote, text="Autre…", command=autre_couleur)
+                b_autre.pack(anchor="w", fill="x", pady=(4, 0))
+                note_fixe = ttk.Label(c2, foreground="#8a5a00", text=(
+                    "Couleur fixe : les repos, congés et fêtes (C, AH, RP, RPP, F, F0…F9…)\n"
+                    "sont toujours en orange."))
+
+                def verrou(*_):
+                    """Code à couleur imposée : orange, palette et boutons désactivés."""
+                    bloque = fond_bloque(v_code.get())
+                    if bloque and v_coul.get() != nom_couleur(FOND_BLOQUE):
+                        v_coul.set(nom_couleur(FOND_BLOQUE))
+                    for b_ in (b_aucune, b_autre):
+                        b_.state(["disabled"] if bloque else ["!disabled"])
+                    for p_ in pastilles.values():
+                        p_.config(cursor="arrow" if bloque else "hand2")
+                    if bloque:
+                        note_fixe.grid(row=7, column=0, columnspan=3, sticky="w", pady=(6, 0))
+                    else:
+                        note_fixe.grid_remove()
+
                 ttk.Checkbutton(c2, text="Écrire en très gros au centre de la case (comme RP)",
-                                variable=v_gros).grid(row=7, column=0, columnspan=3, sticky="w", pady=(10, 0))
+                                variable=v_gros).grid(row=8, column=0, columnspan=3, sticky="w", pady=(10, 0))
 
                 def maj_apercu(*_):
                     t = v_coul.get().strip()
@@ -3036,6 +3079,8 @@ def lancer_interface():
 
                 for v in (v_coul, v_nom, v_code, v_gros):
                     v.trace_add("write", maj_apercu)
+                v_code.trace_add("write", verrou)
+                verrou()
                 maj_apercu()
 
                 def valider():
@@ -3050,7 +3095,7 @@ def lancer_interface():
                         messagebox.showwarning("Code", f"Le code {c} existe déjà dans la liste.", parent=f2)
                         return
                     n = v_nom.get().strip().replace(";", ",") or c
-                    ligne = [c, n, choix_fond["rvb"], v_gros.get()]
+                    ligne = [c, n, FOND_BLOQUE if fond_bloque(c) else choix_fond["rvb"], v_gros.get()]
                     if k is None:
                         lignes.append(ligne)
                         pos = len(lignes) - 1
@@ -3062,7 +3107,7 @@ def lancer_interface():
                     remplir(pos)
 
                 b2 = ttk.Frame(c2, padding=(0, 12, 0, 0))
-                b2.grid(row=8, column=0, columnspan=3, sticky="we")
+                b2.grid(row=9, column=0, columnspan=3, sticky="we")
                 ttk.Button(b2, text="OK", command=valider).pack(side="left")
                 ttk.Button(b2, text="Annuler", command=f2.destroy).pack(side="right")
                 f2.bind("<Return>", lambda e: valider())

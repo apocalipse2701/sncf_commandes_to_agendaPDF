@@ -31,6 +31,7 @@ import java.util.Locale;
  *   PlanningWidgetReglable  « Planning » : un seul widget réglé à la pose (style, horaires, 7 ou 14 jours),
  *                           qui s'adapte à sa taille (horaires masqués s'il est étroit, 4 lignes s'il est bas)
  *   PlanningWidgetProchain  « Prochain service » (mini-widget 2 × 1)
+ *   PlanningWidgetCalendrier « Calendrier du mois » : le mois en grille, style de la page du PDF (DessinCalendrier)
  * Anciens widgets, masqués de la liste (Android 12+) mais qui continuent de marcher là où ils sont posés :
  *   PlanningWidget, PlanningWidgetSimple, PlanningWidgetQuinzaine et leurs versions GrapheneOS (*Gos).
  *
@@ -102,7 +103,7 @@ public abstract class WidgetBase extends AppWidgetProvider {
 
     /** Tous les widgets, pour les mettre à jour ensemble. */
     static WidgetBase[] tous() {
-        return new WidgetBase[]{new PlanningWidgetReglable(), new PlanningWidgetProchain(),
+        return new WidgetBase[]{new PlanningWidgetReglable(), new PlanningWidgetProchain(), new PlanningWidgetCalendrier(),
                 new PlanningWidget(), new PlanningWidgetSimple(), new PlanningWidgetQuinzaine(),
                 new PlanningWidgetGos(), new PlanningWidgetSimpleGos(), new PlanningWidgetQuinzaineGos()};
     }

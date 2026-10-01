@@ -135,7 +135,10 @@ CODES SPÉCIAUX (fichier codes.txt)
     « Enregistrer ». « Éditer en texte… » ouvre codes.txt dans l'éditeur de texte.
   • Modifiez, enregistrez, revenez dans le programme : le planning est
     mis à jour aussitôt. Inutile de refaire l'exe.
-  • Exemple de ligne :   CA ; CONGÉ ; jaune ; gros
+  • Exemple de ligne :   ZREVIN ; DISPO Revin ; jaune ; gros
+  • Couleur fixe : C, AH, RP, RPP, F, F0…F9, FV et les autres repos/congés
+    (RU, RQ, RN, RM, CA, CET, JF, VT, RS) sont toujours sur fond orange,
+    même absents de codes.txt ; leur palette est grisée dans l'éditeur.
   • Couleurs : bleu, vert, violet, orange, jaune, rose, rouge, turquoise,
     gris, beige, marron, blanc — ou R,V,B (ex. 255,240,200) ou #FFF0C8.
   • Le changement s'applique aussi aux jours déjà enregistrés. Cliquez

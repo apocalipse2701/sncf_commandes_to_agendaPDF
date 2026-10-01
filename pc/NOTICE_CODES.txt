@@ -109,6 +109,12 @@ un message et ignorée ; le reste continue de fonctionner.
 Un changement de nom ou de couleur s'applique aussi aux jours déjà
 enregistrés, pas seulement aux prochains bulletins.
 
+Couleur fixe : les repos, congés et fêtes ont TOUJOURS un fond orange,
+quelle que soit la couleur écrite dans codes.txt, et même s'ils n'y
+figurent pas : C, AH, RP, RPP, F, F0 à F9, FV, RU, RQ, RN, RM, CA, CET,
+JF, VT, RS. Dans l'éditeur, leur palette est grisée. On peut toujours
+changer leur nom et l'option « gros ». (Liste dans regles.json, « fond_bloque ».)
+
 
 À SAVOIR
 --------

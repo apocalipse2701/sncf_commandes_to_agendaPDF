@@ -1,6 +1,12 @@
 {
  "_lisezmoi": "Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.",
  "codes_repos": ["RP", "RU", "RQ", "CA", "RN", "RM", "CET", "JF", "VT", "RS"],
+ "fond_bloque": {
+  "_lisezmoi": "Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).",
+  "couleur": "orange",
+  "codes": ["C", "AH", "RP", "RPP", "F", "FV"],
+  "motif": "^F[0-9]$"
+ },
  "couleurs": {
   "bleu": [214, 230, 250],
   "vert": [215, 240, 215],

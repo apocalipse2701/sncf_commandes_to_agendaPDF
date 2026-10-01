@@ -137,6 +137,19 @@
                 android:resource="@xml/widget_prochain" />
         </receiver>
 
+        <!-- Widget « Calendrier du mois » (style de la page du PDF) -->
+        <receiver
+            android:name=".PlanningWidgetCalendrier"
+            android:exported="true"
+            android:label="@string/widget_calendrier_nom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_calendrier" />
+        </receiver>
+
         <!-- Réglages d'un widget (à la pose, et appui long → Réglages) -->
         <activity
             android:name=".WidgetReglages"

@@ -150,6 +150,8 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 .palette { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
 .palette button { aspect-ratio: 1; border-radius: 6px; border: 1px solid rgba(0,0,0,.15); padding: 0; min-width: 0; }
 .palette button[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 1px; }
+.palette.verrouillee, .rangee.verrouillee { opacity: .35; pointer-events: none; }
+.note-fixe { margin: 8px 0 0; }
 
 /* barre d'onglets */
 .onglets { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
@@ -300,7 +302,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <div id="couche"></div>
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
-window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}}};
+window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}}};
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -597,6 +599,16 @@ PGVRVSD    ; [date]
     throw new Error(`couleur inconnue « ${txt} »`);
   }
 
+  // codes dont la couleur de fond est imposée (regles.json, « fond_bloque ») : repos, congés, fêtes…
+  const FB = REGLES.fond_bloque;
+  const FOND_BLOQUE = COULEURS[FB.couleur].slice();
+  const CODES_FOND_BLOQUE = new Set(FB.codes.concat(CODES_REPOS).map(c => c.toUpperCase()));
+  const MOTIF_FOND_BLOQUE = FB.motif ? new RegExp(FB.motif, "i") : null;
+  function fondBloque(code) {
+    const c = (code || "").trim().toUpperCase();
+    return !!c && (CODES_FOND_BLOQUE.has(c) || !!(MOTIF_FOND_BLOQUE && MOTIF_FOND_BLOQUE.test(c)));
+  }
+
   function lireCodes(texte) {
     const codes = {}, ordre = [], erreurs = [];
     (texte || "").replace(/^﻿/, "").split(/\r?\n/).forEach((l, n) => {
@@ -606,8 +618,9 @@ PGVRVSD    ; [date]
       try {
         if (!c[0]) throw new Error("code manquant");
         const nom = c[1] ? c[1] : c[0];
-        const fond = c.length > 2 ? couleur(c[2]) : null;
+        let fond = c.length > 2 ? couleur(c[2]) : null;
         const gros = c.length > 3 && ["gros", "oui", "x", "1"].includes(c[3].toLowerCase());
+        if (fondBloque(c[0])) fond = FOND_BLOQUE.slice();   // couleur imposée, quoi qu'en dise codes.txt
         const k = c[0].toUpperCase();
         if (!(k in codes)) ordre.push(k);
         codes[k] = { code: c[0], nom, fond, gros };
@@ -626,7 +639,8 @@ PGVRVSD    ; [date]
 
   function ecrireCodes(liste) {             // [{code, nom, fond, gros}]
     return ENTETE_CODES + liste.map(c => {
-      const cols = [c.code.padEnd(10), c.nom.padEnd(16), nomCouleur(c.fond).padEnd(10)];
+      const fond = fondBloque(c.code) ? FOND_BLOQUE : c.fond;
+      const cols = [c.code.padEnd(10), c.nom.padEnd(16), nomCouleur(fond).padEnd(10)];
       if (c.gros) cols.push("gros");
       return cols.join(" ; ").trimEnd();
     }).join("\n") + "\n";
@@ -662,7 +676,10 @@ PGVRVSD    ; [date]
     if (!code) return null;
     const c = code.toUpperCase();
     if (CODES[c]) return CODES[c];
-    return Object.values(CODES).find(v => v.nom.toUpperCase() === c) || null;
+    const v = Object.values(CODES).find(v => v.nom.toUpperCase() === c);
+    if (v) return v;
+    // absent de codes.txt : couleur imposée quand même
+    return fondBloque(c) ? { code: code.trim(), nom: code.trim(), fond: FOND_BLOQUE.slice(), gros: false } : null;
   }
   const codeAffiche = code => { const i = infosCode(code); return i ? i.nom : code; };
   function nomAffiche(sv) {
@@ -926,7 +943,7 @@ PGVRVSD    ; [date]
     return L.flatMap(icsPlier).join("\r\n") + "\r\n";
   }
 
-  const api = { JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, cap, couleur, lireCodes,
+  const api = { JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, FOND_BLOQUE, fondBloque, cap, couleur, lireCodes,
     nomCouleur, ecrireCodes, paletteCouleurs, reglerCodes, infosCode, codeAffiche, nomAffiche, iso, decaler,
     jourSemaine, semainesDuMois, aujourdhui, dateLongue, CODE_DN, estNuit, service, avecDn, pourAffichage,
     lignesHoraires, planningVide, integrer, fusionner, versDict, REGLES, paques, joursFeries, nomFerie, dureeService,
@@ -1173,7 +1190,36 @@ PGVRVSD    ; [date]
     ctx.restore();
   }
 
-  const api = { dessiner, THEMES, palette, rgb, lum };
+  /** Contenu d'une case, comme dessiner() l'écrit (pour le widget « Calendrier », qui le dessine en Java) :
+   *  fond, férié, service « spécial » à côté du numéro, lignes [texte, style, rôle] et texte en gros.
+   *  style : g = gras, n = normal (libellé), h = horaires ; rôle : t = texte, r = repos, d = doux.
+   *  jours = M.pourAffichage(...). */
+  function contenuJour(jours, jour) {
+    const infos = sv => M.infosCode(sv.code);
+    const services = jours[jour] || [];
+    let fond = null;
+    for (const sv of services) { const i = infos(sv); if (i && i.fond) { fond = i.fond; break; } }
+    const special = services.find(sv => sv.code && !(infos(sv) || {}).gros);
+    const gros = services.find(sv => { const i = infos(sv); return i && i.gros; });
+    const lignes = [];
+    for (const sv of services) {
+      if (sv === gros) continue;
+      const role = M.CODES_REPOS.includes(M.codeAffiche(sv.code).toUpperCase()) ? "r" : "t";
+      const code = sv === special ? "" : M.nomAffiche(sv);
+      if (code) lignes.push([code, "g", role]);
+      M.lignesHoraires(sv.horaires).forEach(h => lignes.push([h, "h", role]));
+      if (sv.source === "manuel" && sv.libelle) lignes.push([sv.libelle, "n", "d"]);
+    }
+    let txtGros = "";
+    if (gros) {
+      txtGros = M.nomAffiche(gros);
+      if (gros.horaires) txtGros += "\n" + gros.horaires.replace(/ \/ /g, "\n");
+    }
+    return { fond, ferie: M.nomFerie(jour) || "", special: special ? M.nomAffiche(special) : "",
+      parDate: !!special && /\[date\]/i.test((infos(special) || {}).nom || ""), lignes, gros: txtGros, vide: !services.length };
+  }
+
+  const api = { dessiner, contenuJour, THEMES, palette, rgb, lum };
   racine.Rendu = api;
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -1721,7 +1767,32 @@ PGVRVSD    ; [date]
       if (x.fond) { j.f = hex(x.fond); j.s = fonce(x.fond) ? 1 : 0; }
       jours[d] = j;
     }
-    const texte = JSON.stringify({ du, jours });
+    // widget « Calendrier » (style du PDF) : mois précédent → mois + 2, avec les couleurs du thème du planning
+    const cal = { t: {}, c: {}, j: {} };
+    for (const [cle, P] of [["t", R.palette(E.theme)], ["c", R.palette("Classique")]]) {
+      for (const [k, v] of Object.entries(P)) if (Array.isArray(v)) cal[cle][k] = hex(v);
+    }
+    const [an, mo] = du.split("-").map(Number);
+    const debutCal = new Date(Date.UTC(an, mo - 2, 1)).toISOString().slice(0, 10);   // 1er du mois précédent
+    const finCal = new Date(Date.UTC(an, mo + 2, 0)).toISOString().slice(0, 10);
+    for (let d = debutCal; d <= finCal; d = M.decaler(d, 1)) {
+      const x = R.contenuJour(aff, d), g = greves.has(d) ? 1 : 0;
+      if (x.vide && !x.ferie && !g) continue;
+      const j = {};
+      if (x.fond) j.f = hex(x.fond);
+      if (x.ferie) j.fe = x.ferie;
+      if (x.special) j.sp = x.special;
+      if (x.parDate) j.pd = 1;
+      if (x.lignes.length) j.l = x.lignes;
+      if (x.gros) j.gr = x.gros;
+      if (g) j.g = 1;
+      // horaires courts (PS–FS) : affichés à la place des lignes détaillées quand la case est petite
+      const ic = infosCase(d, aff), pr = ic.special || ic.gros || ic.services.find(sv => sv.code);
+      const hc = (ic.heure || (pr && pr !== ic.special ? M.horaireCourt(pr) : "")).replace(/\s*–\s*/g, "–");
+      if (hc) j.hc = hc;
+      cal.j[d] = j;
+    }
+    const texte = JSON.stringify({ du, jours, cal });
     if (texte === dernierWidget) return;
     dernierWidget = texte;
     try { window.Android.majWidget(texte); } catch (e) { /* widget indisponible */ }
@@ -1876,6 +1947,7 @@ PGVRVSD    ; [date]
     const boutons = [];
     for (const ligneC of M.paletteCouleurs()) for (const col of ligneC) {
       const b = el("button", { type: "button", "aria-label": M.nomCouleur(col), "aria-pressed": !!(c.fond && c.fond.join() === col.join()), style: `background:${rgb(col)}` });
+      b.dataset.col = col.join();
       b.addEventListener("click", () => { c.fond = col; boutons.forEach(x => x.setAttribute("aria-pressed", x === b)); majApercu(); });
       boutons.push(b); pal.append(b);
     }
@@ -1887,13 +1959,28 @@ PGVRVSD    ; [date]
       nommees.append(b);
     }
     nommees.append(el("button", { type: "button", class: "btn fantome", onclick: () => { c.fond = null; boutons.forEach(x => x.setAttribute("aria-pressed", "false")); majApercu(); } }, "Sans couleur"));
+    // repos, congés, fêtes (C, AH, RP, RPP, F, F0…F9…) : couleur imposée, palette désactivée
+    const noteFixe = el("p", { class: "discret note-fixe", text: "Couleur fixe : les repos, congés et fêtes (C, AH, RP, RPP, F, F0…F9…) sont toujours en orange." });
+    let fondLibre = c.fond;
+    const verrou = () => {
+      const bloque = M.fondBloque(code.value);
+      if (bloque && !(c.fond && c.fond.join() === M.FOND_BLOQUE.join())) { fondLibre = c.fond; c.fond = M.FOND_BLOQUE.slice(); }
+      else if (!bloque && pal.classList.contains("verrouillee")) c.fond = fondLibre;
+      pal.classList.toggle("verrouillee", bloque); nommees.classList.toggle("verrouillee", bloque);
+      [...pal.children, ...nommees.children].forEach(b => { b.disabled = bloque; });
+      boutons.forEach(x => x.setAttribute("aria-pressed", !!(c.fond && x.dataset.col === c.fond.join())));
+      noteFixe.hidden = !bloque;
+      majApercu();
+    };
+    code.addEventListener("input", verrou);
+    verrou();
     const form = el("form", {},
       el("div", { class: "grille-champs" },
         el("label", { class: "champ", for: "ed-code" }, "Code du bulletin", code),
         el("label", { class: "champ", for: "ed-nom" }, "Nom affiché", nom)),
       el("p", { class: "discret", style: "margin:6px 0 12px", text: "[date] affiche l'intitulé écrit sous la date dans le bulletin (ex. « [date] Vireux »)." }),
       el("div", { class: "rangee", style: "margin-bottom:8px" }, apercu, el("b", { text: "Couleur de la case" })),
-      pal, nommees,
+      pal, nommees, noteFixe,
       el("label", { class: "case-a-cocher", style: "margin:14px 0" }, gros, "Écrire le nom en très gros au centre de la case (comme RP)"),
       el("div", { class: "rangee" },
         el("button", { class: "btn accent", type: "submit" }, "Enregistrer"),
@@ -1904,7 +1991,7 @@ PGVRVSD    ; [date]
       const k = code.value.trim();
       if (!k || k.includes(";")) { toast("Indiquez le code tel qu'il est écrit dans la colonne Utilisation."); return; }
       const n = nom.value.trim().replace(/;/g, ",") || k;
-      const entree = { code: k, nom: n, fond: c.fond, gros: gros.checked };
+      const entree = { code: k, nom: n, fond: M.fondBloque(k) ? M.FOND_BLOQUE.slice() : c.fond, gros: gros.checked };
       let res;
       if (nouveau) res = liste.filter(x => x.code.toUpperCase() !== k.toUpperCase()).concat([entree]);
       else res = liste.map((x, j) => j === i ? entree : x).filter((x, j) => j === i || x.code.toUpperCase() !== k.toUpperCase());

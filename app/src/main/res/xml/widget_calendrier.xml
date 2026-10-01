@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget « Calendrier » : le mois en grille, style de la page du PDF -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="180dp"
+    android:minResizeWidth="200dp"
+    android:minResizeHeight="150dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="3600000"
+    android:initialLayout="@layout/widget_calendrier"
+    android:previewImage="@drawable/widget_apercu_calendrier"
+    android:description="@string/widget_calendrier_description"
+    android:widgetCategory="home_screen" />

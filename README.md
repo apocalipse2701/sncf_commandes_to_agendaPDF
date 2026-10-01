@@ -51,6 +51,10 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 
 *« Planning » (style d'origine ou GrapheneOS, 7 ou 14 jours) et « Prochain service » (aperçus dessinés).*
 
+<img src="docs/captures/widget-calendrier.png" alt="Widget Calendrier du mois, en thèmes Classique, Bleu moderne et Sombre" width="820">
+
+*« Calendrier du mois » : la page du PDF sur l'écran d'accueil, au thème du planning (ici Classique, Bleu moderne, Sombre).*
+
 ---
 
 ## ✨ Ce que fait l'application
@@ -74,6 +78,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 **Au quotidien sur Android**
 - **Apparence GrapheneOS** (Réglages) : toute l'application aux couleurs de GrapheneOS (anthracite, blanc cassé, bleu, toujours en sombre), barres du téléphone comprises. Sinon, elle suit le thème clair ou sombre du téléphone.
 - **Widget « Planning »** : une ligne par jour, le service en couleur ; réglé à la pose (style d'origine ou **GrapheneOS**, horaires, **7 ou 14 jours**), il s'adapte à sa taille. Toucher un jour l'ouvre dans l'application.
+- **Widget « Calendrier du mois »** : la grille du PDF sur l'écran d'accueil, au thème du planning, jour J encadré, **‹ ›** pour changer de mois.
 - **Widget « Prochain service »** (2 × 1) : « Demain · 04:40–12:40 » et le service en couleur ; une nuit reste « En cours » jusqu'au matin.
 - Les widgets changent de jour tout seuls, même téléphone en veille ou après un redémarrage.
 
