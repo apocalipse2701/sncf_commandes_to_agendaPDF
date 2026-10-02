@@ -33,7 +33,7 @@ final class DessinCalendrier {
     // Mois : 6 lignes de 130 ; 15 jours : 3 lignes de 260 (widget_calendrier_15.xml).
     static final float H_TITRE = 130f, H_ENTETE = 56f, H_GRILLE = 780f, H_BAS = 34f;  // 130 + 56 + 780 + 34 = 1000
     static final float MARGE = 25f, COL = 950f / 7f;                                    // 25 + 7 × COL + 25 = 1000
-    static final int NB_LIGNES = 6, LIGNES_15 = 3;
+    static final int NB_LIGNES = 6, LIGNES_15 = 2;
     static final String[] MOIS_COURTS = {"janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
             "oct.", "nov.", "déc."};
 
@@ -62,7 +62,7 @@ final class DessinCalendrier {
         return new Periode(cases(annee, mois), NB_LIGNES, MOIS[mois - 1], String.valueOf(annee), false);
     }
 
-    /** 15 jours : 3 semaines complètes à partir du lundi « lundi ». */
+    /** « 15 jours » : 2 semaines complètes (2 lignes) à partir du lundi « lundi ». */
     static Periode quinzaine(Calendar lundi) {
         String[] r = new String[7 * LIGNES_15];
         Calendar d = (Calendar) lundi.clone();
@@ -310,6 +310,7 @@ final class DessinCalendrier {
         float hEntete = yGrille - yTrait;
         // unité de taille des textes : celle de la page A4 qui aurait des cases de cette taille
         float u = Math.min(col / 0.13429f, lig / 0.0965f);
+        if (v.quinzaine) u = Math.min(col / 0.10f, lig / 0.0965f);   // cases hautes : textes plus grands
         float finT = Math.max(1f, 0.5f * dp), ep = Math.max(1.5f, 1.1f * dp);
 
         String[] cases = v.cases;
@@ -415,14 +416,14 @@ final class DessinCalendrier {
             if (j == null) continue;
             cv.save();
             cv.clipRect(cx0, cy0, cx0 + col, cy1);           // rien ne déborde sur la case voisine
-            dessinerCase(j, cx0, cy0, cy1, col, u, base, numTxt, tNum, largFerie, TXT, DOUX, REPOS, cGros);
+            dessinerCase(j, cx0, cy0, cy1, col, u, base, numTxt, tNum, largFerie, TXT, DOUX, REPOS, cGros, v.quinzaine);
             cv.restore();
         }
         bordures(W, H, dp, x0, col, yGrille, lig, cases, jours, aujourdhui, titre);
     }
 
     private void dessinerCase(JSONObject j, float cx0, float cy0, float cy1, float col, float u, float base, String numTxt,
-                              float tNum, float largFerie, int TXT, int DOUX, int REPOS, int cGros) {
+                              float tNum, float largFerie, int TXT, int DOUX, int REPOS, int cGros, boolean sansAcheminements) {
         float pad = u * 0.007f, ascNum = asc(serif, tNum);
         {
             // service « spécial » : à côté du numéro, sur une ou deux lignes
@@ -471,12 +472,12 @@ final class DessinCalendrier {
 
             // lignes (codes, horaires, libellés) : on réduit jusqu'à ce que tout tienne ;
             // si les lignes détaillées ne tiennent pas, horaires courts à la place (« hc »)
-            float taille = u * 0.0145f;
+            float taille = u * (sansAcheminements ? 0.02f : 0.0145f);
             List<Object[]> lignes;
             float hL;
             boolean compact = false;
             while (true) {
-                lignes = composer(l, compact ? j.optString("hc", "") : null, taille, largeur, TXT, DOUX, REPOS);
+                lignes = composer(l, compact ? j.optString("hc", "") : null, taille, largeur, TXT, DOUX, REPOS, sansAcheminements);
                 hL = 0.93f * reel(taille) + reel(taille) * 0.32f;
                 boolean tient = lignes.size() * hL <= hautDispo;
                 for (Object[] x : lignes) if (larg((String) x[0], (Typeface) x[1], (Float) x[2]) > largeur) tient = false;
@@ -484,7 +485,7 @@ final class DessinCalendrier {
                 if (taille <= u * 0.006f || reel(taille) > taille) {
                     if (compact) break;
                     compact = true;                                   // on recommence en version courte
-                    taille = u * 0.0145f;
+                    taille = u * (sansAcheminements ? 0.02f : 0.0145f);
                     continue;
                 }
                 taille *= 0.96f;
@@ -522,16 +523,29 @@ final class DessinCalendrier {
     }
 
     /** Lignes d'une case : [texte, police, taille, couleur]. horairesCourts != null : version courte. */
-    private List<Object[]> composer(JSONArray l, String horairesCourts, float taille, float largeur, int TXT, int DOUX, int REPOS) {
+    private List<Object[]> composer(JSONArray l, String horairesCourts, float taille, float largeur, int TXT, int DOUX, int REPOS,
+                                    boolean sansAcheminements) {
         List<Object[]> lignes = new ArrayList<>();
         boolean hcMis = false;
+        // « 15 jours » : pas d'acheminements (AUTO…), seulement la prise et la fin de service, sur deux lignes
+        boolean psFs = false;
+        if (sansAcheminements && l != null) {
+            for (int m = 0; m < l.length(); m++) {
+                JSONArray x = l.optJSONArray(m);
+                String s = x == null ? "" : x.optString(0, "");
+                if (x != null && x.optString(1, "").equals("h") && (s.startsWith("PS ") || s.startsWith("FS "))) psFs = true;
+            }
+        }
         if (l != null) {
             for (int m = 0; m < l.length(); m++) {
                 JSONArray x = l.optJSONArray(m);
                 if (x == null) continue;
                 String t = x.optString(0, ""), style = x.optString(1, "g"), role = x.optString(2, "t");
                 int coul = role.equals("r") ? REPOS : role.equals("d") ? DOUX : TXT;
-                if (style.equals("h")) {
+                if (style.equals("h") && psFs && horairesCourts == null) {
+                    if (!t.startsWith("PS ") && !t.startsWith("FS ")) continue;           // acheminement
+                    for (String s : t.split("\\s+(?=FS )")) lignes.add(new Object[]{s.trim(), sansGras, taille, coul});
+                } else if (style.equals("h")) {
                     if (horairesCourts == null) lignes.add(new Object[]{t, sansGras, taille, coul});
                     else if (!hcMis && !horairesCourts.isEmpty()) {
                         lignes.add(new Object[]{horairesCourts, sansGras, taille, coul});

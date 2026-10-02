@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Widget « Calendrier » (style du PDF). Fichier produit par un générateur : les poids (millièmes) doivent
-     rester ceux de DessinCalendrier (H_TITRE 130, H_ENTETE 56, H_GRILLE 780 = 6 lignes de 130 (mois) ou 3 lignes de 260 (15 jours, widget_calendrier_15.xml), H_BAS 34 ; MARGE 25, COL 950/7)
+     rester ceux de DessinCalendrier (H_TITRE 130, H_ENTETE 56, H_GRILLE 780 = 6 lignes de 130 (mois) ou 2 lignes de 390 (« 15 jours », widget_calendrier_15.xml), H_BAS 34 ; MARGE 25, COL 950/7)
      pour que les cases touchables tombent sur les cases dessinées. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_racine"

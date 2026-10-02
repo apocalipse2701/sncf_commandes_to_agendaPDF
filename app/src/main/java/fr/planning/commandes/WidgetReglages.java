@@ -22,7 +22,7 @@ import android.widget.TextView;
  *   - Style : d'origine (suit le thème du téléphone ; pour le calendrier, le thème du planning) ou GrapheneOS (toujours sombre) ;
  *   - Horaires : automatique (selon la largeur), toujours, jamais    } widget « Planning »
  *   - Durée : 7 jours ou 14 jours (2 pages)                           } seulement
- *   Calendrier : style + durée (le mois entier ou 15 jours = 3 semaines).
+ *   Calendrier : style + durée (le mois entier ou « 15 jours » = 2 semaines, sans les acheminements).
  * Les choix sont gardés dans les préférences « widget » (clés + numéro du widget).
  */
 public class WidgetReglages extends Activity {
@@ -68,7 +68,7 @@ public class WidgetReglages extends Activity {
                 new String[]{"7 jours", "14 jours (2 pages, bouton « Suite »)"},
                 p.getInt(DUREE + id, 7) == 14 ? 1 : 0)
                 : calendrier ? groupe(col, "Durée",
-                new String[]{"Le mois entier", "15 jours : les 3 semaines à partir de cette semaine (cases plus grandes)"},
+                new String[]{"Le mois entier", "15 jours : cette semaine et la suivante (2 lignes, sans les acheminements)"},
                 p.getInt(DUREE + id, 0) == 15 ? 1 : 0) : null;
         if (planning) {
             TextView aide = new TextView(this);

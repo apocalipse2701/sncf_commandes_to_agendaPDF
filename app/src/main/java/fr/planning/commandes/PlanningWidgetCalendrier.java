@@ -24,8 +24,9 @@ import java.util.Calendar;
  *   - Le jour J est encadré.
  * Réglé à la pose (WidgetReglages, aussi par appui long → Réglages) :
  *   - style d'origine = thème du planning choisi dans l'application (comme le PDF), ou GrapheneOS (toujours sombre) ;
- *   - durée : le mois entier (6 lignes), ou 15 jours = 3 semaines à partir de la semaine en cours
- *     (widget_calendrier_15.xml, cases deux fois plus hautes ; ‹ › avancent de 2 semaines).
+ *   - durée : le mois entier (6 lignes), ou « 15 jours » = cette semaine et la suivante (widget_calendrier_15.xml,
+ *     2 lignes, cases 3 fois plus hautes, textes plus grands, sans les acheminements AUTO : seulement PS / FS ;
+ *     ‹ › avancent de 2 semaines).
  */
 public class PlanningWidgetCalendrier extends WidgetBase {
 

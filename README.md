@@ -57,7 +57,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 
 <img src="docs/captures/widget-calendrier-15.png" alt="Widget Calendrier sur 15 jours, styles d'origine et GrapheneOS" width="820">
 
-*Le même widget réglé sur **15 jours** : 3 semaines à partir de la semaine en cours, cases plus grandes.*
+*Le même widget réglé sur **15 jours** : cette semaine et la suivante, en grandes cases, sans les acheminements (seulement prise et fin de service).*
 
 ---
 
