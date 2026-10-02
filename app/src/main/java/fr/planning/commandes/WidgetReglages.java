@@ -22,13 +22,16 @@ import android.widget.TextView;
  *   - Style : d'origine (suit le thème du téléphone ; pour le calendrier, le thème du planning) ou GrapheneOS (toujours sombre) ;
  *   - Horaires : automatique (selon la largeur), toujours, jamais    } widget « Planning »
  *   - Durée : 7 jours ou 14 jours (2 pages)                           } seulement
+ *   Tous : transparence du fond (0, 25, 50, 75 %, ou fond invisible).
  *   Calendrier : style + durée (le mois entier ou « 15 jours » = 2 semaines, sans les acheminements).
  * Les choix sont gardés dans les préférences « widget » (clés + numéro du widget).
  */
 public class WidgetReglages extends Activity {
 
-    static final String STYLE = "cfg_style_", HEURES = "cfg_heures_", DUREE = "cfg_duree_";
-    static final String[] CLES = {STYLE, HEURES, DUREE};
+    static final String STYLE = "cfg_style_", HEURES = "cfg_heures_", DUREE = "cfg_duree_", TRANSPARENCE = "cfg_transp_";
+    static final String[] CLES = {STYLE, HEURES, DUREE, TRANSPARENCE};
+    /** Transparence du fond, en % (0 = opaque, 100 = fond invisible). */
+    static final int[] TRANSPARENCES = {0, 25, 50, 75, 100};
     static final int STYLE_ORIGINE = 0, STYLE_GOS = 1;
     static final int HEURES_AUTO = 0, HEURES_OUI = 1, HEURES_NON = 2;
 
@@ -70,6 +73,11 @@ public class WidgetReglages extends Activity {
                 : calendrier ? groupe(col, "Durée",
                 new String[]{"Le mois entier", "15 jours : cette semaine et la suivante (2 lignes, sans les acheminements)"},
                 p.getInt(DUREE + id, 0) == 15 ? 1 : 0) : null;
+        int tActuelle = p.getInt(TRANSPARENCE + id, 0), iT = 0;
+        for (int i = 0; i < TRANSPARENCES.length; i++) if (TRANSPARENCES[i] == tActuelle) iT = i;
+        final RadioGroup transparence = groupe(col, "Transparence du fond",
+                new String[]{"Aucune (fond plein)", "25 %", "50 %", "75 %", "Totale (fond invisible, seuls les textes et les couleurs des services restent)"},
+                iT);
         if (planning) {
             TextView aide = new TextView(this);
             aide.setText("Si le widget est peu haut, il affiche 4 jours par page. Toucher un jour l'ouvre dans l'application.");
@@ -79,7 +87,8 @@ public class WidgetReglages extends Activity {
         }
         if (calendrier) {
             TextView aide = new TextView(this);
-            aide.setText("‹ › changent de mois (de 2 semaines en « 15 jours »). Toucher un jour l'ouvre dans l'application.");
+            aide.setText("‹ › changent de mois (de 2 semaines en « 15 jours »). Toucher un jour l'ouvre dans l'application.\n"
+                    + "En « 15 jours », le widget peut être réduit à 2 cases de haut (appui long, puis tirer la poignée).");
             aide.setAlpha(0.7f);
             aide.setPadding(0, dp(12), 0, 0);
             col.addView(aide);
@@ -95,6 +104,7 @@ public class WidgetReglages extends Activity {
             SharedPreferences.Editor ed = WidgetBase.prefs(this).edit();
             ed.putInt(STYLE + id, indice(style));
             if (heures != null) ed.putInt(HEURES + id, indice(heures));
+            ed.putInt(TRANSPARENCE + id, TRANSPARENCES[indice(transparence)]);
             if (duree != null) ed.putInt(DUREE + id, calendrier ? (indice(duree) == 1 ? 15 : 0) : indice(duree) == 1 ? 14 : 7);
             ed.remove("p_" + id);
             ed.apply();

@@ -80,6 +80,7 @@ public class PlanningWidgetProchain extends WidgetBase {
                 == WidgetReglages.STYLE_GOS;
         RemoteViews vue = new RemoteViews(contexte.getPackageName(),
                 gos ? R.layout.widget_prochain_gos : R.layout.widget_prochain);
+        vue.setInt(R.id.w_racine, "setBackgroundResource", fond(gos, transparence(contexte, idWidget)));
         boolean sombre = sombre(contexte);
         int[] texte = couleurTexte(gos), doux = couleurDouce(gos);
 

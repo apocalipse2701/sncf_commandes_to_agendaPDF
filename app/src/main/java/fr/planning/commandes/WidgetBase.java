@@ -214,6 +214,20 @@ public abstract class WidgetBase extends AppWidgetProvider {
         return gos ? new int[]{0xFFF2B8B5, 0xFFF2B8B5} : new int[]{0xFFB0463F, 0xFFF0A0A0};
     }
 
+    /** Transparence du fond réglée pour ce widget (%), 0 si aucun réglage. */
+    static int transparence(Context contexte, int id) {
+        return prefs(contexte).getInt(WidgetReglages.TRANSPARENCE + id, 0);
+    }
+
+    /** Fond arrondi du widget selon le style et la transparence (0 = aucun fond). */
+    static int fond(boolean gos, int transparence) {
+        if (transparence >= 100) return 0;
+        if (transparence >= 75) return gos ? R.drawable.widget_gos_fond_75 : R.drawable.widget_fond_75;
+        if (transparence >= 50) return gos ? R.drawable.widget_gos_fond_50 : R.drawable.widget_fond_50;
+        if (transparence >= 25) return gos ? R.drawable.widget_gos_fond_25 : R.drawable.widget_fond_25;
+        return gos ? R.drawable.widget_gos_fond : R.drawable.widget_fond;
+    }
+
     /** Couleur d'un texte {clair, sombre} : suit le thème en direct depuis Android 12, valeur du moment avant. */
     static void teinter(RemoteViews vue, int id, int[] couleurs, boolean sombre) {
         if (Build.VERSION.SDK_INT >= 31) vue.setColorInt(id, "setTextColor", couleurs[0], couleurs[1]);
@@ -291,6 +305,7 @@ public abstract class WidgetBase extends AppWidgetProvider {
     RemoteViews construire(Context contexte, int idWidget) {
         Reglage r = reglage(contexte, idWidget);
         RemoteViews vue = new RemoteViews(contexte.getPackageName(), r.disposition);
+        vue.setInt(R.id.w_racine, "setBackgroundResource", fond(r.gos, transparence(contexte, idWidget)));
         boolean sombre = sombre(contexte);
         int[] texte = couleurTexte(r.gos), doux = couleurDouce(r.gos), rouge = couleurRouge(r.gos);
         int surlignage = r.gos ? R.drawable.widget_gos_aujourdhui : R.drawable.widget_aujourdhui;

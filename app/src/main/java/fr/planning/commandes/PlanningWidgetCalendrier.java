@@ -25,8 +25,9 @@ import java.util.Calendar;
  * Réglé à la pose (WidgetReglages, aussi par appui long → Réglages) :
  *   - style d'origine = thème du planning choisi dans l'application (comme le PDF), ou GrapheneOS (toujours sombre) ;
  *   - durée : le mois entier (6 lignes), ou « 15 jours » = cette semaine et la suivante (widget_calendrier_15.xml,
- *     2 lignes, cases 3 fois plus hautes, textes plus grands, sans les acheminements AUTO : seulement PS / FS ;
- *     ‹ › avancent de 2 semaines).
+ *     2 lignes ; titre et noms des jours de hauteur fixe pour que le widget tienne sur 2 cases de haut ;
+ *     pas d'horaires : l'intitulé du jour en grand, centré ; ‹ › avancent de 2 semaines).
+ *   - transparence du fond (0 à 100 %) : fond, week-ends et cases hors du mois ; les couleurs des services restent pleines.
  */
 public class PlanningWidgetCalendrier extends WidgetBase {
 
@@ -139,7 +140,8 @@ public class PlanningWidgetCalendrier extends WidgetBase {
         int W = Math.round(t[0] * echelle), H = Math.round(t[1] * echelle);
         boolean gos = prefs(contexte).getInt(WidgetReglages.STYLE + idWidget, WidgetReglages.STYLE_ORIGINE)
                 == WidgetReglages.STYLE_GOS;
-        Bitmap image = DessinCalendrier.dessiner(W, H, echelle, v, cal, DessinCalendrier.iso(auj), message, gos);
+        float opacite = 1f - transparence(contexte, idWidget) / 100f;
+        Bitmap image = DessinCalendrier.dessiner(W, H, echelle, v, cal, DessinCalendrier.iso(auj), message, gos, opacite);
         vue.setImageViewBitmap(R.id.w_image, image);
 
         String[] cases = v.cases;

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fonds des widgets avec transparence (réglage « Transparence du fond », WidgetReglages) : 25, 50, 75 %.
+     Style d'origine : même couleur que widget_fond (clair / sombre) ; GrapheneOS : #212121, toujours sombre. -->
+<resources>
+    <color name="widget_fond_25">#B61A2029</color>
+    <color name="widget_fond_50">#791A2029</color>
+    <color name="widget_fond_75">#3C1A2029</color>
+    <color name="widget_gos_fond_25">#BF212121</color>
+    <color name="widget_gos_fond_50">#80212121</color>
+    <color name="widget_gos_fond_75">#40212121</color>
+</resources>

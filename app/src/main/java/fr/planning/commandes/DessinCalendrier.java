@@ -262,11 +262,25 @@ final class DessinCalendrier {
      * @param gos        style GrapheneOS (toujours sombre) au lieu du thème du planning
      */
     static Bitmap dessiner(int W, int H, float dp, Periode v, JSONObject cal, String aujourdhui, String message,
-                           boolean gos) {
+                           boolean gos, float opacite) {
         Bitmap bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
-        new DessinCalendrier(new Canvas(bmp), dp).page(W, H, dp, v, cal, aujourdhui, message, gos);
+        new DessinCalendrier(new Canvas(bmp), dp).page(W, H, dp, v, cal, aujourdhui, message, gos, opacite);
         return bmp;
     }
+
+    static Bitmap dessiner(int W, int H, float dp, Periode v, JSONObject cal, String aujourdhui, String message,
+                           boolean gos) {
+        return dessiner(W, H, dp, v, cal, aujourdhui, message, gos, 1f);
+    }
+
+    /** Même couleur, opacité multipliée par « o » (transparence du fond réglée pour le widget). */
+    static int transparent(int c, float o) {
+        return (Math.round(Color.alpha(c) * o) << 24) | (c & 0xFFFFFF);
+    }
+
+    /** « 15 jours » : hauteurs fixes (dp) du titre, des noms des jours et de la marge du bas — mêmes valeurs que
+     *  widget_calendrier_15.xml ; les 2 lignes de cases se partagent le reste (le widget peut faire 2 cases de haut). */
+    static final float Q_TITRE = 26f, Q_ENTETE = 15f, Q_BAS = 5f;
 
     static Bitmap dessiner(int W, int H, float dp, int annee, int mois, JSONObject cal, String aujourdhui, String message,
                            boolean gos) {
@@ -285,7 +299,7 @@ final class DessinCalendrier {
     }
 
     private void page(int W, int H, float dp, Periode v, JSONObject cal, String aujourdhui, String message,
-                      boolean gos) {
+                      boolean gos, float opacite) {
         final int NB = v.lignes;
         JSONObject P = gos ? paletteGos() : cal == null ? null : cal.optJSONObject("t");
         if (P == null) P = paletteDefaut();
@@ -299,7 +313,7 @@ final class DessinCalendrier {
         Integer entete = couleur(P, "entete"), horsMois = couleur(P, "hors_mois");
 
         // fond arrondi (les lanceurs récents arrondissent aussi les widgets)
-        p.setColor(fond);
+        p.setColor(transparent(fond, opacite));
         p.setStyle(Paint.Style.FILL);
         float rayon = (gos ? 14 : 16) * dp;                 // GrapheneOS : angles un peu plus nets (comme widget_gos_fond)
         cv.drawRoundRect(new RectF(0, 0, W, H), rayon, rayon, p);
@@ -307,29 +321,35 @@ final class DessinCalendrier {
         float x0 = W * MARGE / 1000f, x1 = W - x0, col = W * COL / 1000f;
         float yTrait = H * H_TITRE / 1000f, yGrille = yTrait + H * H_ENTETE / 1000f;
         float lig = H * H_GRILLE / NB / 1000f, yFin = yGrille + NB * lig;
+        if (v.quinzaine) {
+            yTrait = Q_TITRE * dp;
+            yGrille = yTrait + Q_ENTETE * dp;
+            lig = (H - yGrille - Q_BAS * dp) / NB;
+            yFin = yGrille + NB * lig;
+        }
         float hEntete = yGrille - yTrait;
         // unité de taille des textes : celle de la page A4 qui aurait des cases de cette taille
         float u = Math.min(col / 0.13429f, lig / 0.0965f);
-        if (v.quinzaine) u = Math.min(col / 0.10f, lig / 0.0965f);   // cases hautes : textes plus grands
+        if (v.quinzaine) u = col / 0.10f;                    // « 15 jours » : numéros plus grands
         float finT = Math.max(1f, 0.5f * dp), ep = Math.max(1.5f, 1.1f * dp);
 
         String[] cases = v.cases;
 
-        if (entete != null) rect(x0, yTrait, x1, yGrille, entete);
+        if (entete != null) rect(x0, yTrait, x1, yGrille, transparent(entete, opacite));
         for (int c = 5; c <= 6; c++) {
-            rect(x0 + c * col, yTrait, x0 + (c + 1) * col, yGrille, weekendEntete);
-            rect(x0 + c * col, yGrille, x0 + (c + 1) * col, yFin, weekend);
+            rect(x0 + c * col, yTrait, x0 + (c + 1) * col, yGrille, transparent(weekendEntete, opacite));
+            rect(x0 + c * col, yGrille, x0 + (c + 1) * col, yFin, transparent(weekend, opacite));
         }
         for (int k = 0; k < cases.length; k++) {
             int r = k / 7, c = k % 7;
             float bx0 = x0 + c * col, by0 = yGrille + r * lig, bx1 = bx0 + col, by1 = by0 + lig;
             if (cases[k] == null) {
-                if (horsMois != null) rect(bx0, by0, bx1, by1, horsMois);
+                if (horsMois != null) rect(bx0, by0, bx1, by1, transparent(horsMois, opacite));
                 continue;
             }
             JSONObject j = jours == null ? null : jours.optJSONObject(cases[k]);
             Integer f = couleur(j, "f");
-            if (f == null && c < 5 && j != null && !j.optString("fe", "").isEmpty()) f = weekend;  // férié
+            if (f == null && c < 5 && j != null && !j.optString("fe", "").isEmpty()) f = transparent(weekend, opacite);  // férié
             if (f != null) rect(bx0, by0, bx1, by1, f);
         }
         for (int r = 1; r < NB; r++) ligne(x0, yGrille + r * lig, x1, yGrille + r * lig, grille, finT);
@@ -416,7 +436,8 @@ final class DessinCalendrier {
             if (j == null) continue;
             cv.save();
             cv.clipRect(cx0, cy0, cx0 + col, cy1);           // rien ne déborde sur la case voisine
-            dessinerCase(j, cx0, cy0, cy1, col, u, base, numTxt, tNum, largFerie, TXT, DOUX, REPOS, cGros, v.quinzaine);
+            if (v.quinzaine) caseIntitule(j, cx0, cy1, col, base, u * 0.007f, TXT, DOUX, REPOS, cGros, dp);
+            else dessinerCase(j, cx0, cy0, cy1, col, u, base, numTxt, tNum, largFerie, TXT, DOUX, REPOS, cGros, false);
             cv.restore();
         }
         bordures(W, H, dp, x0, col, yGrille, lig, cases, jours, aujourdhui, titre);
@@ -519,6 +540,60 @@ final class DessinCalendrier {
                     yy += hLg;
                 }
             }
+        }
+    }
+
+    /**
+     * « 15 jours » : pas d'horaires, l'intitulé du jour (S-GIV, GRAISSAGE REVIN, RP…) centré sous le numéro,
+     * le plus gros possible. Libellés ajoutés à la main : plus petits, dessous.
+     */
+    private void caseIntitule(JSONObject j, float cx0, float cy1, float col, float base, float pad,
+                              int TXT, int DOUX, int REPOS, int cGros, float dp) {
+        List<Object[]> noms = new ArrayList<>();                      // [texte, couleur, échelle]
+        String sp = j.optString("sp", "");
+        if (!sp.isEmpty()) noms.add(new Object[]{sp, TXT, 1f});
+        JSONArray l = j.optJSONArray("l");
+        if (l != null) {
+            for (int m = 0; m < l.length(); m++) {
+                JSONArray x = l.optJSONArray(m);
+                if (x == null) continue;
+                String s = x.optString(0, ""), style = x.optString(1, "g"), role = x.optString(2, "t");
+                if (style.equals("g")) noms.add(new Object[]{s, role.equals("r") ? REPOS : TXT, 1f});
+                else if (style.equals("n")) noms.add(new Object[]{s, DOUX, 0.55f});
+                // « h » : horaires, retirés
+            }
+        }
+        String gr = j.optString("gr", "");
+        if (!gr.isEmpty()) noms.add(Math.min(noms.size(), sp.isEmpty() ? 0 : 1), new Object[]{gr.split("\n")[0], cGros, 1f});
+        if (noms.isEmpty()) return;
+
+        float haut = base + 0.25f * pad, bas = cy1 - pad, largeur = col - 2 * pad;
+        float t = Math.min((bas - haut) * 0.7f, 26 * dp);
+        List<Object[]> lignes;                                          // [texte, couleur, taille]
+        float total;
+        while (true) {
+            lignes = new ArrayList<>();
+            total = 0;
+            for (Object[] n : noms) {
+                float tt = t * (Float) n[2];
+                for (String s : couper((String) n[0], sansGras, tt, largeur)) {
+                    lignes.add(new Object[]{s, n[1], tt});
+                    total += reel(tt) * 1.12f;
+                }
+            }
+            boolean tient = total <= bas - haut;
+            for (Object[] x : lignes) if (larg((String) x[0], sansGras, (Float) x[2]) > largeur) tient = false;
+            for (Object[] n : noms)                                     // jamais un mot coupé (S-GIV, FDPX…)
+                for (String mot : ((String) n[0]).trim().split("\\s+"))
+                    if (larg(mot, sansGras, t * (Float) n[2]) > largeur) tient = false;
+            if (tient || reel(t * 0.94f) >= reel(t)) break;
+            t *= 0.94f;
+        }
+        float y = haut + Math.max(0, (bas - haut - total) / 2);
+        for (Object[] x : lignes) {
+            float tt = (Float) x[2];
+            texte((String) x[0], cx0 + col / 2, y + 0.88f * reel(tt), sansGras, tt, (Integer) x[1], "ms");
+            y += reel(tt) * 1.12f;
         }
     }
 
