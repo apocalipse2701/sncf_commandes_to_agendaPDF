@@ -349,8 +349,8 @@ final class DessinCalendrier {
             }
             JSONObject j = jours == null ? null : jours.optJSONObject(cases[k]);
             Integer f = couleur(j, "f");
-            if (f == null && c < 5 && j != null && !j.optString("fe", "").isEmpty()) f = transparent(weekend, opacite);  // férié
-            if (f != null) rect(bx0, by0, bx1, by1, f);
+            if (f == null && c < 5 && j != null && !j.optString("fe", "").isEmpty()) f = weekend;  // férié
+            if (f != null) rect(bx0, by0, bx1, by1, transparent(f, opacite));  // tout le tableau suit la transparence
         }
         for (int r = 1; r < NB; r++) ligne(x0, yGrille + r * lig, x1, yGrille + r * lig, grille, finT);
         for (int c = 1; c < 7; c++) ligne(x0 + c * col, yGrille, x0 + c * col, yFin, grille, finT);

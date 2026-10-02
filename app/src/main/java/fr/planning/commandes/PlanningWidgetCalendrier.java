@@ -27,7 +27,7 @@ import java.util.Calendar;
  *   - durée : le mois entier (6 lignes), ou « 15 jours » = cette semaine et la suivante (widget_calendrier_15.xml,
  *     2 lignes ; titre et noms des jours de hauteur fixe pour que le widget tienne sur 2 cases de haut ;
  *     pas d'horaires : l'intitulé du jour en grand, centré ; ‹ › avancent de 2 semaines).
- *   - transparence du fond (0 à 100 %) : fond, week-ends et cases hors du mois ; les couleurs des services restent pleines.
+ *   - transparence (0 à 100 %) : tout le tableau (fond, week-ends, cases des services) ; les textes restent pleins.
  */
 public class PlanningWidgetCalendrier extends WidgetBase {
 

@@ -76,7 +76,7 @@ public class WidgetReglages extends Activity {
         int tActuelle = p.getInt(TRANSPARENCE + id, 0), iT = 0;
         for (int i = 0; i < TRANSPARENCES.length; i++) if (TRANSPARENCES[i] == tActuelle) iT = i;
         final RadioGroup transparence = groupe(col, "Transparence du fond",
-                new String[]{"Aucune (fond plein)", "25 %", "50 %", "75 %", "Totale (fond invisible, seuls les textes et les couleurs des services restent)"},
+                new String[]{"Aucune (fond plein)", "25 %", "50 %", "75 %", "Totale (fond invisible ; sur le Calendrier, seuls les textes restent)"},
                 iT);
         if (planning) {
             TextView aide = new TextView(this);

@@ -57,7 +57,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 
 <img src="docs/captures/widget-calendrier-15.png" alt="Widget Calendrier sur 15 jours, styles d'origine et GrapheneOS" width="820">
 
-*Le même widget réglé sur **15 jours** : cette semaine et la suivante, en grandes cases, sans les acheminements (seulement prise et fin de service).*
+*Le même widget réglé sur **15 jours** (2 cases de haut) : cette semaine et la suivante, l'intitulé du jour en grand, sans horaires. À droite : style GrapheneOS avec fond transparent à 50 %.*
 
 ---
 
@@ -84,6 +84,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 - **Widget « Planning »** : une ligne par jour, le service en couleur ; réglé à la pose (style d'origine ou **GrapheneOS**, horaires, **7 ou 14 jours**), il s'adapte à sa taille. Toucher un jour l'ouvre dans l'application.
 - **Widget « Calendrier »** : la grille du PDF sur l'écran d'accueil, **le mois ou 15 jours**, au thème du planning ou en style **GrapheneOS** (réglé à la pose), jour J encadré, **‹ ›** pour changer de période.
 - **Widget « Prochain service »** (2 × 1) : « Demain · 04:40–12:40 » et le service en couleur ; une nuit reste « En cours » jusqu'au matin.
+- **Transparence du fond** réglable pour chaque widget (de plein à invisible).
 - Les widgets changent de jour tout seuls, même téléphone en veille ou après un redémarrage.
 
 **Toujours à jour**
