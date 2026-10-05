@@ -4,6 +4,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- notification « Nouvelle commande » quand un bulletin arrive par mail (Android 13 et plus) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- relevé seulement quand le téléphone a Internet (tâche JobScheduler avec condition réseau) : obligatoire depuis Android 14 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application>
         <!-- relevé des commandes dans la boîte mail, toutes les heures (JobScheduler) -->

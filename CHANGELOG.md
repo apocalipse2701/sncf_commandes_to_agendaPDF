@@ -7,6 +7,12 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.0.4 — 5 octobre 2026
+
+**Application Android, version « mail » seulement**
+- Correction : enregistrer les réglages du relevé des mails affichait « enregistrement impossible : android.permission.ACCESS_NETWORK_STATE required for jobs with a connectivity constraint ». L'autorisation (accordée automatiquement, sans question) est ajoutée : le relevé toutes les heures peut être programmé.
+- Version manuelle et programme PC : aucun changement.
+
 ## 2.0.3 — 5 octobre 2026
 
 **Fabrication (GitHub)**
