@@ -2,21 +2,21 @@
 
 **Vos bulletins de commande deviennent un planning clair, en couleurs, sur le téléphone et sur le PC.**
 
-Chaque semaine arrive un nouveau *bulletin de commande* en PDF : un long tableau de codes (GIV001, RP, ZREVIN…) et d'horaires (« AUTO 03:50 – 04:40 / PS 04:40 / FS 12:40… »), difficile à lire d'un coup d'œil. Planning Commandes lit ces PDF et en fait **un calendrier du mois** :
+Chaque semaine arrive un nouveau *bulletin de commande* en PDF : un long tableau de codes (VAL001, RP, ZBELLE…) et d'horaires (« AUTO 03:50 – 04:40 / PS 04:40 / FS 12:40… »), difficile à lire d'un coup d'œil. Planning Commandes lit ces PDF et en fait **un calendrier du mois** :
 
-- chaque jour affiche **le service sous un nom parlant** (M-GIV, S-GIV, DISPO Revin…), **dans sa couleur**, avec les **heures de prise et de fin de service** ;
-- ajoutez les bulletins au fil des semaines : pour chaque jour, **le plus récent l'emporte**, et l'application liste **ce qui a changé** (« Mer 21/10 : S-GIV → RP ») ;
+- chaque jour affiche **le service sous un nom parlant** (M-VAL, S-VAL, DISPO Bellerive…), **dans sa couleur**, avec les **heures de prise et de fin de service** ;
+- ajoutez les bulletins au fil des semaines : pour chaque jour, **le plus récent l'emporte**, et l'application liste **ce qui a changé** (« Mer 21/10 : S-VAL → RP ») ;
 - le mois se lit d'un regard : **repos en gros**, nuits et **lendemains de nuit (DN)**, **jours fériés**, **grèves** en filigrane, et un récapitulatif (**heures de service, nuits, dimanches et fériés travaillés, repos**).
 
 Il existe en deux versions qui lisent les bulletins exactement de la même façon :
 
 | | 📱 Application Android | 💻 Programme PC (Windows) |
 |---|---|---|
-| Fichier | `PlanningCommandes.apk` | `PlanningPDF.exe` |
+| Fichier | `PlanningCommandes.apk` (manuelle) ou `PlanningCommandes-mail.apk` | `PlanningPDF.exe` (manuelle) ou `PlanningPDF-mail.exe` |
 | En plus | widgets pour l'écran d'accueil, « Partager » un bulletin depuis un mail | dossier `commande` lu automatiquement, sauvegardes automatiques |
 | Données | dans le téléphone | sur le PC |
 
-Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un PDF créé par une version se rouvre dans l'autre.
+Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les commandes peuvent être relevées dans votre boîte mail, en lecture seule). Un PDF créé par une version se rouvre dans l'autre.
 
 > Les captures ci-dessous montrent un **planning fictif** (« Agent Exemple »).
 
@@ -65,6 +65,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 
 **Lire les commandes**
 - Import d'un ou plusieurs bulletins PDF (Android : bouton **Ajouter une commande**, ou **Partager / Ouvrir avec** depuis un mail ; PC : déposer les PDF dans le dossier `commande`).
+- **Commandes reçues par mail** (version « mail » seulement, Free par défaut) : l'application et l'exe relèvent la boîte toutes les heures et ajoutent tout seuls les bulletins envoyés par les expéditeurs choisis (Android : notification « Nouvelle commande »). Lecture seule, mot de passe chiffré sur l'appareil.
 - Fusion intelligente : le bulletin le plus récent l'emporte jour par jour ; les notes ajoutées à la main sont conservées.
 - Liste des jours modifiés par une nouvelle commande.
 
@@ -92,10 +93,19 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet**. Un 
 
 ---
 
+## Deux versions au choix
+
+| | Android | Windows |
+|---|---|---|
+| **Manuelle** : bulletins ajoutés à la main (Android : aussi « Partager » depuis le mail ; PC : dossier `commande`) | `PlanningCommandes.apk` | `PlanningPDF.exe` |
+| **Mail** : la même, et en plus les commandes sont récupérées toutes seules dans la boîte mail | `PlanningCommandes-mail.apk` | `PlanningPDF-mail.exe` |
+
+Même planning et mêmes réglages : on passe de l'une à l'autre en installant l'autre fichier par-dessus. Chaque version se met ensuite à jour avec la même version.
+
 ## 📲 Installer sur le téléphone
 
 1. Sur le téléphone, ouvrez **[Releases → dernière version](../../releases/latest)**.
-2. Touchez **`PlanningCommandes.apk`**, puis ouvrez le fichier téléchargé.
+2. Touchez **`PlanningCommandes.apk`** (ou **`PlanningCommandes-mail.apk`**), puis ouvrez le fichier téléchargé.
 3. Autorisez l'installation depuis cette source si Android le demande, puis **Installer**.
 4. Si Play Protect signale une « appli inconnue » (normal hors Play Store) : **Plus de détails → Installer quand même**.
 
@@ -103,7 +113,7 @@ Android 7.0 ou plus récent. Les versions suivantes se proposent toutes seules (
 
 ## 💻 Installer sur le PC
 
-1. Ouvrez **[Releases → exe](../../releases/tag/exe)** et téléchargez **`PlanningPDF.exe`**.
+1. Ouvrez **[Releases → exe](../../releases/tag/exe)** et téléchargez **`PlanningPDF.exe`** (ou **`PlanningPDF-mail.exe`**).
 2. Placez-le dans un dossier à vous (par exemple `Documents\PlanningPDF`) et double-cliquez dessus. Si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires → Exécuter quand même**.
 
 Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une mise à jour…**) : l'exe se remplace à la fermeture et se relance.
@@ -112,7 +122,7 @@ Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une 
 
 ## 💾 Vos données
 
-- Le planning reste **sur l'appareil** : rien n'est envoyé sur Internet. La seule connexion sert à lire, une fois par jour, le numéro de la dernière version publiée ici.
+- Le planning reste **sur l'appareil** : rien n'est envoyé sur Internet. Les connexions servent seulement à lire, une fois par jour, le numéro de la dernière version publiée ici et, si vous l'activez, à **lire** votre boîte mail (IMAP sécurisé) pour y prendre les bulletins de commande. Le mot de passe de la boîte reste chiffré sur l'appareil (coffre de clés d'Android, protection Windows sur le PC) et n'est envoyé qu'à votre serveur de messagerie.
 - **Désinstaller l'application efface le planning** : faites de temps en temps **Réglages → Sauvegarde → Enregistrer une copie**, et « Reprendre une copie… » pour la restaurer. L'application vous le rappelle.
 - Ce dépôt ne contient que le code, aucune donnée personnelle.
 
@@ -122,17 +132,20 @@ Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une 
 
 À chaque envoi de fichiers, GitHub Actions (`.github/workflows/apk.yml`) fabrique et publie :
 
-- **l'APK** (release `apk`) : Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 24 ; numéro de version = numéro de fabrication ; signé avec `app/planning.keystore` ;
-- **l'exe Windows** (release `exe`) : Python 3.12 + PyInstaller à partir de `pc/planning_pdf.py` et `pc/regles.json`.
+- **les 2 APK** (release `apk`) : `PlanningCommandes.apk` (manuelle) et `PlanningCommandes-mail.apk` (variantes Gradle `manuel` / `mail`) ; Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 24 ; numéro de fabrication GitHub ; signés avec la clé fournie par les secrets du dépôt ;
+- **les 2 exe Windows** (release `exe`) : `PlanningPDF.exe` (manuelle) et `PlanningPDF-mail.exe` ; Python 3.12 + PyInstaller à partir de `pc/planning_pdf.py` et `pc/regles.json`.
 
 Chaque release contient aussi `version.json`, lu par la mise à jour automatique.
 
-> ⚠️ Ne supprimez pas `app/planning.keystore` : sans cette clé, une nouvelle version ne pourrait plus s'installer par-dessus l'ancienne.
+**Numéro de version** : `pc/VERSION` (ex. 2.0.0) ; ce qui change d'une version à l'autre est dans **[CHANGELOG.md](CHANGELOG.md)**.
+
+**Toutes les versions sont gardées** : en plus des releases `apk` et `exe` (toujours la dernière), chaque fabrication crée une release permanente **« Version X.Y.Z (fabrication N) »** avec ses 2 APK et ses 2 exe. Pour revenir en arrière, il suffit de télécharger les fichiers d'une version plus ancienne (voir le wiki, « Revenir à une ancienne version »). Le code de chaque version reste dans l'historique des commits.
+
+> 🔑 **Clé de signature** : elle n'est **pas** dans le dépôt. GitHub la reçoit par deux secrets du dépôt (**Settings → Secrets and variables → Actions**) : `KEYSTORE_BASE64` et `KEYSTORE_PASSWORD`. Sans eux, la fabrication de l'APK s'arrête avec un message. Gardez précieusement la clé : sans elle, une nouvelle version ne pourrait plus s'installer par-dessus l'ancienne.
 
 ```
 app/
 ├── build.gradle                      configuration Android, signature, numéro de version
-├── planning.keystore                 clé de signature (à conserver)
 └── src/main/
     ├── AndroidManifest.xml
     ├── java/fr/planning/commandes/   fenêtre de l'appli, widgets, mise à jour automatique

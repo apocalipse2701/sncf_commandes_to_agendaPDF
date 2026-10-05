@@ -6,6 +6,7 @@
     <!-- mise à jour de l'application : lire la dernière version sur GitHub, la télécharger et l'installer -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- (version « mail » : notifications et relevé des commandes ajoutés par src/mail/AndroidManifest.xml) -->
 
     <application
         android:label="Planning Commandes"

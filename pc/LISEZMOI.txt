@@ -10,11 +10,15 @@ INSTALLATION
 
 VERSION .EXE POUR WINDOWS (recommandé)
   1. Double-cliquez sur « Creer l'exe (Windows).bat » (une seule fois,
-     2 à 3 minutes). Si Python n'est pas installé, il est téléchargé et
+     4 à 6 minutes). Si Python n'est pas installé, il est téléchargé et
      installé automatiquement (connexion Internet requise, sans droits
      administrateur). Python ne sert qu'à cette étape.
-  2. PlanningPDF.exe apparaît dans le dossier : double-cliquez dessus.
-     Il peut être copié sur n'importe quel PC Windows, sans Python.
+  2. Les 2 versions apparaissent dans le dossier :
+       PlanningPDF.exe       version manuelle (sans mail)
+       PlanningPDF-mail.exe  avec les commandes par mail
+     Double-cliquez sur celle que vous voulez (même planning, mêmes codes
+     et réglages). Elles peuvent être copiées sur n'importe quel PC
+     Windows, sans Python.
   Si Windows affiche « Windows a protégé votre ordinateur » :
   cliquez sur « Informations complémentaires » puis « Exécuter quand même »
   (l'exe n'est pas signé numériquement, c'est normal).
@@ -28,7 +32,7 @@ LANCEMENT SANS EXE
   automatiquement (connexion Internet requise, environ 1 minute).
 
 MENUS
-  Fichier   : Ajouter une commande (Ctrl+O), Dossier commande (Ctrl+D),
+  Fichier   : Ajouter une commande (Ctrl+O), Dossier commande (Ctrl+D), Commandes par mail,
               Exporter (Ctrl+E), Exporter vers l'agenda (.ics),
               Envoyer vers le téléphone / Reprendre une copie du téléphone,
               Mettre à jour le PDF (Ctrl+S), Imprimer (Ctrl+P), Sauvegardes,
@@ -42,7 +46,7 @@ MENUS
   Aide      : Lisez-moi, Notice des codes, Rechercher une mise à jour
   Bandeau du haut : ◀ ▶, le mois en grand, « Aujourd'hui », et les actions
   rapides (Ouvrir, Imprimer, Mettre à jour le PDF).
-  Dessous, le résumé du mois en pastilles (nombre de S-GIV, M-GIV, RP…,
+  Dessous, le résumé du mois en pastilles (nombre de S-VAL, M-VAL, RP…,
   jours de grève, heures de service, nuits, dimanches, fériés, repos).
   Planning : la case survolée est surlignée, aujourd'hui est encadré en
   bleu, une info-bulle détaille le jour, la molette change de mois.
@@ -60,13 +64,13 @@ UTILISATION
   • « Ajouter une commande » : choisissez un ou plusieurs bulletins PDF (Ctrl/Cmd-clic
     pour en sélectionner plusieurs). Vous pouvez en ouvrir d'autres ensuite
     pour compléter le mois.
-  • Pour chaque jour sont repris : le code (GIV002, RP, ZREVIN…) et
+  • Pour chaque jour sont repris : le code (VAL002, RP, ZBELLE…) et
     TOUTES les lignes horaires du bulletin (AUTO, PS, FS, K, DAT…). Le libellé n'est pas affiché dans le planning
     (il reste visible dans la liste de droite). Les horaires sont
     toujours affichés en entier : le texte se réduit si la case est pleine.
   • Si deux bulletins couvrent le même jour, c'est celui dont la date
     d'édition est la plus récente qui est retenu.
-  • Codes renommés / colorés (S-GIV, M-GIV, DISPO, RP…) : voir
+  • Codes renommés / colorés (S-VAL, M-VAL, DISPO, RP…) : voir
     « CODES SPÉCIAUX » plus bas.
   • ◀ ▶ : changer de mois.
   • Clic DROIT sur un jour : « Ajouter un jour de grève » (filigrane GRÈVE
@@ -126,6 +130,23 @@ DOSSIER « commande »
     autre endroit y est COPIÉ et rangé automatiquement (l'original reste
     en place ; pas de copie en double).
 
+COMMANDES PAR MAIL (Fichier › Commandes par mail…) — PlanningPDF-mail.exe seulement
+  (PlanningPDF.exe est la version manuelle, sans cette fonction.)
+  Le programme peut relever lui-même la boîte mail (Free par défaut :
+  imap.free.fr, port 993) au démarrage puis toutes les heures.
+  • Indiquez l'adresse mail complète, le mot de passe de la boîte et les
+    adresses des expéditeurs des commandes (2 au plus), cochez « Relever
+    automatiquement », puis « Enregistrer » (ou « Relever maintenant »).
+  • Les bulletins joints aux messages de ces expéditeurs sont déposés dans
+    le dossier « commande », rangés et ajoutés au planning. Deux conditions :
+    l'expéditeur est exactement l'expéditeur 1 ou 2, et le nom du PDF
+    contient « bulletin de commande » ou « contrairement ».
+  • Lecture seule : aucun message n'est envoyé, effacé, déplacé ni marqué lu.
+  • Le mot de passe est protégé par Windows (lisible seulement par votre
+    compte Windows, sur ce PC). « Oublier le mot de passe » l'efface.
+  • Premier relevé : les messages des 30 derniers jours ; ensuite seulement
+    les nouveaux.
+
 CODES SPÉCIAUX (fichier codes.txt)
   Le fichier codes.txt, à côté du programme (ou de PlanningPDF.exe),
   dit comment afficher chaque code : nom affiché, couleur de la case,
@@ -135,7 +156,7 @@ CODES SPÉCIAUX (fichier codes.txt)
     « Enregistrer ». « Éditer en texte… » ouvre codes.txt dans l'éditeur de texte.
   • Modifiez, enregistrez, revenez dans le programme : le planning est
     mis à jour aussitôt. Inutile de refaire l'exe.
-  • Exemple de ligne :   ZREVIN ; DISPO Revin ; jaune ; gros
+  • Exemple de ligne :   ZBELLE ; DISPO Bellerive ; jaune ; gros
   • Couleur fixe : C, AH, RP, RPP, F, F0…F9, FV et les autres repos/congés
     (RU, RQ, RN, RM, CA, CET, JF, VT, RS) sont toujours sur fond orange,
     même absents de codes.txt ; leur palette est grisée dans l'éditeur.
@@ -172,7 +193,7 @@ NOUVEAUTÉS
     (de la prise à la fin de service), nuits, dimanches et fériés travaillés,
     repos. Les jours de grève ne comptent pas comme travaillés.
   • Changements : quand une nouvelle commande modifie des jours déjà connus,
-    une fenêtre les liste (ex. « Lun 09/03/2026 : DISPO Revin 08:00–16:45 → RP »).
+    une fenêtre les liste (ex. « Lun 09/03/2026 : DISPO Bellerive 08:00–16:45 → RP »).
   • Agenda : Fichier > « Exporter vers l'agenda (.ics) » : un rendez-vous par
     service, pour Outlook, Google Agenda ou l'agenda du téléphone.
   • Téléphone : Fichier > « Envoyer vers le téléphone (.json) » (planning,

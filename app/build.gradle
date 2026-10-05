@@ -12,18 +12,44 @@ android {
         targetSdk 34
         // numéro de version = numéro de fabrication GitHub (chaque mise à jour s'installe par-dessus)
         versionCode Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
-        versionName "1." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+        // nom de version = numéro du projet (pc/VERSION, ex. « 2.0.0 ») + numéro de fabrication
+        def fichierVersion = file("../pc/VERSION")
+        def versionProjet = fichierVersion.exists() ? fichierVersion.text.trim() : "dev"
+        versionName versionProjet + " (" + (System.getenv("GITHUB_RUN_NUMBER") ?: "0") + ")"
         // dépôt GitHub (ex. « pseudo/planning-commandes ») : l'appli y cherche les nouvelles versions
         resValue "string", "depot_github", (System.getenv("GITHUB_REPOSITORY") ?: "")
     }
 
+    // Deux variantes, fabriquées ensemble par GitHub (même code, même clé, même planning) :
+    //   manuel : la version habituelle, SANS mail (bulletins ajoutés à la main / « Partager »)  → PlanningCommandes.apk
+    //   mail   : en plus, récupère les commandes dans la boîte mail (IMAP, Free)               → PlanningCommandes-mail.apk
+    // Même applicationId : on passe de l'une à l'autre en installant par-dessus, sans perdre le planning.
+    flavorDimensions = ["version"]
+    productFlavors {
+        manuel {
+            dimension "version"
+            buildConfigField "boolean", "RELEVE_MAIL", "false"
+            resValue "string", "nom_apk", "PlanningCommandes.apk"
+        }
+        mail {
+            dimension "version"
+            buildConfigField "boolean", "RELEVE_MAIL", "true"
+            resValue "string", "nom_apk", "PlanningCommandes-mail.apk"
+        }
+    }
+    buildFeatures {
+        buildConfig true
+    }
+
     // Clé de signature fixe : les mises à jour s'installent sans effacer le planning.
+    // La clé et son mot de passe NE SONT PAS dans le dépôt (public) : ce sont des « secrets » GitHub
+    // (KEYSTORE_BASE64, KEYSTORE_PASSWORD), que la recette transmet par KEYSTORE_FILE et KEYSTORE_PASSWORD.
     signingConfigs {
         release {
-            storeFile file('planning.keystore')
-            storePassword 'planning2026'
-            keyAlias 'planning'
-            keyPassword 'planning2026'
+            storeFile file(System.getenv("KEYSTORE_FILE") ?: "planning.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias "planning"
+            keyPassword System.getenv("KEYSTORE_PASSWORD") ?: ""
         }
     }
     buildTypes {

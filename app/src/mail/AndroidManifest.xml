@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Version « mail » (PlanningCommandes-mail.apk) : ajouté au manifeste principal à la fabrication.
+     La version « manuel » (PlanningCommandes.apk) n'a ni notification ni relevé des commandes. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- notification « Nouvelle commande » quand un bulletin arrive par mail (Android 13 et plus) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <!-- relevé des commandes dans la boîte mail, toutes les heures (JobScheduler) -->
+        <service
+            android:name=".ReleveMail"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+    </application>
+</manifest>

@@ -178,6 +178,21 @@ def version_build():
     return None, ""
 
 
+def version_appli():
+    """Numéro de version du projet (fichier VERSION, ex. « 2.0.0 »), intégré à l'exe ; « dev » s'il manque."""
+    for base in (getattr(sys, "_MEIPASS", None), os.path.dirname(os.path.abspath(__file__))):
+        if not base:
+            continue
+        try:
+            with open(os.path.join(base, "VERSION"), encoding="utf-8") as f:
+                v = f.read().strip()
+            if v:
+                return v
+        except OSError:
+            pass
+    return "dev"
+
+
 def _adresse_release(depot, fichier):
     return f"https://github.com/{depot}/releases/download/exe/{fichier}"
 
@@ -225,7 +240,7 @@ def version_publiee(depot):
 
 def telecharger_exe(depot, destination, progression=None):
     """Télécharge la nouvelle PlanningPDF.exe dans « destination » (vérifie que c'est bien un programme Windows)."""
-    with _ouvrir_url(_adresse_release(depot, "PlanningPDF.exe"), delai=60) as r:
+    with _ouvrir_url(_adresse_release(depot, NOM_EXE), delai=60) as r:          # même variante
         total = int(r.headers.get("Content-Length") or 0)
         lu, dernier = 0, -1
         with open(destination + ".tmp", "wb") as f:
@@ -307,8 +322,8 @@ CODES_TXT_DEFAUT = """\
 #  - NOM AFFICHÉ      : ce qui apparaît dans le planning
 #                       (remettez le même code pour ne pas le renommer).
 #                       [date] = afficher l'intitulé écrit sous la date
-#                       dans le bulletin (ex. « GRAISSAGE VIREUX »).
-#                       On peut y ajouter du texte : [date] Vireux
+#                       dans le bulletin (ex. « GRAISSAGE MONTCLAIR »).
+#                       On peut y ajouter du texte : [date] Montclair
 #  - COULEUR DE FOND  : un nom parmi
 #                       bleu, vert, violet, orange, jaune, rose, rouge,
 #                       turquoise, gris, beige, marron, blanc,
@@ -324,13 +339,13 @@ CODES_TXT_DEFAUT = """\
 #  Les lignes qui commencent par # sont ignorées.
 #
 # CODE     ; NOM     ; COULEUR  ; gros
-GIV002     ; S-GIV   ; bleu
-GIV001     ; M-GIV   ; vert
-ZREVIN     ; DISPO   ; violet
+VAL002     ; S-VAL   ; bleu
+VAL001     ; M-VAL   ; vert
+ZBELLE     ; DISPO   ; violet
 RP         ; RP      ; orange   ; gros
-RVN303T    ; [date]  ;
-REVRTM     ; [date]  ;
-RVN302T    ; [date] Vireux ;
+BLR303T    ; [date]  ;
+BLRRTM     ; [date]  ;
+BLR302T    ; [date] Montclair ;
 """
 
 COULEURS = _tuples(REGLES["couleurs"])   # voir regles.json
@@ -499,8 +514,8 @@ def code_affiche(code):
 
 def nom_affiche(sv):
     """Nom à afficher pour un service. [date] dans codes.txt est remplacé par
-    l'intitulé écrit sous la date dans le bulletin (ex. « GRAISSAGE VIREUX ») ;
-    on peut y ajouter du texte, ex. « [date] Vireux » -> « NUCLEAIRE Vireux »."""
+    l'intitulé écrit sous la date dans le bulletin (ex. « GRAISSAGE MONTCLAIR ») ;
+    on peut y ajouter du texte, ex. « [date] Montclair » -> « NUCLEAIRE Montclair »."""
     i = infos_code(sv["code"])
     if not i:
         return sv["code"]
@@ -518,17 +533,17 @@ R_JOUR = re.compile(r"^(lun|mar|mer|jeu|ven|sam|dim)\.?$", re.I)
 
 # ---------------------------------------------------------------------------
 #  Données : un « service » = ce qui s'affiche dans une case du planning
-#     {"code": "GIV002", "horaires": "13:28 – 22:35",
-#      "libelle": "Agent circulation Givet - STV", "source": "pdf"|"manuel"}
+#     {"code": "VAL002", "horaires": "13:28 – 22:35",
+#      "libelle": "Agent circulation Valmont - STV", "source": "pdf"|"manuel"}
 # ---------------------------------------------------------------------------
 def service(code="", horaires="", libelle="", source="manuel", intitule=""):
-    # intitule : texte écrit sous la date dans le bulletin (ex. « GRAISSAGE VIREUX »)
+    # intitule : texte écrit sous la date dans le bulletin (ex. « GRAISSAGE MONTCLAIR »)
     return {"code": code, "horaires": horaires, "libelle": libelle, "source": source,
             "intitule": intitule}
 
 
 def joli(texte):
-    """« AGENT CIRCULATION GIVET - STV » -> « Agent circulation Givet - STV »."""
+    """« AGENT CIRCULATION VALMONT - STV » -> « Agent circulation Valmont - STV »."""
     texte = re.sub(r"\s+", " ", texte).strip()
     if texte and texte.isupper():
         petits = {"A", "À", "DU", "DE", "DES", "LA", "LE", "LES", "ET", "AU", "AUX", "EN", "D", "L"}
@@ -660,7 +675,7 @@ def lire_bulletin(chemin):
             limites = [(haut, None)] + debuts + [(bas, "FIN")]
             for (y0, date), (y1, _) in zip(limites, limites[1:]):
                 ms = [w for w in zone if y0 <= w["top"] < y1 and w["x0"] >= col_util]
-                # intitulé écrit sous la date (ex. « GRAISSAGE VIREUX »)
+                # intitulé écrit sous la date (ex. « GRAISSAGE MONTCLAIR »)
                 md = [w for w in zone if y0 <= w["top"] < y1 and w["x0"] < col_util
                       and not R_DATE.match(w["text"]) and not R_JOUR.match(w["text"])]
                 if date is None:
@@ -873,6 +888,199 @@ def trouver_bulletin(sv, dossier=None):
             pass
     f = sv.get("fichier", "")
     return f if f and os.path.exists(f) else None
+
+
+# ---------------------------------------------------------------------------
+#  Commandes reçues par mail (IMAP, Free par défaut) → dossier « commande »
+#  (même fonctionnement que l'application Android : ReleveMail / CourrierImap)
+# ---------------------------------------------------------------------------
+def _version_mail():
+    """Version de l'exe, inscrite par la recette GitHub dans version_build.json (« mail ») :
+    PlanningPDF.exe = version manuelle, SANS mail (comme avant) ; PlanningPDF-mail.exe = avec les commandes par mail.
+    Sans ce fichier (planning_pdf.py lancé directement, exe fabriqué sur le PC) : avec les commandes par mail."""
+    for base in (getattr(sys, "_MEIPASS", None), os.path.dirname(os.path.abspath(__file__))):
+        if not base:
+            continue
+        try:
+            with open(os.path.join(base, FICHIER_VERSION), encoding="utf-8") as f:
+                return bool(json.load(f).get("mail", True))
+        except (OSError, ValueError, AttributeError):
+            pass
+    return True
+
+
+MAIL_DISPONIBLE = _version_mail()          # False : version manuelle (aucune fonction mail : ni menu, ni relevé)
+NOM_EXE = "PlanningPDF-mail.exe" if MAIL_DISPONIBLE else "PlanningPDF.exe"   # nom publié sur GitHub (même version)
+MAIL_SERVEUR, MAIL_PORT = "imap.free.fr", 993
+MAIL_JOURS_DEPART = 30                     # premier relevé : messages des 30 derniers jours
+# Conditions pour garder un PDF : expéditeur EXACTEMENT l'un des expéditeurs choisis, et nom du fichier contenant
+# l'un de ces mots (sans majuscules, accents, « _ » ni « - »). Mêmes valeurs que CourrierImap.NOMS_PDF (Android).
+MAIL_NOMS_PDF = ("bulletin de commande", "contrairement")
+MAIL_INTERVALLE_MS = 60 * 60 * 1000        # puis toutes les heures, tant que le programme est ouvert
+
+
+def proteger(texte):
+    """Mot de passe protégé par Windows (DPAPI : lisible seulement par ce compte Windows, sur ce PC)."""
+    import base64
+    if sys.platform.startswith("win"):
+        import ctypes
+        from ctypes import wintypes
+
+        class BLOB(ctypes.Structure):
+            _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_char))]
+        donnees = texte.encode("utf-8")
+        entree = BLOB(len(donnees), ctypes.cast(ctypes.create_string_buffer(donnees, len(donnees)), ctypes.POINTER(ctypes.c_char)))
+        sortie = BLOB()
+        if not ctypes.windll.crypt32.CryptProtectData(ctypes.byref(entree), "PlanningPDF", None, None, None, 0, ctypes.byref(sortie)):
+            raise OSError("protection du mot de passe impossible")
+        try:
+            return "dpapi:" + base64.b64encode(ctypes.string_at(sortie.pbData, sortie.cbData)).decode()
+        finally:
+            ctypes.windll.kernel32.LocalFree(sortie.pbData)
+    return "b64:" + base64.b64encode(texte.encode("utf-8")).decode()      # hors Windows (essais)
+
+
+def deproteger(protege):
+    import base64
+    if protege.startswith("dpapi:"):
+        import ctypes
+        from ctypes import wintypes
+
+        class BLOB(ctypes.Structure):
+            _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_char))]
+        donnees = base64.b64decode(protege[6:])
+        entree = BLOB(len(donnees), ctypes.cast(ctypes.create_string_buffer(donnees, len(donnees)), ctypes.POINTER(ctypes.c_char)))
+        sortie = BLOB()
+        if not ctypes.windll.crypt32.CryptUnprotectData(ctypes.byref(entree), None, None, None, None, 0, ctypes.byref(sortie)):
+            raise OSError("mot de passe à ressaisir (Commandes par mail)")
+        try:
+            return ctypes.string_at(sortie.pbData, sortie.cbData).decode("utf-8")
+        finally:
+            ctypes.windll.kernel32.LocalFree(sortie.pbData)
+    if protege.startswith("b64:"):
+        return base64.b64decode(protege[4:]).decode("utf-8")
+    raise OSError("mot de passe à ressaisir (Commandes par mail)")
+
+
+def _quoter_imap(s):
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _normaliser_nom(s):
+    import unicodedata
+    s = "".join(c for c in unicodedata.normalize("NFD", s) if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", re.sub(r"[_\-.]+", " ", s.lower())).strip()
+
+
+def nom_pdf_accepte(nom):
+    """Le nom de la pièce jointe contient « bulletin de commande » ou « contrairement »."""
+    n = _normaliser_nom(nom)
+    return any(mot in n for mot in MAIL_NOMS_PDF)
+
+
+def expediteur_accepte(de, expediteurs):
+    """L'adresse de l'en-tête From est exactement l'un des expéditeurs choisis."""
+    from email.utils import parseaddr
+    adresse = parseaddr(de or "")[1].strip().lower()
+    return any(adresse == e.strip().lower() for e in expediteurs)
+
+
+def pdf_du_message(brut, expediteurs=None):
+    """Bulletins joints à un message (y compris dans une commande transférée) : [(nom, octets)].
+    Gardés seulement si l'expéditeur est l'un de « expediteurs » (si donné) et si le nom du PDF le permet."""
+    import email
+    from email import policy
+    msg = email.message_from_bytes(brut, policy=policy.default)
+    pieces = []
+    if expediteurs is not None and not expediteur_accepte(str(msg.get("From", "")), expediteurs):
+        return pieces
+    for partie in msg.walk():
+        if partie.is_multipart():
+            continue
+        nom = partie.get_filename() or ""
+        type_ = partie.get_content_type()
+        if type_ != "application/pdf" and not (nom.lower().endswith(".pdf") and type_.startswith("application/")):
+            continue
+        donnees = partie.get_payload(decode=True) or b""
+        if donnees[:4] == b"%PDF" and nom_pdf_accepte(nom):
+            pieces.append((re.sub(r'[\\/:*?"<>|\r\n]', "_", nom).strip() or "commande.pdf", donnees))
+    return pieces
+
+
+def relever_mail(adresse, mot_de_passe, expediteurs, uid_validite=0, dernier_uid=0,
+                 serveur=MAIL_SERVEUR, port=MAIL_PORT, ssl=True):
+    """Lit la boîte (sans rien modifier : lecture seule, BODY.PEEK) ; renvoie
+    ([(uid, nom, octets)], uid_validite, dernier_uid). Lève OSError avec un message clair."""
+    import imaplib
+    if not expediteurs:
+        raise OSError("aucun expéditeur indiqué")
+    try:
+        imap = imaplib.IMAP4_SSL(serveur, port, timeout=30) if ssl else imaplib.IMAP4(serveur, port, timeout=30)
+    except (OSError, imaplib.IMAP4.error) as ex:
+        raise OSError(f"serveur {serveur} injoignable ({ex})")
+    try:
+        try:
+            imap.login(adresse, mot_de_passe)
+        except imaplib.IMAP4.error:
+            raise OSError("connexion refusée : adresse ou mot de passe incorrect")
+        typ, _ = imap.select("INBOX", readonly=True)
+        if typ != "OK":
+            raise OSError("boîte de réception introuvable")
+        validite = int((imap.response("UIDVALIDITY")[1] or [b"0"])[0] or 0)
+        neuf = not uid_validite or validite != uid_validite
+        dernier = 0 if neuf else dernier_uid
+        critere = "OR " * (len(expediteurs) - 1) + " ".join("FROM " + _quoter_imap(e) for e in expediteurs)
+        if neuf:
+            depuis = (dt.date.today() - dt.timedelta(days=MAIL_JOURS_DEPART))
+            depuis = f"{depuis.day}-{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][depuis.month - 1]}-{depuis.year}"
+            typ, data = imap.uid("SEARCH", None, f"SINCE {depuis} {critere}")
+        else:
+            typ, data = imap.uid("SEARCH", None, f"UID {dernier + 1}:* {critere}")
+        if typ != "OK":
+            raise OSError("recherche refusée par le serveur")
+        uids = [int(x) for x in (data[0] or b"").split()]
+        pieces, plus_grand = [], dernier
+        for uid in uids:
+            if not neuf and uid <= dernier_uid:
+                continue                                  # « n:* » renvoie toujours le dernier message
+            plus_grand = max(plus_grand, uid)
+            typ, data = imap.uid("FETCH", str(uid), "(BODY.PEEK[])")
+            brut = next((x[1] for x in data if isinstance(x, tuple)), None) if typ == "OK" else None
+            if brut:
+                pieces += [(uid, nom, octets) for nom, octets in pdf_du_message(brut, expediteurs)]
+        return pieces, validite, plus_grand
+    finally:
+        try:
+            imap.logout()
+        except Exception:
+            pass
+
+
+def ranger_pieces_mail(pieces, dossier=None):
+    """Dépose les PDF reçus dans le dossier « commande » (sauf s'il y est déjà) ; renvoie les chemins créés."""
+    import hashlib
+    dossier = dossier or dossier_commandes()
+    connus = set()
+    for f in _tous_les_pdf(dossier):
+        try:
+            with open(f, "rb") as fh:
+                connus.add(hashlib.md5(fh.read()).hexdigest())
+        except OSError:
+            pass
+    crees = []
+    for _uid, nom, octets in pieces:
+        h = hashlib.md5(octets).hexdigest()
+        if h in connus:
+            continue
+        connus.add(h)
+        base, ext = os.path.splitext(nom if nom.lower().endswith(".pdf") else nom + ".pdf")
+        chemin, k = os.path.join(dossier, base + ext), 2
+        while os.path.exists(chemin):
+            chemin, k = os.path.join(dossier, f"{base} ({k}){ext}"), k + 1
+        with open(chemin, "wb") as fh:
+            fh.write(octets)
+        crees.append(chemin)
+    return crees
 
 
 def synchroniser_dossier(planning, dossier=None, changements=None):
@@ -1167,7 +1375,7 @@ def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", 
                 if jour.month != mois:
                     d.rectangle([x0 + c * col, y_grille + r * lig, x0 + (c + 1) * col,
                                  y_grille + (r + 1) * lig], fill=P["hors_mois"])
-    # cases colorées selon le code (ex. S-GIV en bleu pastel)
+    # cases colorées selon le code (ex. S-VAL en bleu pastel)
     for r, sem in enumerate(semaines):
         for c, jour in enumerate(sem):
             if jour.month != mois:
@@ -1242,7 +1450,7 @@ def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", 
                 d.text((cx0 + col - pad, base), ferie, font=f_fer, fill=TXT_DOUX if fond_j else c_num, anchor="rs")
                 larg_ferie = d.textlength(ferie, font=f_fer) + u * 0.006
 
-            # code spécial (S-GIV, M-GIV…) juste après le chiffre de la date
+            # code spécial (S-VAL, M-VAL…) juste après le chiffre de la date
             # le 1er code du jour s'affiche à côté du chiffre (qu'il soit dans codes.txt ou non),
             # sauf les codes « gros » (RP…) écrits au centre de la case
             special = next((sv for sv in jours.get(jour, [])
@@ -1250,7 +1458,7 @@ def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", 
             if special:
                 xc = cx0 + pad + d.textlength(str(jour.day), font=f_num) + u * 0.009
                 nom, larg_nom = nom_affiche(special), cx0 + col - pad - xc - larg_ferie
-                # 1 ligne si le nom tient assez gros, sinon 2 lignes (ex. « GRAISSAGE / VIREUX »)
+                # 1 ligne si le nom tient assez gros, sinon 2 lignes (ex. « GRAISSAGE / MONTCLAIR »)
                 # intitulé repris de la case Date ([date]) : police plus petite
                 par_date = "[date]" in (infos_code(special["code"]) or {}).get("nom", "").lower()
                 t_max = u * (0.0105 if par_date else 0.0165)
@@ -1469,7 +1677,7 @@ def horaire_court(sv):
 
 
 def resume_services(services):
-    """Résumé d'une journée venant des bulletins : « S-GIV 13:28–22:35 + K 12:00–13:00 »."""
+    """Résumé d'une journée venant des bulletins : « S-VAL 13:28–22:35 + K 12:00–13:00 »."""
     codes_a_jour()                          # noms affichés à jour (codes.txt)
     parts = []
     for sv in services:
@@ -1924,6 +2132,8 @@ def lancer_interface():
             self.after(300, lambda: self.actualiser(silencieux=True))   # range + lit le dossier « commande »
             self._maj_prete = False                                     # nouvelle version téléchargée ?
             self.after(4000, lambda: self.verifier_maj(manuel=False))    # nouvelle version de l'exe ? (1 fois/jour)
+            self._mail_en_cours = False
+            self.after(6000, self._minuteur_mail)                       # commandes reçues par mail (toutes les heures)
             self.tout_rafraichir(sauver=False)
             self.afficher_sortie()
             self.appliquer_panneau()                  # cadre « Informations extraites » masqué par défaut
@@ -2625,6 +2835,8 @@ def lancer_interface():
             fichier = tk.Menu(barre, tearoff=False)
             fichier.add_command(label="Ajouter une commande…", accelerator=f"{ctrl}+O", command=self.ouvrir)
             fichier.add_command(label="Dossier commande", accelerator=f"{ctrl}+D", command=self.dossier_commande)
+            if MAIL_DISPONIBLE:                                         # version « mail » seulement
+                fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
             fichier.add_separator()
             fichier.add_command(label="Exporter…", accelerator=f"{ctrl}+E", command=self.exporter)
             fichier.add_command(label="Exporter vers l'agenda (.ics)…", command=self.exporter_agenda)
@@ -2682,8 +2894,11 @@ def lancer_interface():
             aide.add_command(label="Rechercher une mise à jour…", command=lambda: self.verifier_maj(manuel=True))
             aide.add_separator()
             aide.add_command(label="À propos", command=lambda: messagebox.showinfo(
-                "À propos", "Planning PDF" + (f" — version {version_build()[0]}" if version_build()[0] else "")
-                + "\n\nTransforme les bulletins de commande (PDF) en planning mensuel."))
+                "À propos", f"Planning PDF {version_appli()}"
+                + (f" (fabrication {version_build()[0]})" if version_build()[0] else "")
+                + ("\nVersion mail : commandes récupérées dans la boîte mail." if MAIL_DISPONIBLE else "\nVersion manuelle (sans mail).")
+                + "\n\nTransforme les bulletins de commande (PDF) en planning mensuel."
+                + "\nHistorique des versions : CHANGELOG.md (dépôt GitHub)."))
             barre.add_cascade(label="Aide", menu=aide)
             self.config(menu=barre)
 
@@ -2754,7 +2969,7 @@ def lancer_interface():
                 return "#f3f3f3"
 
         def maj_resume(self):
-            """Pastilles : nombre de jours par code sur le mois affiché, grèves, jours à Givet."""
+            """Pastilles : nombre de jours par code sur le mois affiché, grèves."""
             for w in self.resume.winfo_children():
                 w.destroy()
             fond = self.fond_resume()
@@ -3294,6 +3509,175 @@ def lancer_interface():
                 else:
                     self.statut.config(text="Codes mis à jour. Cliquez sur « Mettre à jour le PDF » "
                                             "pour les reporter dans le PDF de sortie.")
+
+        # ---- commandes reçues par mail ---------------------------------------------
+        def _minuteur_mail(self):
+            if not MAIL_DISPONIBLE:                     # version manuelle : jamais de relevé
+                return
+            if lire_prefs().get("mail_actif"):
+                self.relever_mail_maintenant(manuel=False)
+            self.after(MAIL_INTERVALLE_MS, self._minuteur_mail)
+
+        def relever_mail_maintenant(self, manuel=True, fini=None):
+            """Relève la boîte (dans un fil à part) ; les PDF trouvés vont dans « commande » puis au planning."""
+            import threading
+            if self._mail_en_cours:
+                return
+            pr = lire_prefs()
+            adresse, protege = pr.get("mail_adresse", ""), pr.get("mail_mdp", "")
+            exp = [e for e in pr.get("mail_expediteurs", []) if e]
+            if not adresse or not protege or not exp:
+                if manuel:
+                    messagebox.showinfo("Commandes par mail", "Indiquez d'abord l'adresse, le mot de passe et les expéditeurs.")
+                return
+            self._mail_en_cours = True
+            if manuel:
+                self.statut.config(text="Relevé de la boîte mail…")
+
+            def travail():
+                crees, erreur = [], None
+                try:
+                    pieces, validite, dernier = relever_mail(
+                        adresse, deproteger(protege), exp, pr.get("mail_uidvalidite", 0), pr.get("mail_dernier_uid", 0),
+                        pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT))
+                    crees = ranger_pieces_mail(pieces)
+                    ecrire_pref("mail_uidvalidite", validite)
+                    ecrire_pref("mail_dernier_uid", dernier)
+                except OSError as ex:
+                    erreur = str(ex)
+                except Exception as ex:                                     # réponse inattendue du serveur
+                    erreur = f"{type(ex).__name__} : {ex}"
+                self.after(0, lambda: self._resultat_mail(manuel, crees, erreur, fini))
+
+            threading.Thread(target=travail, daemon=True).start()
+
+        def _resultat_mail(self, manuel, crees, erreur, fini):
+            self._mail_en_cours = False
+            heure = dt.datetime.now().strftime("%d/%m %H:%M")
+            if erreur:
+                etat = f"Relevé le {heure} : échec ({erreur})"
+            else:
+                n = len(crees)
+                etat = f"Relevé le {heure} : " + ("aucune nouvelle commande" if not n else
+                                                  f"{n} nouvelle{'s' if n > 1 else ''} commande{'s' if n > 1 else ''}")
+            ecrire_pref("mail_etat", etat)
+            if crees:
+                self.actualiser()                       # range les PDF et les ajoute au planning
+                self.statut.config(text=f"{len(crees)} commande(s) reçue(s) par mail et ajoutée(s) au planning.")
+            elif manuel:
+                self.statut.config(text=etat)
+                if erreur:
+                    messagebox.showwarning("Commandes par mail", etat)
+            if fini:
+                fini(etat, bool(erreur))
+
+        def fenetre_mail(self):
+            """Réglages du relevé des commandes dans la boîte mail."""
+            pr = lire_prefs()
+            fen = tk.Toplevel(self)
+            fen.title("Commandes par mail")
+            fen.transient(self)
+            fen.resizable(False, False)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            ttk.Label(c, text="Commandes reçues par mail", font=("", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky="w")
+            ttk.Label(c, foreground="#555", justify="left", wraplength=430, text=(
+                "Le programme relève la boîte mail au démarrage puis toutes les heures, et dépose dans le dossier "
+                "« commande » les bulletins envoyés par les expéditeurs ci-dessous (pièces jointes PDF dont le nom contient "
+                "« bulletin de commande » ou « contrairement ») : ils sont ajoutés au planning. "
+                "Il ne fait que lire : aucun message n'est envoyé, effacé, déplacé ni marqué comme lu.")).grid(
+                row=1, column=0, columnspan=2, sticky="w", pady=(2, 10))
+            v_actif = tk.BooleanVar(value=bool(pr.get("mail_actif")))
+            v_adr = tk.StringVar(value=pr.get("mail_adresse", ""))
+            v_mdp = tk.StringVar(value="")
+            exp = (pr.get("mail_expediteurs") or []) + ["", ""]
+            v_e1, v_e2 = tk.StringVar(value=exp[0]), tk.StringVar(value=exp[1])
+            v_srv = tk.StringVar(value=pr.get("mail_serveur") or MAIL_SERVEUR)
+            v_port = tk.StringVar(value=str(pr.get("mail_port") or MAIL_PORT))
+            ttk.Checkbutton(c, text="Relever automatiquement (au démarrage puis toutes les heures)",
+                            variable=v_actif).grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 8))
+            lignes = (("Adresse mail complète :", v_adr, None), ("Mot de passe de la boîte :", v_mdp, "•"),
+                      ("Expéditeur des commandes 1 :", v_e1, None), ("Expéditeur des commandes 2 :", v_e2, None),
+                      ("Serveur IMAP (SSL) :", v_srv, None), ("Port :", v_port, None))
+            for i, (lib, var, cache) in enumerate(lignes):
+                ttk.Label(c, text=lib).grid(row=3 + i, column=0, sticky="w", pady=2)
+                ttk.Entry(c, textvariable=var, width=34, show=cache or "").grid(row=3 + i, column=1, sticky="w", pady=2)
+            note = ttk.Label(c, foreground="#666", text=(
+                "Mot de passe enregistré : laissez vide pour le garder." if pr.get("mail_mdp") else
+                "Free : imap.free.fr, port 993, adresse complète et mot de passe habituel."))
+            note.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
+            etat = ttk.Label(c, foreground="#555", wraplength=430, text=pr.get("mail_etat", ""))
+            etat.grid(row=11, column=0, columnspan=2, sticky="w", pady=(8, 0))
+
+            def enregistrer(verifier=True):
+                adr, mdp = v_adr.get().strip(), v_mdp.get()
+                exps = [e.strip() for e in (v_e1.get(), v_e2.get()) if e.strip()]
+                if verifier and v_actif.get():
+                    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", adr):
+                        messagebox.showwarning("Commandes par mail", "Indiquez l'adresse mail complète (ex. prenom.nom@free.fr).", parent=fen)
+                        return False
+                    if not mdp and not lire_prefs().get("mail_mdp"):
+                        messagebox.showwarning("Commandes par mail", "Indiquez le mot de passe de la boîte mail.", parent=fen)
+                        return False
+                    if not exps:
+                        messagebox.showwarning("Commandes par mail", "Indiquez au moins un expéditeur des commandes.", parent=fen)
+                        return False
+                try:
+                    port = int(v_port.get() or MAIL_PORT)
+                except ValueError:
+                    port = MAIL_PORT
+                if adr.lower() != lire_prefs().get("mail_adresse", "").lower():      # autre boîte : on repart de zéro
+                    ecrire_pref("mail_uidvalidite", 0)
+                    ecrire_pref("mail_dernier_uid", 0)
+                ecrire_pref("mail_actif", bool(v_actif.get()))
+                ecrire_pref("mail_adresse", adr)
+                ecrire_pref("mail_expediteurs", exps)
+                ecrire_pref("mail_serveur", v_srv.get().strip() or MAIL_SERVEUR)
+                ecrire_pref("mail_port", port)
+                if mdp:
+                    try:
+                        ecrire_pref("mail_mdp", proteger(mdp))
+                    except OSError as ex:
+                        messagebox.showerror("Commandes par mail", str(ex), parent=fen)
+                        return False
+                    v_mdp.set("")
+                    note.config(text="Mot de passe enregistré : laissez vide pour le garder.")
+                return True
+
+            def relever():
+                actif = v_actif.get()
+                v_actif.set(True)
+                ok = enregistrer()
+                v_actif.set(actif)
+                ecrire_pref("mail_actif", bool(actif))
+                if not ok:
+                    return
+                b_rel.state(["disabled"])
+                etat.config(text="Relevé en cours…", foreground="#555")
+
+                def fini(texte, erreur):
+                    try:
+                        b_rel.state(["!disabled"])
+                        etat.config(text=texte, foreground="#b00020" if erreur else "#555")
+                    except tk.TclError:
+                        pass                                  # fenêtre fermée entre-temps
+                self.relever_mail_maintenant(manuel=False, fini=fini)
+
+            def oublier():
+                ecrire_pref("mail_mdp", "")
+                ecrire_pref("mail_actif", False)
+                v_actif.set(False)
+                note.config(text="Mot de passe oublié, relevé arrêté.")
+
+            b = ttk.Frame(c, padding=(0, 12, 0, 0))
+            b.grid(row=10, column=0, columnspan=2, sticky="we")
+            ttk.Button(b, text="Enregistrer", command=lambda: enregistrer() and fen.destroy()).pack(side="left")
+            b_rel = ttk.Button(b, text="Relever maintenant", command=relever)
+            b_rel.pack(side="left", padx=6)
+            ttk.Button(b, text="Oublier le mot de passe", command=oublier).pack(side="left")
+            ttk.Button(b, text="Fermer", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+            fen.grab_set()
 
         # ---- mise à jour automatique de l'exe -------------------------------------
         def verifier_maj(self, manuel=False):

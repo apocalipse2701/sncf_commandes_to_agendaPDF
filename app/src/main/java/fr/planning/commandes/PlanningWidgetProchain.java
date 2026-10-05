@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Mini-widget « Prochain service » (2 × 1) : le service en cours ou le prochain.
  *   1re ligne : « En cours · fin 22:35 », « Aujourd'hui · 13:28–22:35 », « Demain · 04:35–13:38 » ou « Lun 05/10 · … »
- *   2e ligne  : le service dans sa couleur (M-GIV, S-GIV…).
+ *   2e ligne  : le service dans sa couleur (M-VAL, S-VAL…).
  * Un « service » est un jour qui a des horaires (les repos n'en ont pas), hors jours de grève.
  * Une nuit (fin avant le début) se termine le lendemain : elle reste « en cours » jusqu'à sa fin.
  * Toucher le widget ouvre ce jour dans l'application. Style réglé à la pose (WidgetReglages).

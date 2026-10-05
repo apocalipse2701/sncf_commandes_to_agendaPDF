@@ -123,9 +123,10 @@ button { cursor: pointer; }
 
 /* formulaires */
 label.champ { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); font-weight: 600; }
-input[type="text"], input[type="number"], select, textarea { background: var(--surface-2); border: 1px solid var(--line);
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], select, textarea { background: var(--surface-2); border: 1px solid var(--line);
   border-radius: 10px; padding: 10px 12px; width: 100%; font-size: 1rem; color: var(--fg); }
 .grille-champs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+details.reglage-serveur summary { cursor: pointer; padding: 4px 0; }
 .case-a-cocher { display: flex; align-items: center; gap: 10px; font-weight: 600; }
 .case-a-cocher input { width: 20px; height: 20px; accent-color: var(--accent); }
 
@@ -264,6 +265,30 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         </div>
         <p class="discret" id="ics-note" style="margin:10px 0 0">Ouvrez ensuite le fichier « Planning.ics » enregistré : l'agenda propose d'ajouter les rendez-vous.</p>
       </div></div></div>
+    <div class="bloc" id="bloc-mail" hidden><h2>Commandes reçues par mail</h2>
+      <div class="carte"><div class="pad">
+        <p style="margin:0 0 12px">L'application relève votre boîte mail toutes les heures et ajoute au planning les bulletins envoyés par les expéditeurs ci-dessous (pièces jointes PDF dont le nom contient « bulletin de commande » ou « contrairement »). Elle ne fait que lire : aucun message n'est envoyé, effacé, déplacé ni marqué comme lu.</p>
+        <label class="case-a-cocher" style="margin:0 0 12px"><input type="checkbox" id="mail-actif">Relever automatiquement (toutes les heures)</label>
+        <div class="grille-champs" style="grid-template-columns:1fr">
+          <label class="champ" for="mail-adresse">Adresse mail complète<input type="email" id="mail-adresse" autocomplete="off" autocapitalize="none" placeholder="prenom.nom@free.fr"></label>
+          <label class="champ" for="mail-mdp">Mot de passe de la boîte<input type="password" id="mail-mdp" autocomplete="off"></label>
+        </div>
+        <div class="grille-champs" style="margin-top:10px;grid-template-columns:1fr">
+          <label class="champ" for="mail-exp1">Expéditeur des commandes 1<input type="email" id="mail-exp1" autocomplete="off" autocapitalize="none" placeholder="adresse de l'expéditeur"></label>
+          <label class="champ" for="mail-exp2">Expéditeur des commandes 2<input type="email" id="mail-exp2" autocomplete="off" autocapitalize="none" placeholder="adresse de l'expéditeur"></label>
+        </div>
+        <details class="reglage-serveur" style="margin-top:10px"><summary class="discret">Serveur de messagerie (Free par défaut)</summary>
+          <div class="grille-champs" style="margin-top:8px">
+            <label class="champ" for="mail-serveur">Serveur IMAP<input type="text" id="mail-serveur" autocomplete="off" autocapitalize="none" placeholder="imap.free.fr"></label>
+            <label class="champ" for="mail-port">Port (SSL)<input type="number" id="mail-port" placeholder="993"></label>
+          </div></details>
+        <div class="rangee" style="margin-top:12px">
+          <button class="btn accent" id="mail-enregistrer">Enregistrer</button>
+          <button class="btn" id="mail-relever">Relever maintenant</button>
+          <button class="btn fantome" id="mail-oublier" hidden>Oublier le mot de passe</button>
+        </div>
+        <p class="discret" id="mail-etat" style="margin:10px 0 0"></p>
+      </div></div></div>
     <div class="bloc" id="bloc-maj" hidden><h2>Mise à jour de l'application</h2>
       <div class="carte"><div class="pad">
         <p id="maj-version" style="margin:0 0 10px"></p>
@@ -283,6 +308,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         </div>
         <p class="discret" id="etat-stockage" style="margin:10px 0 0"></p>
       </div></div></div>
+    <p class="discret" id="version-appli" style="text-align:center;margin:18px 0 6px"></p>
     <div class="bloc"><h2>Zone de danger</h2>
       <div class="carte zone-danger"><div class="pad">
         <h3>Nouveau planning</h3>
@@ -303,6 +329,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
 window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}}};
+window.VERSION_APPLI = "2.0.2";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -552,7 +579,7 @@ window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py)
 #    CODE DU BULLETIN ; NOM AFFICHÉ ; COULEUR DE FOND ; gros
 #
 #  - NOM AFFICHÉ : [date] = intitulé écrit sous la date dans le bulletin
-#                  (on peut ajouter du texte : [date] Vireux)
+#                  (on peut ajouter du texte : [date] Montclair)
 #  - COULEUR     : bleu, vert, violet, orange, jaune, rose, rouge, turquoise,
 #                  gris, beige, marron, blanc, noir, gris foncé, bleu foncé,
 #                  vert foncé, rouge foncé, ou R,V,B (255,240,200), ou #FFF0C8
@@ -560,12 +587,12 @@ window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py)
 #
 # CODE     ; NOM     ; COULEUR  ; gros
 `;
-  const CODES_TXT_DEFAUT = ENTETE_CODES + `GIV002     ; S-GIV   ; bleu
-GIV001     ; M-GIV   ; vert
-GIV301T    ; N-GIV   ; 170,186,222
+  const CODES_TXT_DEFAUT = ENTETE_CODES + `VAL002     ; S-VAL   ; bleu
+VAL001     ; M-VAL   ; vert
+VAL301T    ; N-VAL   ; 170,186,222
 DN         ; DN      ; 170,186,222
 FZECU      ; [date]
-ZREVIN     ; DISPO Revin ; violet
+ZBELLE     ; DISPO Bellerive ; violet
 RP         ; RP      ; orange   ; gros
 RN         ; RN      ; orange   ; gros
 RU         ; RU      ; orange   ; gros
@@ -578,12 +605,12 @@ F4         ; F4      ; orange   ; gros
 FV         ; FV      ; orange   ; gros
 F6         ; F6      ; orange   ; gros
 F7         ; F7      ; orange   ; gros
-RVN303T    ; [date]  ; jaune
-RVN302T    ; [date] Vireux ; 210,32,182
-REVRTI     ; [date] travaux ; #FFC000
+BLR303T    ; [date]  ; jaune
+BLR302T    ; [date] Montclair ; 210,32,182
+BLRRTI     ; [date] travaux ; #FFC000
 AH         ; AH      ; orange   ; gros
 FDPX       ; FDPX    ; noir
-REVRTM     ; [date] travaux ; #FFC000
+BLRRTM     ; [date] travaux ; #FFC000
 PGVRVSD    ; [date]
 `;
 
@@ -1816,6 +1843,7 @@ PGVRVSD    ; [date]
   // ------------------------------------------------------------------ mise à jour de l'application (Android)
   // L'application lit la dernière version publiée sur GitHub (release « apk », fichier version.json),
   // la télécharge et l'installe (MiseAJour.java) : Android demande toujours une confirmation.
+  const VERSION = window.VERSION_APPLI || "dev";     // numéro du projet (fichier VERSION), ex. « 2.0.0 »
   const MAJ = { installee: 0, publiee: 0, depot: "", etat: "", enCours: false, erreur: false };
   const majPossible = () => ANDROID && typeof window.Android.verifierMaj === "function";
   if (majPossible()) {
@@ -1834,7 +1862,7 @@ PGVRVSD    ; [date]
     if (r.installee) MAJ.installee = r.installee;
     if (r.ok) {
       MAJ.publiee = r.publiee || 0;
-      MAJ.etat = nouvelle() ? `Nouvelle version 1.${MAJ.publiee} disponible.` : "Vous avez la dernière version.";
+      MAJ.etat = nouvelle() ? `Nouvelle version disponible (fabrication ${MAJ.publiee}).` : "Vous avez la dernière version.";
       MAJ.erreur = false;
       E.majVerifieeLe = M.aujourdhui(); Stock.marquer([], true);
     } else {
@@ -1855,7 +1883,7 @@ PGVRVSD    ; [date]
     b.hidden = !montrer;
     if (montrer) {
       b.replaceChildren(...[
-        el("p", { text: `Nouvelle version de l'application disponible : 1.${MAJ.publiee} (installée : 1.${MAJ.installee}).` }),
+        el("p", { text: `Nouvelle version de l'application disponible (fabrication ${MAJ.publiee} ; installée : version ${VERSION}, fabrication ${MAJ.installee}).` }),
         MAJ.etat && !/^(Nouvelle version|Recherche)/.test(MAJ.etat) ? el("p", { class: MAJ.erreur ? "ko" : "discret", text: MAJ.etat }) : null,
         el("button", { class: "btn accent", disabled: MAJ.enCours || null, onclick: installerMaj }, MAJ.enCours ? "Installation…" : "Installer"),
         MAJ.enCours ? null : el("button", { class: "btn fantome", onclick: () => { E.majReportee = M.decaler(M.aujourdhui(), 3); Stock.marquer([], true); rendreMaj(); } }, "Plus tard")].filter(Boolean));
@@ -1863,12 +1891,12 @@ PGVRVSD    ; [date]
     const bloc = $("#bloc-maj");
     bloc.hidden = !majPossible();
     if (bloc.hidden) return;
-    $("#maj-version").textContent = MAJ.installee ? `Version installée : 1.${MAJ.installee}` : "Version installée : inconnue";
+    $("#maj-version").textContent = `Version installée : ${VERSION}` + (MAJ.installee ? ` (fabrication ${MAJ.installee})` : "");
     $("#maj-verifier").disabled = MAJ.enCours;
     const bi = $("#maj-installer");
     bi.hidden = !nouvelle();
     bi.disabled = MAJ.enCours;
-    bi.textContent = MAJ.enCours ? "Installation…" : `Installer la version 1.${MAJ.publiee}`;
+    bi.textContent = MAJ.enCours ? "Installation…" : `Installer la nouvelle version (fabrication ${MAJ.publiee})`;
     const z = $("#maj-etat");
     z.textContent = MAJ.etat;
     z.className = MAJ.erreur ? "ko" : "discret";
@@ -1876,9 +1904,93 @@ PGVRVSD    ; [date]
   $("#maj-verifier").addEventListener("click", () => verifierMaj(true));
   $("#maj-installer").addEventListener("click", installerMaj);
 
+  // ------------------------------------------------------------------ commandes reçues par mail (Android)
+  // Android relève la boîte (ReleveMail, toutes les heures) et garde les PDF trouvés ; la page les importe
+  // à l'ouverture, au retour dans l'application et quand on touche la notification « Nouvelle commande ».
+  // seulement dans la version « mail » (PlanningCommandes-mail.apk) ; la version manuelle n'a pas cette fonction
+  const MAIL_POSSIBLE = ANDROID && typeof window.Android.mailDisponible === "function" && !!window.Android.mailDisponible();
+  let mailReglagesLus = null, importMailEnCours = false;
+  function lireMail() {
+    try { mailReglagesLus = JSON.parse(window.Android.mailReglages()); } catch (e) { mailReglagesLus = null; }
+    return mailReglagesLus;
+  }
+  function rendreMail() {
+    const bloc = $("#bloc-mail");
+    bloc.hidden = !MAIL_POSSIBLE;
+    if (!MAIL_POSSIBLE) return;
+    const r = lireMail() || {};
+    $("#mail-actif").checked = !!r.actif;
+    $("#mail-adresse").value = r.adresse || "";
+    $("#mail-mdp").value = "";
+    $("#mail-mdp").placeholder = r.motDePasse ? "•••••• enregistré (vide = inchangé)" : "";
+    const ex = r.expediteurs || [];
+    $("#mail-exp1").value = ex[0] || ""; $("#mail-exp2").value = ex[1] || "";
+    $("#mail-serveur").value = r.serveur && r.serveur !== "imap.free.fr" ? r.serveur : "";
+    $("#mail-port").value = r.port && r.port !== 993 ? r.port : "";
+    $("#mail-oublier").hidden = !r.motDePasse;
+    $("#mail-etat").textContent = r.etat || (r.actif ? "Pas encore relevé." : "");
+  }
+  function enregistrerMail(oublier) {
+    const adresse = $("#mail-adresse").value.trim(), mdp = $("#mail-mdp").value;
+    const expediteurs = [$("#mail-exp1").value.trim(), $("#mail-exp2").value.trim()].filter(Boolean);
+    const actif = $("#mail-actif").checked;
+    if (actif && !oublier) {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adresse)) { toast("Indiquez l'adresse mail complète (ex. prenom.nom@free.fr)."); return false; }
+      if (!mdp && !(mailReglagesLus && mailReglagesLus.motDePasse)) { toast("Indiquez le mot de passe de la boîte mail."); return false; }
+      if (!expediteurs.length) { toast("Indiquez au moins un expéditeur des commandes."); return false; }
+    }
+    const err = window.Android.mailEnregistrer(JSON.stringify({ actif: oublier ? false : actif, adresse, motDePasse: mdp, expediteurs,
+      serveur: $("#mail-serveur").value.trim(), port: +$("#mail-port").value || 993, oublier: !!oublier }));
+    if (err) { toast(err); return false; }
+    rendreMail();
+    return true;
+  }
+  async function importerCommandesMail() {
+    if (!MAIL_POSSIBLE || importMailEnCours) return;
+    importMailEnCours = true;
+    try {
+      await pret;
+      let liste = [];
+      try { liste = JSON.parse(window.Android.commandesMail() || "[]"); } catch (e) { liste = []; }
+      if (!liste.length) return;
+      const fichiers = liste.map(x => {
+        const bin = atob(x.b64), o = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i);
+        return new File([o], x.nom || "commande.pdf", { type: "application/pdf" });
+      });
+      montrerOnglet("commandes");
+      toast(liste.length > 1 ? `${liste.length} commandes reçues par mail : ajout au planning…` : "Commande reçue par mail : ajout au planning…");
+      await importer(fichiers);
+      window.Android.commandesMailTraitees(JSON.stringify(liste.map(x => x.id)));
+      if (!$("#bloc-mail").hidden) rendreMail();
+    } finally { importMailEnCours = false; }
+  }
+  window.__commandesMail = importerCommandesMail;
+  window.__retourMail = r => {
+    $("#mail-relever").disabled = false;
+    $("#mail-etat").textContent = r.texte || "";
+    $("#mail-etat").className = r.ok ? "discret" : "ko";
+    if (r.nouveaux > 0) importerCommandesMail();
+  };
+  $("#mail-enregistrer").addEventListener("click", () => { if (enregistrerMail(false)) toast($("#mail-actif").checked ? "Relevé automatique activé." : "Réglages enregistrés."); });
+  $("#mail-oublier").addEventListener("click", () => { $("#mail-actif").checked = false; if (enregistrerMail(true)) toast("Mot de passe oublié, relevé arrêté."); });
+  $("#mail-relever").addEventListener("click", () => {
+    const actif = $("#mail-actif").checked;
+    $("#mail-actif").checked = true;                    // les champs doivent être complets pour relever
+    const ok = enregistrerMail(false);
+    $("#mail-actif").checked = actif;
+    if (!ok) return;
+    if (!actif) enregistrerMail(false);                 // relevé ponctuel : l'automatique reste comme choisi
+    $("#mail-relever").disabled = true;
+    $("#mail-etat").className = "discret";
+    $("#mail-etat").textContent = "Relevé en cours…";
+    window.Android.mailRelever();
+  });
+
   // ------------------------------------------------------------------ réglages
   function rendreReglages() {
-    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj();
+    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail();
+    $("#version-appli").textContent = `Planning Commandes ${VERSION}` + (MAIL_POSSIBLE ? " · version mail" : ANDROID ? " · version manuelle" : "");
     const web = !ANDROID && !!window.claude;
     $("#ics-futur").disabled = $("#ics-tout").disabled = web;
     $("#ics-note").textContent = web ? "L'export vers l'agenda est disponible dans l'application Android et sur le PC (menu Fichier)."
@@ -1978,7 +2090,7 @@ PGVRVSD    ; [date]
       el("div", { class: "grille-champs" },
         el("label", { class: "champ", for: "ed-code" }, "Code du bulletin", code),
         el("label", { class: "champ", for: "ed-nom" }, "Nom affiché", nom)),
-      el("p", { class: "discret", style: "margin:6px 0 12px", text: "[date] affiche l'intitulé écrit sous la date dans le bulletin (ex. « [date] Vireux »)." }),
+      el("p", { class: "discret", style: "margin:6px 0 12px", text: "[date] affiche l'intitulé écrit sous la date dans le bulletin (ex. « [date] Montclair »)." }),
       el("div", { class: "rangee", style: "margin-bottom:8px" }, apercu, el("b", { text: "Couleur de la case" })),
       pal, nommees, noteFixe,
       el("label", { class: "case-a-cocher", style: "margin:14px 0" }, gros, "Écrire le nom en très gros au centre de la case (comme RP)"),
@@ -2261,8 +2373,9 @@ PGVRVSD    ; [date]
     setTimeout(() => { const z = $("#detail"); if (z) z.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 80);
   };
   // retour dans l'application (elle a pu rester ouverte plusieurs jours) : le widget reçoit des données fraîches
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") envoyerWidget(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { envoyerWidget(); importerCommandesMail(); } });
   const pret = demarrer();
+  pret.then(() => importerCommandesMail());           // bulletins arrivés par mail pendant que l'application était fermée
   pret.then(() => { if (majPossible() && E.majVerifieeLe !== M.aujourdhui()) verifierMaj(false); });
 })();
 

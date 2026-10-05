@@ -544,7 +544,7 @@ final class DessinCalendrier {
     }
 
     /**
-     * « 15 jours » : pas d'horaires, l'intitulé du jour (S-GIV, GRAISSAGE REVIN, RP…) centré sous le numéro,
+     * « 15 jours » : pas d'horaires, l'intitulé du jour (S-VAL, GRAISSAGE BELLERIVE, RP…) centré sous le numéro,
      * le plus gros possible. Libellés ajoutés à la main : plus petits, dessous.
      */
     private void caseIntitule(JSONObject j, float cx0, float cy1, float col, float base, float pad,
@@ -583,7 +583,7 @@ final class DessinCalendrier {
             }
             boolean tient = total <= bas - haut;
             for (Object[] x : lignes) if (larg((String) x[0], sansGras, (Float) x[2]) > largeur) tient = false;
-            for (Object[] n : noms)                                     // jamais un mot coupé (S-GIV, FDPX…)
+            for (Object[] n : noms)                                     // jamais un mot coupé (S-VAL, FDPX…)
                 for (String mot : ((String) n[0]).trim().split("\\s+"))
                     if (larg(mot, sansGras, t * (Float) n[2]) > largeur) tient = false;
             if (tient || reel(t * 0.94f) >= reel(t)) break;

@@ -24,7 +24,8 @@ import java.nio.charset.StandardCharsets;
 /**
  * Mise à jour de l'application sans passer par le navigateur :
  *   1. lit https://github.com/<dépôt>/releases/download/apk/version.json  ({"version": N}, écrit par la recette GitHub) ;
- *   2. si N > version installée : télécharge PlanningCommandes.apk de la même release ;
+ *   2. si N > version installée : télécharge l'APK de la même version (PlanningCommandes.apk ou
+ *      PlanningCommandes-mail.apk) dans la même release ;
  *   3. l'installe avec le PackageInstaller d'Android (Android demande toujours une confirmation).
  * Le dépôt est inscrit dans l'application au moment de la fabrication (res/values : depot_github, via build.gradle).
  * Seuls les fichiers de ce dépôt GitHub sont téléchargés ; l'APK doit être signé avec la même clé (sinon Android refuse).
@@ -39,6 +40,15 @@ final class MiseAJour {
             return c.getString(R.string.depot_github).trim();
         } catch (RuntimeException e) {
             return "";
+        }
+    }
+
+    /** APK de la même version : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk (commandes par mail). */
+    static String nomApk(Context c) {
+        try {
+            return c.getString(R.string.nom_apk);
+        } catch (RuntimeException e) {
+            return "PlanningCommandes.apk";
         }
     }
 
@@ -94,7 +104,7 @@ final class MiseAJour {
 
     /** Télécharge l'APK dans le cache de l'application. */
     static File telecharger(Context c, Progression p) throws IOException {
-        HttpURLConnection h = ouvrir(adresse(depot(c), "PlanningCommandes.apk"));
+        HttpURLConnection h = ouvrir(adresse(depot(c), nomApk(c)));
         File f = new File(c.getCacheDir(), "mise-a-jour.apk");
         long total = h.getContentLengthLong(), lu = 0;
         int dernier = -1;

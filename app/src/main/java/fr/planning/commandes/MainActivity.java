@@ -28,6 +28,7 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -61,6 +62,7 @@ public class MainActivity extends Activity {
         super.onCreate(etat);
         web = new WebView(this);
         setContentView(web);
+        ReleveMail.programmer(this);           // tâche de relevé à jour (annulée si désactivée ou version manuelle)
         barreEtatOrigine = getWindow().getStatusBarColor();
         barreNavOrigine = getWindow().getNavigationBarColor();
         drapeauxOrigine = getWindow().getDecorView().getSystemUiVisibility();
@@ -191,6 +193,12 @@ public class MainActivity extends Activity {
     @SuppressWarnings("deprecation")
     private void traiterIntent(Intent intent) {
         if (intent == null) return;
+        if (ReleveMail.ACTION_COMMANDES.equals(intent.getAction())) {          // notification « Nouvelle commande »
+            final String js = "window.__commandesMail && window.__commandesMail()";
+            if (pageChargee) web.evaluateJavascript(js, null);
+            else importEnAttente = js;
+            return;
+        }
         if (WidgetBase.ACTION_JOUR.equals(intent.getAction())) {
             String jour = intent.getStringExtra(WidgetBase.EXTRA_JOUR);
             if (jour != null && jour.matches("\\d{4}-\\d{2}-\\d{2}")) {
@@ -272,7 +280,91 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> web.evaluateJavascript(js, null));
     }
 
+    private static final int REQ_NOTIFICATIONS = 3;
+
+    /** Android 13 et plus : autorisation d'afficher la notification « Nouvelle commande ». */
+    private void demanderNotifications() {
+        if (Build.VERSION.SDK_INT < 33) return;
+        runOnUiThread(() -> {
+            if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, REQ_NOTIFICATIONS);
+            }
+        });
+    }
+
     private class Passerelle {
+        // ---- commandes reçues par mail (ReleveMail), version « mail » seulement ----
+
+        /** true dans PlanningCommandes-mail.apk : la page affiche « Commandes reçues par mail ». */
+        @JavascriptInterface
+        public boolean mailDisponible() {
+            return ReleveMail.ACTIF;
+        }
+
+        /** Réglages du relevé (sans le mot de passe) : {actif, adresse, serveur, port, expediteurs, motDePasse, etat, enAttente}. */
+        @JavascriptInterface
+        public String mailReglages() {
+            return ReleveMail.reglages(MainActivity.this).toString();
+        }
+
+        /** Enregistre les réglages ; renvoie "" ou un message d'erreur. */
+        @JavascriptInterface
+        public String mailEnregistrer(String json) {
+            try {
+                JSONObject o = new JSONObject(json);
+                ReleveMail.enregistrer(MainActivity.this, o);
+                if (o.optBoolean("actif", false)) demanderNotifications();
+                return "";
+            } catch (Exception e) {
+                return "Enregistrement impossible : " + e.getMessage();
+            }
+        }
+
+        /** Relève tout de suite ; la réponse arrive dans window.__retourMail({ok, texte, nouveaux}). */
+        @JavascriptInterface
+        public void mailRelever() {
+            new Thread(() -> appelerPage("__retourMail", ReleveMail.relever(MainActivity.this).toString())).start();
+        }
+
+        /** PDF reçus par mail et pas encore importés : [{id, nom, b64}] (au plus 20 Mo à la fois). */
+        @JavascriptInterface
+        public String commandesMail() {
+            JSONArray l = new JSONArray();
+            long total = 0;
+            for (java.io.File f : ReleveMail.enAttente(MainActivity.this)) {
+                if (total + f.length() > 20L * 1024 * 1024 && l.length() > 0) break;
+                try (InputStream in = new java.io.FileInputStream(f)) {
+                    ByteArrayOutputStream b = new ByteArrayOutputStream();
+                    byte[] bloc = new byte[65536];
+                    int n;
+                    while ((n = in.read(bloc)) > 0) b.write(bloc, 0, n);
+                    JSONObject o = new JSONObject();
+                    o.put("id", f.getName());
+                    o.put("nom", ReleveMail.nomAffiche(f.getName()));
+                    o.put("b64", Base64.encodeToString(b.toByteArray(), Base64.NO_WRAP));
+                    l.put(o);
+                    total += f.length();
+                } catch (Exception e) {
+                    // fichier illisible : ignoré
+                }
+            }
+            return l.toString();
+        }
+
+        /** La page a importé ces PDF : on les efface (seulement des fichiers du dossier des commandes). */
+        @JavascriptInterface
+        public void commandesMailTraitees(String jsonIds) {
+            try {
+                JSONArray ids = new JSONArray(jsonIds);
+                java.util.Set<String> noms = new java.util.HashSet<>();
+                for (int i = 0; i < ids.length(); i++) noms.add(ids.optString(i, ""));
+                for (java.io.File f : ReleveMail.enAttente(MainActivity.this)) if (noms.contains(f.getName())) f.delete();
+            } catch (Exception e) {
+                // rien à effacer
+            }
+            ReleveMail.effacerNotification(MainActivity.this);
+        }
+
         /** Apparence « GrapheneOS » : barres d'état et de navigation à la couleur du fond (« #212121 ») ;
          *  texte vide = couleurs du thème Android d'origine. */
         @JavascriptInterface

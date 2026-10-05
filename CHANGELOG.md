@@ -1,0 +1,46 @@
+# Journal des versions
+
+Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
+- **CORRECTIF** (2.0.1) : correction, petit ajustement, sans nouvelle fonction ;
+- **MINEUR** (2.1.0) : nouvelle fonction ou changement visible ;
+- **MAJEUR** (3.0.0) : grand changement (fonctionnement, fichiers, versions de l'application).
+
+Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
+
+## 2.0.2 — 5 octobre 2026
+
+**Confidentialité et sécurité**
+- Les vrais noms de lieux et de codes ont disparu de tout ce qui est public (codes par défaut, exemples, notices, wiki, planning fictif, captures) : lieux et codes inventés (Valmont, Bellerive, Montclair, Saint-Aubin ; codes VAL…, BLR…). Votre propre codes.txt n'est pas touché.
+- Les captures du README sont refaites avec des codes fictifs (et plus jamais avec votre codes.txt).
+- La clé de signature de l'APK et son mot de passe ne sont plus dans le dépôt GitHub : GitHub les reçoit par deux « secrets » (KEYSTORE_BASE64, KEYSTORE_PASSWORD). Même clé qu'avant (les mises à jour s'installent toujours par-dessus), nouveau mot de passe.
+
+## 2.0.1 — 5 octobre 2026
+
+**Confidentialité**
+- Les aperçus des widgets « Planning » et « Prochain service » (liste des widgets d'Android) et l'image des widgets du README montraient une vraie semaine de planning (18–24 mai 2026). Ils sont redessinés à partir du planning fictif « Agent Exemple » (script `mobile/captures/apercus_widgets.py`).
+- Vérification complète du dépôt GitHub, du wiki et de l'archive : aucun nom, numéro CP, adresse mail ni chemin du PC.
+
+## 2.0.0 — 5 octobre 2026
+
+Première version numérotée. Elle réunit tout ce qui a été ajouté depuis les fabrications 1.N :
+
+**Deux versions de l'application**
+- **Manuelle** (`PlanningCommandes.apk`, `PlanningPDF.exe`) : la version habituelle, sans mail.
+- **Mail** (`PlanningCommandes-mail.apk`, `PlanningPDF-mail.exe`) : récupère les bulletins dans la boîte mail Free (IMAP, lecture seule), toutes les heures ; Android : notification « Nouvelle commande ».
+- Un PDF n'est relevé que si l'expéditeur est exactement l'expéditeur 1 ou 2 et si son nom contient « bulletin de commande » ou « contrairement ».
+- Mot de passe chiffré sur l'appareil (coffre de clés Android, protection Windows).
+
+**Widgets Android**
+- Nouveau widget **Calendrier** : le mois ou 15 jours (2 semaines) en grille, comme la page du PDF ; style d'origine (thème du planning) ou GrapheneOS ; en « 15 jours », intitulé du jour en grand, sans horaires ; jour J encadré ; ‹ › pour changer de période.
+- **Transparence du fond** réglable pour tous les widgets (aucune, 25, 50, 75 %, totale) ; sur le Calendrier, tout le tableau devient transparent.
+
+**Codes et couleurs**
+- Couleur de fond **fixe (orange)** pour C, AH, RP, RPP, F, F0 à F9, FV et les autres repos/congés, même s'ils manquent dans codes.txt.
+
+**Fabrication et versions**
+- GitHub fabrique les 2 APK et les 2 exe à chaque envoi, et garde chaque fabrication dans une release permanente.
+- « Creer l'exe (Windows).bat » fabrique aussi les 2 exe sur le PC.
+
+## 1.N — jusqu'au 2 octobre 2026
+
+Fabrications numérotées par GitHub (1.1, 1.2…), sans journal détaillé : lecture des bulletins, planning, PDF et impression, agenda (.ics), échange PC ↔ téléphone, widgets « Planning » et « Prochain service », apparence GrapheneOS, mise à jour automatique de l'APK et de l'exe.

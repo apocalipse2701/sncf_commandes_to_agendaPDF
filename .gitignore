@@ -1,0 +1,8 @@
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+# clé de signature : jamais dans le dépôt (secret GitHub KEYSTORE_BASE64)
+*.keystore
+*.jks
