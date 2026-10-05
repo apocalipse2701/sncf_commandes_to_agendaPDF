@@ -7,6 +7,12 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.0.3 — 5 octobre 2026
+
+**Fabrication (GitHub)**
+- La clé de signature reçue par le secret `KEYSTORE_BASE64` est vérifiée avant de fabriquer l'APK : les espaces et retours à la ligne collés par erreur sont ignorés, et un message clair indique si le secret est absent, incomplet (collé en partie) ou si le mot de passe est incorrect. Avant, une clé collée en partie donnait seulement « Failed to read key planning … EOFException ».
+- Aucun changement dans l'application ni dans le programme PC.
+
 ## 2.0.2 — 5 octobre 2026
 
 **Confidentialité et sécurité**

@@ -27,13 +27,32 @@ jobs:
       - name: Clé de signature (secret GitHub)
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::error::Secret KEYSTORE_BASE64 absent : ajoutez-le dans Settings › Secrets and variables › Actions (voir le wiki, Pour les développeurs)."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/planning.keystore"
-          echo "KEYSTORE_FILE=$RUNNER_TEMP/planning.keystore" >> "$GITHUB_ENV"
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Secret KEYSTORE_PASSWORD absent : ajoutez-le dans Settings › Secrets and variables › Actions."
+            exit 1
+          fi
+          CLE="$RUNNER_TEMP/planning.keystore"
+          # espaces et retours à la ligne collés par erreur avec le secret : ignorés
+          if ! printf '%s' "$KEYSTORE_BASE64" | tr -d ' \r\n\t' | base64 -d > "$CLE" 2>/dev/null; then
+            echo "::error::Secret KEYSTORE_BASE64 illisible : recopiez tout le contenu de cles\\KEYSTORE_BASE64.txt (un seul bloc)."
+            exit 1
+          fi
+          echo "Clé décodée : $(stat -c %s "$CLE") octets (attendu : 2652)."
+          if ! keytool -list -keystore "$CLE" -storepass "$KEYSTORE_PASSWORD" -alias planning > /dev/null 2>&1; then
+            if [ "$(stat -c %s "$CLE")" != "2652" ]; then
+              echo "::error::Secret KEYSTORE_BASE64 incomplet (collé en partie) : recopiez tout le contenu de cles\\KEYSTORE_BASE64.txt."
+            else
+              echo "::error::Secret KEYSTORE_PASSWORD incorrect : recopiez le contenu de cles\\KEYSTORE_PASSWORD.txt."
+            fi
+            exit 1
+          fi
+          echo "KEYSTORE_FILE=$CLE" >> "$GITHUB_ENV"
 
       # deux versions : manuelle (sans mail, comme avant) et « mail » (commandes récupérées dans la boîte mail)
       - name: Construire l'application (2 versions)
