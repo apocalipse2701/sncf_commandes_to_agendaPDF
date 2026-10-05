@@ -1056,6 +1056,154 @@ def relever_mail(adresse, mot_de_passe, expediteurs, uid_validite=0, dernier_uid
             pass
 
 
+# Boîtes mail proposées (regles.json, communes au PC et à Android) : nom, serveur IMAP, port, domaines, aide
+FOURNISSEURS_MAIL = REGLES.get("fournisseurs_mail", [])
+MAIL_NON_PRIS = REGLES.get("mail_non_pris_en_charge", {"domaines": [], "message": ""})
+MAIL_JOURS_RECHERCHE, MAIL_MAX_RECHERCHE = 365, 500   # « Trouver les expéditeurs » : 500 derniers messages d'un an
+
+
+def _domaine(adresse):
+    return (adresse or "").strip().lower().rsplit("@", 1)[-1] if "@" in (adresse or "") else ""
+
+
+def fournisseur_pour_adresse(adresse):
+    """Fournisseur reconnu d'après le domaine de l'adresse (ex. …@orange.fr → Orange), sinon None."""
+    d = _domaine(adresse)
+    return next((f for f in FOURNISSEURS_MAIL if d and d in f.get("domaines", [])), None)
+
+
+def fournisseur_pour_serveur(serveur):
+    s = (serveur or "").strip().lower()
+    return next((f for f in FOURNISSEURS_MAIL if f["serveur"] and f["serveur"] == s),
+                next((f for f in FOURNISSEURS_MAIL if f["id"] == "autre"), None))
+
+
+def mail_non_pris_en_charge(adresse):
+    """Message d'explication si la boîte ne peut pas être relevée (Outlook, Hotmail, Proton…), sinon ""."""
+    return MAIL_NON_PRIS.get("message", "") if _domaine(adresse) in MAIL_NON_PRIS.get("domaines", []) else ""
+
+
+def _chaines_imap(texte):
+    """Chaînes entre guillemets d'une réponse IMAP (BODYSTRUCTURE), décodées : mots encodés (=?utf-8?…?=)
+    et paramètres RFC 2231 (utf-8''Bulletin%20de%20commande.pdf)."""
+    from email.header import decode_header, make_header
+    from urllib.parse import unquote
+    sortie = []
+    for s in re.findall(r'"((?:[^"\\]|\\.)*)"', texte):
+        s = s.replace('\\"', '"').replace("\\\\", "\\")
+        if "=?" in s:
+            try:
+                s = str(make_header(decode_header(s)))
+            except Exception:
+                pass
+        m = re.match(r"^([\w-]+)'[\w-]*'(.*)$", s)
+        if m:
+            try:
+                s = unquote(m.group(2), encoding=m.group(1) or "utf-8", errors="replace")
+            except LookupError:
+                s = unquote(m.group(2))
+        sortie.append(s)
+    return sortie
+
+
+def _bodystructure_commande(texte):
+    """Le message porte (d'après sa structure, sans le télécharger) un PDF nommé « bulletin de commande »/« contrairement »."""
+    return "pdf" in texte.lower() and any(nom_pdf_accepte(s) for s in _chaines_imap(texte))
+
+
+def _reponses_fetch(data):
+    """Regroupe la réponse d'imaplib à un FETCH en un texte par message (littéraux inclus)."""
+    blocs = []
+    for x in data or []:
+        if isinstance(x, tuple):
+            texte = x[0].decode("utf-8", "replace") + x[1].decode("utf-8", "replace")
+        elif isinstance(x, bytes):
+            texte = x.decode("utf-8", "replace")
+        else:
+            continue
+        if re.match(r"^\d+ \(", texte) or not blocs:
+            blocs.append(texte)
+        else:
+            blocs[-1] += texte
+    return blocs
+
+
+def chercher_expediteurs(adresse, mot_de_passe, serveur=MAIL_SERVEUR, port=MAIL_PORT, ssl=True,
+                         jours=MAIL_JOURS_RECHERCHE, maxi=MAIL_MAX_RECHERCHE):
+    """Expéditeurs des messages récents qui portent un bulletin de commande (lecture seule, rien n'est téléchargé
+    sauf la structure et l'en-tête From) : [{adresse, nom, nb, dernier}] du plus fréquent au moins fréquent."""
+    import imaplib
+    from email.utils import parseaddr, parsedate_to_datetime
+    from email.header import decode_header, make_header
+    try:
+        imap = imaplib.IMAP4_SSL(serveur, port, timeout=30) if ssl else imaplib.IMAP4(serveur, port, timeout=30)
+    except (OSError, imaplib.IMAP4.error) as ex:
+        raise OSError(f"serveur {serveur} injoignable ({ex})")
+    try:
+        try:
+            imap.login(adresse, mot_de_passe)
+        except imaplib.IMAP4.error:
+            raise OSError("connexion refusée : adresse ou mot de passe incorrect")
+        if imap.select("INBOX", readonly=True)[0] != "OK":
+            raise OSError("boîte de réception introuvable")
+        depuis = dt.date.today() - dt.timedelta(days=jours)
+        depuis = f"{depuis.day}-{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][depuis.month - 1]}-{depuis.year}"
+        typ, data = imap.uid("SEARCH", None, f"SINCE {depuis}")
+        if typ != "OK":
+            raise OSError("recherche refusée par le serveur")
+        uids = sorted(int(x) for x in (data[0] or b"").split())[-maxi:]
+        retenus = []
+        for i in range(0, len(uids), 100):
+            lot = ",".join(map(str, uids[i:i + 100]))
+            typ, data = imap.uid("FETCH", lot, "(UID BODYSTRUCTURE)")
+            if typ != "OK":
+                continue
+            for bloc in _reponses_fetch(data):
+                m = re.search(r"\bUID (\d+)", bloc)
+                if m and _bodystructure_commande(bloc):
+                    retenus.append(int(m.group(1)))
+        trouves = {}
+        for i in range(0, len(retenus), 100):
+            lot = ",".join(map(str, retenus[i:i + 100]))
+            typ, data = imap.uid("FETCH", lot, "(UID BODY.PEEK[HEADER.FIELDS (FROM DATE)])")
+            if typ != "OK":
+                continue
+            for x in data or []:
+                if not isinstance(x, tuple):
+                    continue
+                entetes = x[1].decode("utf-8", "replace")
+                de = re.search(r"^From:(.*(?:\r?\n[ \t].*)*)", entetes, re.I | re.M)
+                if not de:
+                    continue
+                try:
+                    de_txt = str(make_header(decode_header(de.group(1).replace("\r\n", "").replace("\n", "").strip())))
+                except Exception:
+                    de_txt = de.group(1).strip()
+                nom, adr = parseaddr(de_txt)
+                adr = adr.strip().lower()
+                if not adr or "@" not in adr:
+                    continue
+                date = None
+                d = re.search(r"^Date:(.*)$", entetes, re.I | re.M)
+                if d:
+                    try:
+                        date = parsedate_to_datetime(d.group(1).strip()).date()
+                    except (TypeError, ValueError):
+                        date = None
+                t = trouves.setdefault(adr, {"adresse": adr, "nom": nom.strip(), "nb": 0, "dernier": None})
+                t["nb"] += 1
+                if nom.strip() and not t["nom"]:
+                    t["nom"] = nom.strip()
+                if date and (t["dernier"] is None or date > t["dernier"]):
+                    t["dernier"] = date
+        return sorted(trouves.values(), key=lambda t: (-t["nb"], t["adresse"]))
+    finally:
+        try:
+            imap.logout()
+        except Exception:
+            pass
+
+
 def ranger_pieces_mail(pieces, dossier=None):
     """Dépose les PDF reçus dans le dossier « commande » (sauf s'il y est déjà) ; renvoie les chemins créés."""
     import hashlib
@@ -3596,23 +3744,163 @@ def lancer_interface():
             v_port = tk.StringVar(value=str(pr.get("mail_port") or MAIL_PORT))
             ttk.Checkbutton(c, text="Relever automatiquement (au démarrage puis toutes les heures)",
                             variable=v_actif).grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 8))
-            lignes = (("Adresse mail complète :", v_adr, None), ("Mot de passe de la boîte :", v_mdp, "•"),
-                      ("Expéditeur des commandes 1 :", v_e1, None), ("Expéditeur des commandes 2 :", v_e2, None),
-                      ("Serveur IMAP (SSL) :", v_srv, None), ("Port :", v_port, None))
-            for i, (lib, var, cache) in enumerate(lignes):
-                ttk.Label(c, text=lib).grid(row=3 + i, column=0, sticky="w", pady=2)
-                ttk.Entry(c, textvariable=var, width=34, show=cache or "").grid(row=3 + i, column=1, sticky="w", pady=2)
+            # boîte mail : le choix du fournisseur remplit le serveur ; reconnu aussi d'après l'adresse
+            noms_f = [f["nom"] for f in FOURNISSEURS_MAIL]
+            f0 = fournisseur_pour_serveur(v_srv.get())
+            v_four = tk.StringVar(value=f0["nom"] if f0 else (noms_f[0] if noms_f else ""))
+            ttk.Label(c, text="Boîte mail :").grid(row=3, column=0, sticky="w", pady=2)
+            cb_four = ttk.Combobox(c, textvariable=v_four, values=noms_f, state="readonly", width=32)
+            cb_four.grid(row=3, column=1, sticky="w", pady=2)
+            aide = ttk.Label(c, foreground="#555", justify="left", wraplength=430)
+            aide.grid(row=4, column=0, columnspan=2, sticky="w", pady=(0, 6))
+
+            def montrer_aide():
+                bloque = mail_non_pris_en_charge(v_adr.get())
+                f = next((x for x in FOURNISSEURS_MAIL if x["nom"] == v_four.get()), None)
+                aide.config(text=bloque or (f or {}).get("aide", ""), foreground="#b00020" if bloque else "#555")
+
+            def choisir_fournisseur(_e=None):
+                f = next((x for x in FOURNISSEURS_MAIL if x["nom"] == v_four.get()), None)
+                if f and f["serveur"]:
+                    v_srv.set(f["serveur"])
+                    v_port.set(str(f.get("port") or MAIL_PORT))
+                elif f:
+                    v_srv.set("" if fournisseur_pour_serveur(v_srv.get())["id"] != "autre" else v_srv.get())
+                montrer_aide()
+
+            def adresse_changee(_e=None):
+                f = fournisseur_pour_adresse(v_adr.get())
+                if f and f["nom"] != v_four.get():
+                    v_four.set(f["nom"])
+                    choisir_fournisseur()
+                else:
+                    montrer_aide()
+            cb_four.bind("<<ComboboxSelected>>", choisir_fournisseur)
+            lignes = ((5, "Adresse mail complète :", v_adr, None), (6, "Mot de passe de la boîte :", v_mdp, "•"),
+                      (7, "Expéditeur des commandes 1 :", v_e1, None), (8, "Expéditeur des commandes 2 :", v_e2, None),
+                      (10, "Serveur IMAP (SSL) :", v_srv, None), (11, "Port :", v_port, None))
+            champs = {}
+            for ligne, lib, var, cache in lignes:
+                ttk.Label(c, text=lib).grid(row=ligne, column=0, sticky="w", pady=2)
+                champs[ligne] = ttk.Entry(c, textvariable=var, width=34, show=cache or "")
+                champs[ligne].grid(row=ligne, column=1, sticky="w", pady=2)
+            v_adr.trace_add("write", lambda *_a: adresse_changee())    # frappe, collage…
+            ligne_trouver = ttk.Frame(c)
+            ligne_trouver.grid(row=9, column=1, sticky="w", pady=(2, 6))
+            b_trouver = ttk.Button(ligne_trouver, text="Trouver les expéditeurs dans la boîte…")
+            b_trouver.pack(side="left")
+            montrer_aide()
             note = ttk.Label(c, foreground="#666", text=(
                 "Mot de passe enregistré : laissez vide pour le garder." if pr.get("mail_mdp") else
-                "Free : imap.free.fr, port 993, adresse complète et mot de passe habituel."))
-            note.grid(row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
+                "Adresse complète et mot de passe de la boîte (voir l'aide ci-dessus)."))
+            note.grid(row=12, column=0, columnspan=2, sticky="w", pady=(4, 0))
             etat = ttk.Label(c, foreground="#555", wraplength=430, text=pr.get("mail_etat", ""))
-            etat.grid(row=11, column=0, columnspan=2, sticky="w", pady=(8, 0))
+            etat.grid(row=14, column=0, columnspan=2, sticky="w", pady=(8, 0))
+
+            def trouver_expediteurs():
+                """Cherche dans la boîte (lecture seule) qui envoie les bulletins, puis propose de choisir."""
+                import threading
+                adr, mdp = v_adr.get().strip(), v_mdp.get()
+                bloque = mail_non_pris_en_charge(adr)
+                if bloque:
+                    messagebox.showwarning("Commandes par mail", bloque, parent=fen)
+                    return
+                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", adr):
+                    messagebox.showwarning("Commandes par mail", "Indiquez d'abord l'adresse mail complète.", parent=fen)
+                    return
+                if not mdp:
+                    protege = lire_prefs().get("mail_mdp", "")
+                    if not protege or adr.lower() != lire_prefs().get("mail_adresse", "").lower():
+                        messagebox.showwarning("Commandes par mail", "Indiquez d'abord le mot de passe de la boîte.", parent=fen)
+                        return
+                    try:
+                        mdp = deproteger(protege)
+                    except OSError as ex:
+                        messagebox.showwarning("Commandes par mail", str(ex), parent=fen)
+                        return
+                srv = v_srv.get().strip() or MAIL_SERVEUR
+                try:
+                    port = int(v_port.get() or MAIL_PORT)
+                except ValueError:
+                    port = MAIL_PORT
+                b_trouver.state(["disabled"])
+                etat.config(text="Recherche des expéditeurs des bulletins dans la boîte (12 derniers mois)…", foreground="#555")
+
+                def travail():
+                    try:
+                        res, err = chercher_expediteurs(adr, mdp, srv, port), None
+                    except OSError as ex:
+                        res, err = [], str(ex)
+                    except Exception as ex:                             # réponse inattendue du serveur
+                        res, err = [], f"{type(ex).__name__} : {ex}"
+                    self.after(0, lambda: fini(res, err))
+
+                def fini(res, err):
+                    try:
+                        b_trouver.state(["!disabled"])
+                    except tk.TclError:
+                        return                                          # fenêtre fermée entre-temps
+                    if err:
+                        etat.config(text=f"Recherche impossible : {err}", foreground="#b00020")
+                        return
+                    if not res:
+                        etat.config(text="Aucun message avec un bulletin de commande (PDF « bulletin de commande » "
+                                         "ou « contrairement ») dans les 12 derniers mois.", foreground="#b00020")
+                        return
+                    etat.config(text=f"{len(res)} expéditeur(s) trouvé(s).", foreground="#555")
+                    choisir_expediteurs(res)
+                threading.Thread(target=travail, daemon=True).start()
+
+            def choisir_expediteurs(res):
+                ch = tk.Toplevel(fen)
+                ch.title("Expéditeurs des bulletins")
+                ch.transient(fen)
+                ch.resizable(False, False)
+                f = ttk.Frame(ch, padding=14)
+                f.pack(fill="both", expand=True)
+                ttk.Label(f, wraplength=420, justify="left", text=(
+                    "Ces adresses ont envoyé des bulletins de commande (12 derniers mois). "
+                    "Cochez les deux qui envoient vos commandes :")).pack(anchor="w", pady=(0, 8))
+                actuels = {e.strip().lower() for e in (v_e1.get(), v_e2.get()) if e.strip()}
+                cases = []
+                for i, t in enumerate(res[:12]):
+                    v = tk.BooleanVar(value=(t["adresse"] in actuels) if actuels else i < 2)
+                    der = t["dernier"].strftime("%d/%m/%Y") if t.get("dernier") else ""
+                    lib = (t["adresse"] + (f"  ({t['nom']})" if t.get("nom") else "")
+                           + f" — {t['nb']} bulletin{'s' if t['nb'] > 1 else ''}" + (f", dernier le {der}" if der else ""))
+                    ttk.Checkbutton(f, text=lib, variable=v).pack(anchor="w", pady=1)
+                    cases.append((v, t["adresse"]))
+
+                def utiliser():
+                    pris = [a for v, a in cases if v.get()]
+                    if len(pris) > 2:
+                        messagebox.showwarning("Expéditeurs", "Cochez deux adresses au plus.", parent=ch)
+                        return
+                    if not pris:
+                        messagebox.showwarning("Expéditeurs", "Cochez au moins une adresse.", parent=ch)
+                        return
+                    v_e1.set(pris[0])
+                    v_e2.set(pris[1] if len(pris) > 1 else "")
+                    etat.config(text="Expéditeurs remplis : cliquez sur « Enregistrer ».", foreground="#555")
+                    ch.destroy()
+                bb = ttk.Frame(f, padding=(0, 10, 0, 0))
+                bb.pack(fill="x")
+                ttk.Button(bb, text="Utiliser", command=utiliser).pack(side="left")
+                ttk.Button(bb, text="Annuler", command=ch.destroy).pack(side="right")
+                ch.bind("<Escape>", lambda e: ch.destroy())
+                ch.grab_set()
+            b_trouver.config(command=trouver_expediteurs)
 
             def enregistrer(verifier=True):
                 adr, mdp = v_adr.get().strip(), v_mdp.get()
                 exps = [e.strip() for e in (v_e1.get(), v_e2.get()) if e.strip()]
                 if verifier and v_actif.get():
+                    if mail_non_pris_en_charge(adr):
+                        messagebox.showwarning("Commandes par mail", mail_non_pris_en_charge(adr), parent=fen)
+                        return False
+                    if not v_srv.get().strip():
+                        messagebox.showwarning("Commandes par mail", "Indiquez le serveur IMAP de votre fournisseur.", parent=fen)
+                        return False
                     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", adr):
                         messagebox.showwarning("Commandes par mail", "Indiquez l'adresse mail complète (ex. prenom.nom@free.fr).", parent=fen)
                         return False
@@ -3670,7 +3958,7 @@ def lancer_interface():
                 note.config(text="Mot de passe oublié, relevé arrêté.")
 
             b = ttk.Frame(c, padding=(0, 12, 0, 0))
-            b.grid(row=10, column=0, columnspan=2, sticky="we")
+            b.grid(row=13, column=0, columnspan=2, sticky="we")
             ttk.Button(b, text="Enregistrer", command=lambda: enregistrer() and fen.destroy()).pack(side="left")
             b_rel = ttk.Button(b, text="Relever maintenant", command=relever)
             b_rel.pack(side="left", padx=6)

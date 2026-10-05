@@ -152,6 +152,168 @@ final class CourrierImap {
         return r;
     }
 
+    // ------------------------------------------------------------------ « Trouver les expéditeurs »
+
+    /** Expéditeur des bulletins trouvé dans la boîte. */
+    static final class Expediteur {
+        final String adresse;
+        String nom = "", dernier = "";
+        int nb;
+        long derniereFois;
+
+        Expediteur(String adresse) {
+            this.adresse = adresse;
+        }
+    }
+
+    /** Recherche des 12 derniers mois et des 500 derniers messages (planning_pdf.py : MAIL_JOURS/MAX_RECHERCHE). */
+    static final int JOURS_RECHERCHE = 365, MAX_RECHERCHE = 500;
+
+    /**
+     * Expéditeurs des messages récents qui portent un bulletin de commande, du plus fréquent au moins fréquent.
+     * Lecture seule : seuls la structure (BODYSTRUCTURE) et l'en-tête From/Date sont lus, rien n'est téléchargé.
+     */
+    List<Expediteur> chercherExpediteurs(String serveur, int port, String adresse, String motDePasse) throws IOException {
+        java.util.Map<String, Expediteur> trouves = new java.util.LinkedHashMap<>();
+        connecter(serveur, port);
+        try {
+            lireLigne();
+            List<String> rep = commande("LOGIN " + quoter(adresse) + " " + quoter(motDePasse), null);
+            if (!ok(rep)) throw new IOException("connexion refusée : adresse ou mot de passe incorrect");
+            rep = commande("EXAMINE INBOX", null);                       // lecture seule
+            if (!ok(rep)) throw new IOException("boîte de réception introuvable");
+            rep = commande("UID SEARCH SINCE " + dateImap(new Date(System.currentTimeMillis() - JOURS_RECHERCHE * 86400000L)), null);
+            if (!ok(rep)) throw new IOException("recherche refusée par le serveur");
+            List<Long> uids = new ArrayList<>();
+            for (String l : rep) {
+                if (!l.toUpperCase(Locale.ROOT).startsWith("* SEARCH")) continue;
+                for (String x : l.substring(8).trim().split("\\s+")) if (!x.isEmpty()) uids.add(Long.parseLong(x));
+            }
+            java.util.Collections.sort(uids);
+            if (uids.size() > MAX_RECHERCHE) uids = new ArrayList<>(uids.subList(uids.size() - MAX_RECHERCHE, uids.size()));
+            List<Long> retenus = new ArrayList<>();
+            for (int i = 0; i < uids.size(); i += 100) {
+                List<String> lignes = commandeComplete("UID FETCH " + liste(uids.subList(i, Math.min(uids.size(), i + 100)))
+                        + " (UID BODYSTRUCTURE)");
+                for (String l : lignes) {
+                    Matcher m = Pattern.compile("\\bUID (\\d+)").matcher(l);
+                    if (l.startsWith("* ") && m.find() && structureCommande(l)) retenus.add(Long.parseLong(m.group(1)));
+                }
+            }
+            for (int i = 0; i < retenus.size(); i += 100) {
+                List<String> lignes = commandeComplete("UID FETCH " + liste(retenus.subList(i, Math.min(retenus.size(), i + 100)))
+                        + " (UID BODY.PEEK[HEADER.FIELDS (FROM DATE)])");
+                for (String l : lignes) {
+                    int a = l.indexOf('\u0001'), b = l.indexOf('\u0002');
+                    if (!l.startsWith("* ") || a < 0 || b < a) continue;
+                    String entetes = l.substring(a + 1, b).replaceAll("\r?\n[ \t]+", " ");
+                    Matcher de = Pattern.compile("(?im)^From:\\s*(.*)$").matcher(entetes);
+                    if (!de.find()) continue;
+                    String brut = Mime.motsEncodes(de.group(1).trim());
+                    String adr = adresse(brut);
+                    if (!adr.contains("@") || adr.contains(" ")) continue;
+                    Expediteur e = trouves.get(adr);
+                    if (e == null) trouves.put(adr, e = new Expediteur(adr));
+                    e.nb++;
+                    int chevron = brut.indexOf('<');
+                    if (e.nom.isEmpty() && chevron > 0) e.nom = brut.substring(0, chevron).replace("\"", "").trim();
+                    Matcher dt = Pattern.compile("(?im)^Date:\\s*(.*)$").matcher(entetes);
+                    if (dt.find()) {
+                        long t = dateMessage(dt.group(1).trim());
+                        if (t > e.derniereFois) {
+                            e.derniereFois = t;
+                            e.dernier = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE).format(new Date(t));
+                        }
+                    }
+                }
+            }
+            try {
+                commande("LOGOUT", null);
+            } catch (IOException e) {
+                // le serveur ferme parfois avant de répondre
+            }
+        } finally {
+            fermer();
+        }
+        List<Expediteur> l = new ArrayList<>(trouves.values());
+        java.util.Collections.sort(l, (x, y) -> x.nb != y.nb ? y.nb - x.nb : x.adresse.compareTo(y.adresse));
+        return l;
+    }
+
+    private static String liste(List<Long> uids) {
+        StringBuilder b = new StringBuilder();
+        for (long u : uids) b.append(b.length() == 0 ? "" : ",").append(u);
+        return b.toString();
+    }
+
+    private static long dateMessage(String d) {
+        String[] formats = {"EEE, d MMM yyyy HH:mm:ss Z", "d MMM yyyy HH:mm:ss Z", "EEE, d MMM yyyy HH:mm Z"};
+        String propre = d.replaceAll("\\s*\\(.*\\)\\s*$", "").trim();
+        for (String f : formats) {
+            try {
+                Date x = new SimpleDateFormat(f, Locale.ENGLISH).parse(propre);
+                if (x != null) return x.getTime();
+            } catch (java.text.ParseException e) {
+                // format suivant
+            }
+        }
+        return 0;
+    }
+
+    /** Chaînes d'une structure IMAP (entre guillemets ou littéraux), décodées : =?utf-8?…?= et utf-8''x%20y (RFC 2231). */
+    static List<String> chaines(String texte) {
+        List<String> l = new ArrayList<>();
+        Matcher m = Pattern.compile("\"((?:[^\"\\\\]|\\\\.)*)\"|\u0001([^\u0002]*)\u0002").matcher(texte);
+        while (m.find()) {
+            String s = m.group(1) != null ? m.group(1).replace("\\\"", "\"").replace("\\\\", "\\") : m.group(2);
+            if (s.contains("=?")) s = Mime.motsEncodes(s);
+            Matcher r = Pattern.compile("^([\\w-]+)'[\\w-]*'(.*)$").matcher(s);
+            if (r.find()) {
+                try {
+                    s = java.net.URLDecoder.decode(r.group(2).replace("+", "%2B"), r.group(1));
+                } catch (Exception e) {
+                    s = r.group(2);
+                }
+            }
+            l.add(s);
+        }
+        return l;
+    }
+
+    /** La structure du message contient un PDF « bulletin de commande » / « contrairement ». */
+    static boolean structureCommande(String texte) {
+        if (!texte.toLowerCase(Locale.ROOT).contains("pdf")) return false;
+        for (String s : chaines(texte)) if (nomAccepte(s)) return true;
+        return false;
+    }
+
+    /** Comme commande(), mais chaque réponse « * … » est rendue en une seule ligne, littéraux compris
+     *  (entre \u0001 et \u0002) : plusieurs messages par FETCH. */
+    private List<String> commandeComplete(String cmd) throws IOException {
+        String etiquette = "a" + (++numero);
+        out.write((etiquette + " " + cmd + "\r\n").getBytes(StandardCharsets.UTF_8));
+        out.flush();
+        List<String> lignes = new ArrayList<>();
+        StringBuilder courante = new StringBuilder();
+        while (true) {
+            String l = lireLigne();
+            Matcher m = Pattern.compile("\\{(\\d+)\\}$").matcher(l);
+            if (m.find()) {
+                long n = Long.parseLong(m.group(1));
+                if (n > TAILLE_MAX) throw new IOException("réponse trop grosse");
+                byte[] b = lireOctets((int) n);
+                courante.append(l, 0, m.start()).append('\u0001')
+                        .append(new String(b, StandardCharsets.UTF_8).replace('\u0001', ' ').replace('\u0002', ' ')).append('\u0002');
+                continue;
+            }
+            courante.append(l);
+            String complete = courante.toString();
+            courante.setLength(0);
+            lignes.add(complete);
+            if (complete.startsWith(etiquette + " ")) return lignes;
+        }
+    }
+
     // ------------------------------------------------------------------ conditions
 
     /** Adresse d'un en-tête From : « Nom <adresse> » → adresse, en minuscules. */

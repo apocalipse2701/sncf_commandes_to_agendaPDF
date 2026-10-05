@@ -201,6 +201,60 @@ public class ReleveMail extends JobService {
         }
     }
 
+    /**
+     * « Trouver les expéditeurs » : qui envoie des bulletins dans cette boîte ? Réglages venus de la page
+     * ({adresse, motDePasse, serveur, port}) ; mot de passe vide = celui enregistré (même adresse).
+     * Renvoie {ok, texte, expediteurs: [{adresse, nom, nb, dernier}]}. Ne lance jamais d'exception.
+     */
+    static JSONObject chercherExpediteurs(Context c, JSONObject o) {
+        JSONObject res = new JSONObject();
+        try {
+            SharedPreferences p = prefs(c);
+            String adresse = o.optString("adresse", "").trim();
+            String mdp = o.optString("motDePasse", "");
+            if (adresse.isEmpty()) throw new IOException("indiquez d'abord l'adresse mail");
+            if (mdp.isEmpty()) {
+                String chiffre = p.getString("mdp", "");
+                if (chiffre.isEmpty() || !adresse.equalsIgnoreCase(p.getString("adresse", "")))
+                    throw new IOException("indiquez d'abord le mot de passe de la boîte");
+                try {
+                    mdp = CoffreMail.dechiffrer(chiffre);
+                } catch (Exception e) {
+                    throw new IOException("mot de passe à ressaisir");
+                }
+            }
+            String serveur = o.optString("serveur", "").trim();
+            int port = o.optInt("port", PORT_DEFAUT) > 0 ? o.optInt("port", PORT_DEFAUT) : PORT_DEFAUT;
+            List<CourrierImap.Expediteur> l = new CourrierImap().chercherExpediteurs(
+                    serveur.isEmpty() ? SERVEUR_DEFAUT : serveur, port, adresse, mdp);
+            JSONArray a = new JSONArray();
+            for (CourrierImap.Expediteur e : l) {
+                JSONObject x = new JSONObject();
+                x.put("adresse", e.adresse);
+                x.put("nom", e.nom);
+                x.put("nb", e.nb);
+                x.put("dernier", e.dernier);
+                a.put(x);
+            }
+            res.put("ok", true);
+            res.put("expediteurs", a);
+            res.put("texte", l.isEmpty() ? "Aucun message avec un bulletin de commande (PDF « bulletin de commande » ou « contrairement ») dans les 12 derniers mois."
+                    : l.size() + (l.size() > 1 ? " expéditeurs trouvés." : " expéditeur trouvé."));
+        } catch (Exception e) {
+            String m = e.getMessage();
+            if (e instanceof java.net.UnknownHostException) m = "pas d'Internet ou serveur introuvable";
+            else if (e instanceof java.net.SocketTimeoutException) m = "le serveur ne répond pas";
+            try {
+                res.put("ok", false);
+                res.put("texte", "Recherche impossible : " + (m == null || m.isEmpty() ? e.getClass().getSimpleName() : m));
+                res.put("expediteurs", new JSONArray());
+            } catch (org.json.JSONException ignore) {
+                // impossible
+            }
+        }
+        return res;
+    }
+
     /** PDF reçus et pas encore importés, du plus ancien au plus récent. */
     static File[] enAttente(Context c) {
         File[] f = dossier(c).listFiles((dir, nom) -> nom.toLowerCase(Locale.ROOT).endsWith(".pdf"));

@@ -148,5 +148,20 @@
     "gros": [255, 190, 110]
    }
   }
- }
+ },
+ "_lisezmoi_mail": "Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.",
+ "fournisseurs_mail": [
+  {"id": "free", "nom": "Free", "serveur": "imap.free.fr", "port": 993, "domaines": ["free.fr", "freesbee.fr", "libertysurf.fr"], "aide": "Adresse complète et mot de passe habituel de la boîte Free."},
+  {"id": "orange", "nom": "Orange / Wanadoo", "serveur": "imap.orange.fr", "port": 993, "domaines": ["orange.fr", "wanadoo.fr"], "aide": "Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},
+  {"id": "sfr", "nom": "SFR / Neuf", "serveur": "imap.sfr.fr", "port": 993, "domaines": ["sfr.fr", "neuf.fr", "cegetel.net", "club-internet.fr"], "aide": "Adresse complète et mot de passe habituel de la boîte SFR."},
+  {"id": "bbox", "nom": "Bouygues Telecom (Bbox)", "serveur": "imap.bbox.fr", "port": 993, "domaines": ["bbox.fr"], "aide": "Adresse complète et mot de passe habituel de la boîte Bbox."},
+  {"id": "laposte", "nom": "La Poste (laposte.net)", "serveur": "imap.laposte.net", "port": 993, "domaines": ["laposte.net"], "aide": "Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},
+  {"id": "gmail", "nom": "Gmail", "serveur": "imap.gmail.com", "port": 993, "domaines": ["gmail.com", "googlemail.com"], "aide": "Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},
+  {"id": "yahoo", "nom": "Yahoo", "serveur": "imap.mail.yahoo.com", "port": 993, "domaines": ["yahoo.fr", "yahoo.com", "ymail.com", "rocketmail.com"], "aide": "Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},
+  {"id": "icloud", "nom": "iCloud (Apple)", "serveur": "imap.mail.me.com", "port": 993, "domaines": ["icloud.com", "me.com", "mac.com"], "aide": "Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},
+  {"id": "gmx", "nom": "GMX", "serveur": "imap.gmx.net", "port": 993, "domaines": ["gmx.fr", "gmx.com", "gmx.net", "gmx.de"], "aide": "Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},
+  {"id": "infomaniak", "nom": "Infomaniak (ik.me)", "serveur": "mail.infomaniak.com", "port": 993, "domaines": ["ik.me", "etik.com", "ikmail.com"], "aide": "Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},
+  {"id": "autre", "nom": "Autre fournisseur", "serveur": "", "port": 993, "domaines": [], "aide": "Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) : il figure dans son aide « configurer un logiciel de messagerie »."}
+ ],
+ "mail_non_pris_en_charge": {"domaines": ["outlook.fr", "outlook.com", "hotmail.fr", "hotmail.com", "live.fr", "live.com", "msn.com", "proton.me", "protonmail.com", "pm.me"], "message": "Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."}
 }

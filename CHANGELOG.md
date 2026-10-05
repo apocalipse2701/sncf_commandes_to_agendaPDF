@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.1.0 — 5 octobre 2026
+
+**Commandes par mail (versions « mail », PC et Android)**
+- Choix de la **boîte mail** dans une liste : Free, Orange / Wanadoo, SFR / Neuf, Bouygues (Bbox), La Poste, Gmail, Yahoo, iCloud, GMX, Infomaniak, ou « Autre » (serveur à indiquer). Le serveur se remplit tout seul et la boîte est reconnue d'après l'adresse. Une aide dit quel mot de passe utiliser (Gmail, Yahoo, iCloud : mot de passe d'application). Outlook / Hotmail / Live et Proton Mail sont signalés comme non pris en charge.
+- **Trouver les expéditeurs dans la boîte** : l'application regarde les messages des 12 derniers mois qui portent un bulletin de commande et propose leurs expéditeurs (nombre de bulletins, date du dernier) ; il suffit de choisir les deux bons. Lecture seule : seuls la liste des pièces jointes et l'expéditeur sont lus.
+- Android : bouton **Contacts** à côté de chaque expéditeur, pour choisir une adresse dans les contacts du téléphone (sans autorisation « contacts »). Le PC n'a pas de carnet d'adresses : il utilise la recherche dans la boîte.
+- Versions manuelles : aucun changement.
+
 ## 2.0.4 — 5 octobre 2026
 
 **Application Android, version « mail » seulement**

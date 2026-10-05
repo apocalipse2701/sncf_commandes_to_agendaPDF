@@ -46,6 +46,8 @@ public class MainActivity extends Activity {
 
     private static final int REQ_FICHIERS = 1;
     private static final int REQ_ENREGISTRER = 2;
+    private static final int REQ_CONTACT = 4;
+    private int contactPour = 1;              // champ « Expéditeur 1 » ou « 2 » à remplir avec le contact choisi
     private static final String ADRESSE = "https://appassets.androidplatform.net/assets/index.html";
 
     private WebView web;
@@ -158,6 +160,24 @@ public class MainActivity extends Activity {
             }
             rappelFichiers.onReceiveValue(choisis);
             rappelFichiers = null;
+        } else if (requete == REQ_CONTACT) {
+            String adr = "";
+            if (resultat == RESULT_OK && donnees != null && donnees.getData() != null) {
+                try (Cursor c = getContentResolver().query(donnees.getData(),
+                        new String[]{android.provider.ContactsContract.CommonDataKinds.Email.ADDRESS}, null, null, null)) {
+                    if (c != null && c.moveToFirst() && c.getString(0) != null) adr = c.getString(0).trim();
+                } catch (Exception e) {
+                    adr = "";
+                }
+            }
+            try {
+                JSONObject r = new JSONObject();
+                r.put("numero", contactPour);
+                r.put("adresse", adr);
+                appelerPage("__contactChoisi", r.toString());
+            } catch (org.json.JSONException e) {
+                // impossible
+            }
         } else if (requete == REQ_ENREGISTRER) {
             boolean ok = false;
             if (resultat == RESULT_OK && donnees != null && donnees.getData() != null && fichierEnAttente != null) {
@@ -324,6 +344,35 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void mailRelever() {
             new Thread(() -> appelerPage("__retourMail", ReleveMail.relever(MainActivity.this).toString())).start();
+        }
+
+        /** Cherche dans la boîte qui envoie les bulletins ; réponse dans window.__expediteursTrouves({ok, texte, expediteurs}). */
+        @JavascriptInterface
+        public void mailChercherExpediteurs(String json) {
+            new Thread(() -> {
+                JSONObject o;
+                try {
+                    o = new JSONObject(json);
+                } catch (Exception e) {
+                    o = new JSONObject();
+                }
+                appelerPage("__expediteursTrouves", ReleveMail.chercherExpediteurs(MainActivity.this, o).toString());
+            }).start();
+        }
+
+        /** Ouvre la liste des contacts (adresses mail) du téléphone ; l'adresse choisie arrive dans
+         *  window.__contactChoisi(numero, adresse). Sans autorisation « contacts » : Android ne transmet que l'adresse touchée. */
+        @JavascriptInterface
+        public void mailChoisirContact(int numero) {
+            runOnUiThread(() -> {
+                contactPour = numero;
+                try {
+                    startActivityForResult(new Intent(Intent.ACTION_PICK,
+                            android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_URI), REQ_CONTACT);
+                } catch (android.content.ActivityNotFoundException e) {
+                    appelerPage("__contactChoisi", "{\"numero\":" + numero + ",\"adresse\":\"\",\"erreur\":\"Aucune application de contacts.\"}");
+                }
+            });
         }
 
         /** PDF reçus par mail et pas encore importés : [{id, nom, b64}] (au plus 20 Mo à la fois). */

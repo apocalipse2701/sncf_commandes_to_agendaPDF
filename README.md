@@ -65,7 +65,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les
 
 **Lire les commandes**
 - Import d'un ou plusieurs bulletins PDF (Android : bouton **Ajouter une commande**, ou **Partager / Ouvrir avec** depuis un mail ; PC : déposer les PDF dans le dossier `commande`).
-- **Commandes reçues par mail** (version « mail » seulement, Free par défaut) : l'application et l'exe relèvent la boîte toutes les heures et ajoutent tout seuls les bulletins envoyés par les expéditeurs choisis (Android : notification « Nouvelle commande »). Lecture seule, mot de passe chiffré sur l'appareil.
+- **Commandes reçues par mail** (version « mail » seulement) : l'application et l'exe relèvent la boîte toutes les heures et ajoutent tout seuls les bulletins envoyés par les expéditeurs choisis (Android : notification « Nouvelle commande »). Free, Orange, SFR, Bouygues, La Poste, Gmail, Yahoo, iCloud, GMX, Infomaniak ou autre boîte IMAP ; expéditeurs trouvés automatiquement dans la boîte (ou dans les contacts sur Android). Lecture seule, mot de passe chiffré sur l'appareil.
 - Fusion intelligente : le bulletin le plus récent l'emporte jour par jour ; les notes ajoutées à la main sont conservées.
 - Liste des jours modifiés par une nouvelle commande.
 

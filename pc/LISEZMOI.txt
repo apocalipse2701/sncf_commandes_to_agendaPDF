@@ -132,11 +132,20 @@ DOSSIER « commande »
 
 COMMANDES PAR MAIL (Fichier › Commandes par mail…) — PlanningPDF-mail.exe seulement
   (PlanningPDF.exe est la version manuelle, sans cette fonction.)
-  Le programme peut relever lui-même la boîte mail (Free par défaut :
-  imap.free.fr, port 993) au démarrage puis toutes les heures.
+  Le programme peut relever lui-même la boîte mail au démarrage puis toutes
+  les heures.
+  • « Boîte mail » : choisissez votre fournisseur (Free, Orange, SFR,
+    Bouygues, La Poste, Gmail, Yahoo, iCloud, GMX, Infomaniak ou « Autre ») :
+    le serveur se remplit tout seul, et il est reconnu d'après l'adresse.
+    L'aide affichée dessous dit quel mot de passe utiliser (Gmail, Yahoo,
+    iCloud : un « mot de passe d'application »). Outlook/Hotmail et Proton
+    Mail ne peuvent pas être relevés.
   • Indiquez l'adresse mail complète, le mot de passe de la boîte et les
     adresses des expéditeurs des commandes (2 au plus), cochez « Relever
     automatiquement », puis « Enregistrer » (ou « Relever maintenant »).
+  • « Trouver les expéditeurs dans la boîte… » : le programme regarde les
+    messages des 12 derniers mois qui portent un bulletin de commande et
+    propose leurs expéditeurs : cochez les deux bons, « Utiliser ».
   • Les bulletins joints aux messages de ces expéditeurs sont déposés dans
     le dossier « commande », rangés et ajoutés au planning. Deux conditions :
     l'expéditeur est exactement l'expéditeur 1 ou 2, et le nom du PDF
