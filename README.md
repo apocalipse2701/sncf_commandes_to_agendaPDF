@@ -109,7 +109,7 @@ Même planning et mêmes réglages : on passe de l'une à l'autre en installant 
 3. Autorisez l'installation depuis cette source si Android le demande, puis **Installer**.
 4. Si Play Protect signale une « appli inconnue » (normal hors Play Store) : **Plus de détails → Installer quand même**.
 
-Android 7.0 ou plus récent. Les versions suivantes se proposent toutes seules (bandeau **Installer**, ou **Réglages → Mise à jour de l'application**).
+Android 7.0 ou plus récent. Les versions suivantes se proposent toutes seules (bandeau **Installer**, ou **Réglages → Mise à jour**).
 
 ## 💻 Installer sur le PC
 
@@ -123,7 +123,7 @@ Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une 
 ## 💾 Vos données
 
 - Le planning reste **sur l'appareil** : rien n'est envoyé sur Internet. Les connexions servent seulement à lire, une fois par jour, le numéro de la dernière version publiée ici et, si vous l'activez, à **lire** votre boîte mail (IMAP sécurisé) pour y prendre les bulletins de commande. Le mot de passe de la boîte reste chiffré sur l'appareil (coffre de clés d'Android, protection Windows sur le PC) et n'est envoyé qu'à votre serveur de messagerie.
-- **Désinstaller l'application efface le planning** : faites de temps en temps **Réglages → Sauvegarde → Enregistrer une copie**, et « Reprendre une copie… » pour la restaurer. L'application vous le rappelle.
+- **Désinstaller l'application efface le planning** : faites de temps en temps **Réglages → Sauvegarde et PC → Enregistrer une copie**, et « Reprendre une copie… » pour la restaurer. L'application vous le rappelle.
 - Ce dépôt ne contient que le code, aucune donnée personnelle.
 
 ---

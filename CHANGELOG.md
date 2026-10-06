@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.2.0 — 6 octobre 2026
+
+**Application Android (et version web) : Réglages plus clairs**
+- L'onglet **Réglages** n'affiche plus tout d'un coup : un menu présente les rubriques (Apparence, Codes et couleurs, Commandes par mail, Agenda du téléphone, Sauvegarde et PC, Mise à jour, Nouveau planning), chacune avec un court résumé (thème choisi, nombre de codes, relevé activé ou non, date de la dernière copie…). Toucher une rubrique l'ouvre ; la flèche ‹ ou le bouton Retour du téléphone ramène au menu.
+- **Commandes par mail** rangé en deux parties, « Boîte mail » et « Expéditeurs des commandes », avec moins de texte ; boutons Contacts en icône.
+- Rien ne change dans les réglages eux-mêmes. Programme PC : aucun changement (il a ses menus).
+
 ## 2.1.0 — 5 octobre 2026
 
 **Commandes par mail (versions « mail », PC et Android)**
