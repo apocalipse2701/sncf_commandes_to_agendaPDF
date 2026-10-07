@@ -7,6 +7,16 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.3.0 — 7 octobre 2026
+
+**Application Android : bulletins rangés comme sur le PC**
+- Chaque bulletin lu (ajouté à la main, partagé ou reçu par mail) est **copié, renommé et rangé** comme dans le dossier « commande » du PC : `Documents/Planning Commandes/2026/10 - Octobre/2026-10-06 au 2026-10-12 - Commande.pdf` (mêmes noms, « Contrairement… », « (édition du …) »). Pas de copie en double ; l'original reste en place. Visible dans l'application Fichiers, sans autorisation (Android 10 et plus).
+- Onglet **Commandes → Bulletins rangés** : **Ouvrir le dossier** et **Exporter en ZIP** (tous les bulletins avec leurs dossiers, enregistrés où l'on veut).
+- Les bulletins importés avant cette version n'étaient pas gardés : il faut les ajouter de nouveau pour les ranger.
+
+**Programme PC**
+- Fichier › **Exporter les bulletins en ZIP…** : le dossier « commande » en une archive, de même forme que celle du téléphone.
+
 ## 2.2.0 — 6 octobre 2026
 
 **Application Android (et version web) : Réglages plus clairs**

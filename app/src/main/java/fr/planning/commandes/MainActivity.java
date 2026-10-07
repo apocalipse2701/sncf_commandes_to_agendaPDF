@@ -301,6 +301,27 @@ public class MainActivity extends Activity {
     }
 
     private static final int REQ_NOTIFICATIONS = 3;
+    private static final int REQ_STOCKAGE = 5;
+    private boolean stockageDemande = false;
+
+    /** Android 9 et moins : autorisation d'écrire dans Documents (demandée une fois par lancement). */
+    private void demanderStockage() {
+        if (Build.VERSION.SDK_INT >= 29 || stockageDemande) return;
+        stockageDemande = true;
+        runOnUiThread(() -> {
+            if (checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"}, REQ_STOCKAGE);
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requete, String[] permissions, int[] resultats) {
+        super.onRequestPermissionsResult(requete, permissions, resultats);
+        if (requete == REQ_STOCKAGE && resultats.length > 0 && resultats[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            new Thread(() -> BulletinsRanges.synchroniserVisible(MainActivity.this)).start();   // copies laissées en attente
+        }
+    }
 
     /** Android 13 et plus : autorisation d'afficher la notification « Nouvelle commande ». */
     private void demanderNotifications() {
@@ -344,6 +365,100 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void mailRelever() {
             new Thread(() -> appelerPage("__retourMail", ReleveMail.relever(MainActivity.this).toString())).start();
+        }
+
+        // ---- bulletins rangés (Documents/Planning Commandes/AAAA/MM - Mois), toutes versions ----
+
+        /** Range une copie du bulletin lu (nom et dossier calculés par la page, comme sur le PC).
+         *  json = {dossier, nom, edition} ; renvoie {chemin} (« » si déjà rangé) ou {erreur}. */
+        @JavascriptInterface
+        public String rangerBulletin(String json, String base64) {
+            JSONObject r = new JSONObject();
+            try {
+                JSONObject o = new JSONObject(json);
+                byte[] pdf = Base64.decode(base64, Base64.DEFAULT);
+                if (Build.VERSION.SDK_INT < 29) demanderStockage();
+                r.put("chemin", BulletinsRanges.ranger(MainActivity.this, o.optString("dossier", ""),
+                        o.optString("nom", "commande"), o.optString("edition", ""), pdf));
+            } catch (Exception e) {
+                try {
+                    r.put("erreur", e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                } catch (org.json.JSONException ignore) {
+                    // impossible
+                }
+            }
+            return r.toString();
+        }
+
+        /** {nb, chemin} : nombre de bulletins rangés et dossier visible. */
+        @JavascriptInterface
+        public String bulletinsInfo() {
+            JSONObject r = new JSONObject();
+            try {
+                r.put("nb", BulletinsRanges.nombre(MainActivity.this));
+                r.put("chemin", BulletinsRanges.cheminVisible());
+            } catch (org.json.JSONException e) {
+                // impossible
+            }
+            return r.toString();
+        }
+
+        /** Ouvre Documents/Planning Commandes dans l'application Fichiers ; renvoie "" ou un message. */
+        @JavascriptInterface
+        public String ouvrirDossierBulletins() {
+            new Thread(() -> BulletinsRanges.synchroniserVisible(MainActivity.this)).start();
+            final String id = "primary:" + android.os.Environment.DIRECTORY_DOCUMENTS + "/" + BulletinsRanges.DOSSIER_VISIBLE;
+            final Uri dossier = android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", id);
+            runOnUiThread(() -> {
+                Intent voir = new Intent(Intent.ACTION_VIEW);
+                voir.setDataAndType(dossier, "vnd.android.document/directory");
+                voir.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try {
+                    startActivity(voir);
+                    return;
+                } catch (Exception e) {
+                    // pas d'application qui ouvre un dossier : sélecteur de dossiers du système, placé dessus
+                }
+                Intent arbre = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                if (Build.VERSION.SDK_INT >= 26) arbre.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, dossier);
+                try {
+                    startActivity(arbre);
+                } catch (Exception e) {
+                    appelerPage("__dossierBulletins", "{\"erreur\":\"Ouvrez l'application Fichiers : " + BulletinsRanges.cheminVisible() + "\"}");
+                }
+            });
+            return "";
+        }
+
+        /** ZIP de tous les bulletins rangés, enregistré où l'on veut (comme une copie) ; réponse par __retourAndroid(id, ok). */
+        @JavascriptInterface
+        public void exporterBulletinsZip(final String id, final String nom) {
+            new Thread(() -> {
+                byte[] zip;
+                try {
+                    zip = BulletinsRanges.zip(MainActivity.this);
+                } catch (IOException e) {
+                    runOnUiThread(() -> repondre(id, false));
+                    return;
+                }
+                final byte[] octets = zip;
+                runOnUiThread(() -> {
+                    if (idEnAttente != null) repondre(idEnAttente, false);
+                    fichierEnAttente = octets;
+                    idEnAttente = id;
+                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("application/zip");
+                    i.putExtra(Intent.EXTRA_TITLE, nom);
+                    try {
+                        startActivityForResult(i, REQ_ENREGISTRER);
+                    } catch (Exception e) {
+                        fichierEnAttente = null;
+                        idEnAttente = null;
+                        repondre(id, false);
+                    }
+                });
+            }).start();
         }
 
         /** Cherche dans la boîte qui envoie les bulletins ; réponse dans window.__expediteursTrouves({ok, texte, expediteurs}). */

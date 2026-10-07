@@ -811,6 +811,19 @@ def ajouter_au_dossier(chemin, dossier=None):
     return None
 
 
+def zip_bulletins(chemin_zip, dossier=None):
+    """ZIP de tous les PDF du dossier « commande », avec leurs sous-dossiers (« Planning Commandes/2026/10 - Octobre/… »,
+    même arborescence que l'export ZIP du téléphone). Renvoie le nombre de bulletins."""
+    import zipfile
+    dossier = dossier or dossier_commandes()
+    fichiers = sorted(_tous_les_pdf(dossier))
+    with zipfile.ZipFile(chemin_zip, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in fichiers:
+            rel = os.path.relpath(f, dossier).replace(os.sep, "/")
+            z.write(f, "Planning Commandes/" + rel)
+    return len(fichiers)
+
+
 def ranger_commandes(dossier=None):
     """Range les PDF du dossier « commande » (et de ses sous-dossiers) :
         commande\\2026\\10 - Octobre\\2026-10-02 au 2026-10-13 - Commande.pdf
@@ -2805,6 +2818,23 @@ def lancer_interface():
             ttk.Button(boutons, text="Fermer", command=fen.destroy).pack(side="right")
             fen.bind("<Escape>", lambda e: fen.destroy())
 
+        def exporter_bulletins_zip(self):
+            """Archive ZIP du dossier « commande » (bulletins rangés par année / mois), pour sauvegarde ou envoi."""
+            chemin = filedialog.asksaveasfilename(parent=self, title="Exporter les bulletins en ZIP",
+                                                  defaultextension=".zip",
+                                                  initialfile=f"Bulletins de commande {dt.date.today().isoformat()}.zip",
+                                                  filetypes=[("Archive ZIP", "*.zip")])
+            if not chemin:
+                return
+            try:
+                n = zip_bulletins(chemin)
+            except OSError as ex:
+                messagebox.showerror("Exporter les bulletins", f"ZIP non enregistré :\n{ex}")
+                return
+            self.statut.config(text=f"{n} bulletin(s) enregistré(s) dans {os.path.basename(chemin)}.")
+            if not n:
+                messagebox.showinfo("Exporter les bulletins", "Le dossier « commande » ne contient aucun bulletin PDF.")
+
         def exporter_agenda(self):
             """Fichier .ics pour Outlook, Google Agenda ou l'agenda du téléphone."""
             fen = tk.Toplevel(self)
@@ -2983,6 +3013,7 @@ def lancer_interface():
             fichier = tk.Menu(barre, tearoff=False)
             fichier.add_command(label="Ajouter une commande…", accelerator=f"{ctrl}+O", command=self.ouvrir)
             fichier.add_command(label="Dossier commande", accelerator=f"{ctrl}+D", command=self.dossier_commande)
+            fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
             fichier.add_separator()

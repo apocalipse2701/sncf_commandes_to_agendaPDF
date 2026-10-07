@@ -126,6 +126,9 @@ DOSSIER « commande »
         2026-10-02 au 2026-10-13 - Commande (édition du 2026-09-22 15h05).pdf
   • Un fichier identique à un bulletin déjà rangé, ou un PDF qui n'est
     pas un bulletin, est laissé tel quel (signalé par un message).
+  • Fichier › « Exporter les bulletins en ZIP… » : tout le dossier
+    « commande » (avec ses dossiers année / mois) dans une archive ZIP, pour
+    le sauvegarder ou l'envoyer. Le téléphone fait le même ZIP.
   • « Ajouter une commande » s'ouvre dans ce dossier. Un bulletin ouvert depuis un
     autre endroit y est COPIÉ et rangé automatiquement (l'original reste
     en place ; pas de copie en double).
