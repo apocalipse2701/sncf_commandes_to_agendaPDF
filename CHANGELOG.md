@@ -7,12 +7,19 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.5.0 — 7 octobre 2026
+
+**Programme PC : export en images de plusieurs mois**
+- Nouveau menu Fichier › **Exporter en images JPEG…** : on coche les mois (Tout, par année, Aucun) ; un mois → un fichier `.jpg`, plusieurs mois → un `.zip` avec une image par mois (A4 paysage, 300 dpi, thème du PDF). Mêmes noms et même forme que l'export JPEG du téléphone.
+- Fenêtre **Imprimer** : boutons par année ajoutés (comme sur le téléphone).
+- Application Android : aucun changement (l'export JPEG de plusieurs mois existe depuis la 2.4.0).
+
 ## 2.4.0 — 7 octobre 2026
 
 **Application Android (et version web) : export en image**
 - Le bouton **PDF** de l'onglet Planning s'appelle maintenant **Exporter** et propose deux formats : **PDF** (comme avant : enregistrer ou imprimer) ou **JPEG (image)**.
 - JPEG : une image par mois coché, A4 paysage (3508 × 2480), au thème choisi ; un mois → un fichier `.jpg`, plusieurs mois → les images réunies dans un `.zip`.
-- Programme PC : déjà possible par Fichier › **Exporter…** (Ctrl+E), type « Image JPEG » (mois affiché) ; aucun changement.
+- Programme PC : déjà possible par Fichier › **Exporter…** (Ctrl+E), type « Image JPEG » (mois affiché) ; plusieurs mois : voir 2.5.0.
 
 ## 2.3.1 — 7 octobre 2026
 

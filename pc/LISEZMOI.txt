@@ -93,6 +93,9 @@ UTILISATION
   • Le PDF de sortie doit être fermé (pas ouvert dans Acrobat ou autre)
     au moment de sa mise à jour.
   • Export PNG / JPEG : le mois affiché uniquement.
+  • Fichier › « Exporter en images JPEG… » : cochez les mois (Tout, par année,
+    Aucun) ; un mois donne un fichier .jpg, plusieurs mois un .zip avec une
+    image par mois (mêmes noms que sur le téléphone).
   • « Imprimer… » : cochez le ou les mois à imprimer (le mois affiché est
     coché d'office), puis « Imprimer » (imprimante par défaut, A4 paysage)
     ou « Aperçu » (ouvre le PDF pour choisir l'imprimante avec Ctrl+P).

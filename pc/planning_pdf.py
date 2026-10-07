@@ -1732,6 +1732,46 @@ def exporter_image(chemin, annee, mois, jours, agent="", greves=()):
         img.save(chemin, "PNG", dpi=(300, 300))
 
 
+def nom_image_mois(annee, mois):
+    """« Planning octobre 2026.jpg » (même nom que l'export JPEG du téléphone)."""
+    return f"Planning {MOIS_LONG[mois - 1]} {annee}.jpg"
+
+
+def exporter_jpeg(chemin, planning, liste_mois):
+    """Images JPEG des mois choisis (A4 paysage, 300 dpi, thème du PDF).
+    Un mois : un fichier .jpg ; plusieurs : un ZIP « Planning <mois> <année>.jpg »… (même forme que le téléphone).
+    Renvoie le nombre d'images."""
+    import zipfile
+    liste_mois = sorted(set(liste_mois))
+    if not liste_mois:
+        return 0
+
+    def jpeg(a, m):
+        img, _ = dessiner_planning(a, m, planning.jours, *A4, planning.agent, planning.greves)
+        b = io.BytesIO()
+        img.save(b, "JPEG", quality=92, dpi=(300, 300))
+        return b.getvalue()
+
+    dossier = os.path.dirname(os.path.abspath(chemin))
+    fd, tmp = tempfile.mkstemp(suffix=".tmp", dir=dossier)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            if len(liste_mois) == 1 and not chemin.lower().endswith(".zip"):
+                f.write(jpeg(*liste_mois[0]))
+            else:
+                with zipfile.ZipFile(f, "w", zipfile.ZIP_STORED) as z:     # JPEG déjà compressés
+                    for a, m in liste_mois:
+                        z.writestr(nom_image_mois(a, m), jpeg(a, m))
+        os.replace(tmp, chemin)
+    except BaseException:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
+    return len(liste_mois)
+
+
 def mois_du_planning(planning, en_plus=None):
     ms = {(d.year, d.month) for d in planning.jours}
     if en_plus:
@@ -2922,18 +2962,10 @@ def lancer_interface():
             messagebox.showinfo("Reprendre une copie", f"{n} jour(s) repris du téléphone (le plus récent l'emporte).\n"
                                 "Les codes et distances du PC ne sont pas modifiés.")
 
-        def choisir_impression(self):
-            """Fenêtre : choisir les mois à imprimer."""
-            fen = tk.Toplevel(self)
-            fen.title("Imprimer le planning")
-            fen.transient(self)
-            fen.resizable(False, False)
-            cadre = ttk.Frame(fen, padding=14)
-            cadre.pack(fill="both", expand=True)
-            ttk.Label(cadre, text="Mois à imprimer :", font=("", 12, "bold")).pack(anchor="w", pady=(0, 6))
-
+        def _cases_mois(self, cadre):
+            """Liste défilante de cases à cocher, un mois par case (le mois affiché coché), + Tout / années / Aucun.
+            Renvoie {(année, mois): BooleanVar}."""
             mois = sorted({(d.year, d.month) for d in self.pl.jours} | {(self.annee, self.mois)}, reverse=True)
-            # liste défilante (il peut y avoir beaucoup de mois)
             zone = ttk.Frame(cadre)
             zone.pack(fill="both", expand=True)
             toile = tk.Canvas(zone, width=260, height=min(320, 26 * len(mois) + 4), highlightthickness=0)
@@ -2955,8 +2987,79 @@ def lancer_interface():
             rapide.pack(fill="x")
             ttk.Button(rapide, text="Tout", width=8,
                        command=lambda: [v.set(True) for v in choix.values()]).pack(side="left")
+            annees = sorted({a for a, _ in mois})
+            if len(annees) > 1:
+                for an in annees:
+                    ttk.Button(rapide, text=str(an), width=6,
+                               command=lambda an=an: [v.set(k[0] == an) for k, v in choix.items()]).pack(side="left", padx=(4, 0))
             ttk.Button(rapide, text="Aucun", width=8,
                        command=lambda: [v.set(False) for v in choix.values()]).pack(side="left", padx=4)
+            return choix
+
+        def exporter_images(self):
+            """Fenêtre : choisir les mois à exporter en images JPEG (un .jpg, ou un ZIP pour plusieurs mois)."""
+            fen = tk.Toplevel(self)
+            fen.title("Exporter en images JPEG")
+            fen.transient(self)
+            fen.resizable(False, False)
+            cadre = ttk.Frame(fen, padding=14)
+            cadre.pack(fill="both", expand=True)
+            ttk.Label(cadre, text="Mois à exporter en images :", font=("", 12, "bold")).pack(anchor="w")
+            ttk.Label(cadre, foreground="#666", wraplength=300, justify="left",
+                      text="Une image JPEG par mois (A4 paysage, 300 dpi, thème du PDF). "
+                           "Plusieurs mois : les images sont réunies dans un ZIP.").pack(anchor="w", pady=(0, 6))
+            choix = self._cases_mois(cadre)
+
+            def lancer():
+                selection = sorted(k for k, v in choix.items() if v.get())
+                if not selection:
+                    messagebox.showinfo("Exporter en images", "Cochez au moins un mois.", parent=fen)
+                    return
+                if len(selection) == 1:
+                    a, m = selection[0]
+                    nom, ext, types = nom_image_mois(a, m), ".jpg", [("Image JPEG", "*.jpg")]
+                else:
+                    (a1, m1), (a2, m2) = selection[0], selection[-1]
+                    nom = f"Planning {a1}-{m1:02d} au {a2}-{m2:02d} (images).zip"
+                    ext, types = ".zip", [("Archive ZIP (images JPEG)", "*.zip")]
+                chemin = filedialog.asksaveasfilename(parent=fen, title="Exporter en images JPEG",
+                                                      initialdir=self.dernier_dossier, initialfile=nom,
+                                                      defaultextension=ext, filetypes=types)
+                if not chemin:
+                    return
+                self.dernier_dossier = os.path.dirname(chemin)
+                self.config(cursor="watch")
+                fen.config(cursor="watch")
+                self.update_idletasks()
+                try:
+                    n = exporter_jpeg(chemin, self.pl, selection)
+                except Exception as ex:
+                    messagebox.showerror("Exporter en images", f"Export impossible :\n{ex}", parent=fen)
+                    return
+                finally:
+                    self.config(cursor="")
+                    fen.config(cursor="")
+                fen.destroy()
+                self.statut.config(text=f"{n} image(s) JPEG exportée(s) : {chemin}")
+
+            boutons = ttk.Frame(cadre, padding=(0, 8, 0, 0))
+            boutons.pack(fill="x")
+            ttk.Button(boutons, text="Enregistrer…", command=lancer).pack(side="left")
+            ttk.Button(boutons, text="Annuler", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+            fen.grab_set()
+
+        def choisir_impression(self):
+            """Fenêtre : choisir les mois à imprimer."""
+            fen = tk.Toplevel(self)
+            fen.title("Imprimer le planning")
+            fen.transient(self)
+            fen.resizable(False, False)
+            cadre = ttk.Frame(fen, padding=14)
+            cadre.pack(fill="both", expand=True)
+            ttk.Label(cadre, text="Mois à imprimer :", font=("", 12, "bold")).pack(anchor="w", pady=(0, 6))
+
+            choix = self._cases_mois(cadre)
 
             def lancer(apercu):
                 selection = [k for k, v in choix.items() if v.get()]
@@ -3018,6 +3121,7 @@ def lancer_interface():
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
             fichier.add_separator()
             fichier.add_command(label="Exporter…", accelerator=f"{ctrl}+E", command=self.exporter)
+            fichier.add_command(label="Exporter en images JPEG…", command=self.exporter_images)
             fichier.add_command(label="Exporter vers l'agenda (.ics)…", command=self.exporter_agenda)
             fichier.add_separator()
             fichier.add_command(label="Envoyer vers le téléphone (.json)…", command=self.envoyer_telephone)
