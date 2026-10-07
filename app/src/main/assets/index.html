@@ -235,7 +235,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
       </div>
       <div class="rangee">
         <button class="btn fantome" id="btn-auj">Aujourd'hui</button>
-        <button class="btn" id="btn-pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>PDF</button>
+        <button class="btn" id="btn-pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>Exporter</button>
       </div>
     </div>
     <div class="carte rappel" id="maj" hidden></div>
@@ -408,7 +408,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
 window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) : il figure dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."}};
-window.VERSION_APPLI = "2.3.1";
+window.VERSION_APPLI = "2.4.0";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -2427,7 +2427,7 @@ PGVRVSD    ; [date]
   async function enregistrer(nom, data) {
     if (ANDROID) {
       const id = "e" + Date.now() + Math.random().toString(36).slice(2, 6);
-      const types = { pdf: "application/pdf", json: "application/json", csv: "text/csv", ics: "text/calendar" };
+      const types = { pdf: "application/pdf", json: "application/json", csv: "text/csv", ics: "text/calendar", jpg: "image/jpeg", zip: "application/zip" };
       const mime = types[(nom.split(".").pop() || "").toLowerCase()] || "text/plain";
       const b64 = await enBase64(data);
       return new Promise(ok => { attentes[id] = ok; window.Android.enregistrer(id, nom, mime, b64); });
@@ -2491,7 +2491,35 @@ PGVRVSD    ; [date]
     rendre(); toast("Planning effacé.");
   });
 
-  // ------------------------------------------------------------------ export PDF
+  // ------------------------------------------------------------------ export PDF / JPEG
+  // ZIP minimal (fichiers « stockés », sans compression : les JPEG le sont déjà)
+  const TABLE_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(o) { let c = 0xFFFFFFFF; for (let i = 0; i < o.length; i++) c = TABLE_CRC[(c ^ o[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zipStocke(fichiers) {                 // [{nom, octets: Uint8Array}] → Uint8Array
+    const enc = new TextEncoder(), morceaux = [], central = [];
+    const d = new Date(), heure = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const jour = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    let pos = 0;
+    for (const f of fichiers) {
+      const nom = enc.encode(f.nom), crc = crc32(f.octets), n = f.octets.length;
+      const loc = new DataView(new ArrayBuffer(30));
+      [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, heure, 2], [12, jour, 2], [14, crc, 4], [18, n, 4], [22, n, 4], [26, nom.length, 2], [28, 0, 2]]
+        .forEach(([o, v, t]) => t === 4 ? loc.setUint32(o, v, true) : loc.setUint16(o, v, true));
+      const cen = new DataView(new ArrayBuffer(46));
+      [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, heure, 2], [14, jour, 2], [16, crc, 4], [20, n, 4], [24, n, 4], [28, nom.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, pos, 4]]
+        .forEach(([o, v, t]) => t === 4 ? cen.setUint32(o, v, true) : cen.setUint16(o, v, true));
+      morceaux.push(new Uint8Array(loc.buffer), nom, f.octets); central.push(new Uint8Array(cen.buffer), nom);
+      pos += 30 + nom.length + n;
+    }
+    const taille = central.reduce((s, x) => s + x.length, 0);
+    const fin = new DataView(new ArrayBuffer(22));
+    [[0, 0x06054b50, 4], [8, fichiers.length, 2], [10, fichiers.length, 2], [12, taille, 4], [16, pos, 4]]
+      .forEach(([o, v, t]) => t === 4 ? fin.setUint32(o, v, true) : fin.setUint16(o, v, true));
+    const tout = [...morceaux, ...central, new Uint8Array(fin.buffer)];
+    const r = new Uint8Array(tout.reduce((s, x) => s + x.length, 0));
+    let k = 0; for (const x of tout) { r.set(x, k); k += x.length; }
+    return r;
+  }
   let pdfLibP = null;
   function chargerPdfLib() {
     if (!pdfLibP) {
@@ -2523,20 +2551,53 @@ PGVRVSD    ; [date]
     const go = el("button", { class: "btn accent plein" });
     const imp = ANDROID ? el("button", { class: "btn plein", style: "margin-top:8px" }) : null;
     const etat = el("p", { class: "discret", style: "margin:10px 0 0" });
+    let format = "pdf";
+    const bPdf = el("button", { type: "button", "aria-pressed": "true" }, "PDF");
+    const bJpg = el("button", { type: "button", "aria-pressed": "false" }, "JPEG (image)");
+    const explication = el("p", { style: "margin:0 0 8px" });
+    const aideImp = ANDROID ? null : el("p", { class: "discret", style: "margin:8px 0 0", text: "Pour imprimer : ouvrez le PDF enregistré puis utilisez la fonction Imprimer du téléphone." });
     const maj = () => {
-      go.textContent = ANDROID ? `Enregistrer le PDF (${choix.size} mois)` : `Créer le PDF (${choix.size} mois)`;
-      go.disabled = !choix.size;
-      if (imp) { imp.textContent = `Imprimer (${choix.size} mois)`; imp.disabled = !choix.size; }
+      const n = choix.size;
+      bPdf.setAttribute("aria-pressed", String(format === "pdf")); bJpg.setAttribute("aria-pressed", String(format === "jpg"));
+      explication.textContent = format === "pdf"
+        ? `Une page A4 paysage par mois, au thème « ${E.theme} ». Le PDF contient aussi les données du planning : le programme PC peut le rouvrir.`
+        : `Une image JPEG par mois (A4 paysage, 3508 × 2480), au thème « ${E.theme} » : à envoyer par message ou à garder dans la galerie. Plusieurs mois : les images sont réunies dans un ZIP.`;
+      go.textContent = format === "pdf"
+        ? (ANDROID ? `Enregistrer le PDF (${n} mois)` : `Créer le PDF (${n} mois)`)
+        : (n > 1 ? `Enregistrer les ${n} images (ZIP)` : "Enregistrer l'image JPEG");
+      go.disabled = !n;
+      if (imp) { imp.textContent = `Imprimer (${n} mois)`; imp.disabled = !n; imp.hidden = format !== "pdf"; }
+      if (aideImp) aideImp.hidden = format !== "pdf";
     };
+    bPdf.addEventListener("click", () => { format = "pdf"; etat.textContent = ""; maj(); });
+    bJpg.addEventListener("click", () => { format = "jpg"; etat.textContent = ""; maj(); });
     maj();
     const contenu = el("div", {},
-      el("p", { style: "margin:0 0 8px", text: `Une page A4 paysage par mois, au thème « ${E.theme} ». Le PDF contient aussi les données du planning : le programme PC peut le rouvrir.` }),
+      el("div", { class: "seg", role: "group", "aria-label": "Format", style: "margin:0 0 10px" }, bPdf, bJpg),
+      explication,
       el("div", { class: "rangee" }, el("button", { class: "btn", onclick: () => tout(true) }, "Tout"),
         annees.map(a => el("button", { class: "btn", onclick: () => { tout(false); tout(true, k => k.startsWith(a)); } }, a)),
         el("button", { class: "btn fantome", onclick: () => tout(false) }, "Aucun")),
-      liste, go, imp, etat,
-      ANDROID ? null : el("p", { class: "discret", style: "margin:8px 0 0", text: "Pour imprimer : ouvrez le PDF enregistré puis utilisez la fonction Imprimer du téléphone." }));
-    feuille("Exporter en PDF", contenu);
+      liste, go, imp, etat, aideImp);
+    feuille("Exporter le planning", contenu);
+    const nomMois = k => `${M.MOIS_LONG[+k.slice(5) - 1]} ${k.slice(0, 4)}`;
+    async function fabriquerJpeg() {
+      const liste = [...choix].sort();
+      const toile = document.createElement("canvas"); toile.width = 3508; toile.height = 2480;
+      const ctx = toile.getContext("2d");
+      const images = [];
+      for (const [i, k] of liste.entries()) {
+        etat.textContent = `Image ${i + 1} / ${liste.length}…`;
+        await new Promise(r => setTimeout(r, 0));
+        R.dessiner(ctx, 3508, 2480, +k.slice(0, 4), +k.slice(5), E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: E.theme });
+        const blob = await new Promise(r => toile.toBlob(r, "image/jpeg", 0.92));
+        if (!blob) throw new Error("image non créée");
+        images.push({ nom: `Planning ${nomMois(k)}.jpg`, octets: new Uint8Array(await blob.arrayBuffer()) });
+      }
+      toile.width = toile.height = 1;
+      if (images.length === 1) return { nom: images[0].nom, blob: new Blob([images[0].octets], { type: "image/jpeg" }) };
+      return { nom: `Planning ${liste[0]} au ${liste[liste.length - 1]} (images).zip`, blob: new Blob([zipStocke(images)], { type: "application/zip" }) };
+    }
     async function fabriquer() {
       const PDFLib = await chargerPdfLib();
       const doc = await PDFLib.PDFDocument.create();
@@ -2560,9 +2621,20 @@ PGVRVSD    ; [date]
       const nom = liste.length === 1 ? `Planning ${M.MOIS_LONG[+liste[0].slice(5) - 1]} ${liste[0].slice(0, 4)}.pdf` : `Planning ${liste[0]} au ${liste[liste.length - 1]}.pdf`;
       return { octets, nom };
     }
-    const occupe = v => { go.disabled = v || !choix.size; if (imp) imp.disabled = v || !choix.size; };
+    const occupe = v => { go.disabled = v || !choix.size; if (imp) imp.disabled = v || !choix.size; bPdf.disabled = bJpg.disabled = v; };
     go.addEventListener("click", async () => {
       occupe(true);
+      if (format === "jpg") {
+        try {
+          const { nom, blob } = await fabriquerJpeg();
+          etat.textContent = "Image prête.";
+          const ok = await enregistrer(nom, blob);
+          etat.textContent = ok ? (nom.endsWith(".zip") ? "Images enregistrées (ZIP)." : "Image enregistrée.") : "Image non enregistrée.";
+        } catch (e) {
+          etat.textContent = "Création de l'image impossible : " + (e.message || e) + ".";
+        } finally { occupe(false); }
+        return;
+      }
       try {
         const { octets, nom } = await fabriquer();
         etat.textContent = "PDF prêt.";

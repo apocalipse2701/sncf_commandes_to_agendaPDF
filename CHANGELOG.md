@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.4.0 — 7 octobre 2026
+
+**Application Android (et version web) : export en image**
+- Le bouton **PDF** de l'onglet Planning s'appelle maintenant **Exporter** et propose deux formats : **PDF** (comme avant : enregistrer ou imprimer) ou **JPEG (image)**.
+- JPEG : une image par mois coché, A4 paysage (3508 × 2480), au thème choisi ; un mois → un fichier `.jpg`, plusieurs mois → les images réunies dans un `.zip`.
+- Programme PC : déjà possible par Fichier › **Exporter…** (Ctrl+E), type « Image JPEG » (mois affiché) ; aucun changement.
+
 ## 2.3.1 — 7 octobre 2026
 
 **Application Android : bulletins rangés (correction)**

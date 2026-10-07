@@ -77,7 +77,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les
 - Récapitulatif du mois : heures de service, nuits, dimanches et fériés travaillés, repos.
 
 **Garder, partager, imprimer**
-- **PDF** du planning (A4 paysage, un mois par page) à enregistrer ou **imprimer**.
+- Bouton **Exporter** : **PDF** du planning (A4 paysage, un mois par page) à enregistrer ou **imprimer**, ou **JPEG** (une image par mois, ZIP pour plusieurs mois).
 - **Export vers l'agenda** (.ics) : un rendez-vous par service dans Google Agenda, Outlook ou l'agenda du téléphone.
 - **Échange PC ↔ téléphone** et copies de sauvegarde.
 
