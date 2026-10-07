@@ -378,8 +378,10 @@ public class MainActivity extends Activity {
                 JSONObject o = new JSONObject(json);
                 byte[] pdf = Base64.decode(base64, Base64.DEFAULT);
                 if (Build.VERSION.SDK_INT < 29) demanderStockage();
-                r.put("chemin", BulletinsRanges.ranger(MainActivity.this, o.optString("dossier", ""),
-                        o.optString("nom", "commande"), o.optString("edition", ""), pdf));
+                String chemin = BulletinsRanges.ranger(MainActivity.this, o.optString("dossier", ""),
+                        o.optString("nom", "commande"), o.optString("edition", ""), pdf);
+                r.put("chemin", chemin);
+                if (!chemin.isEmpty() && BulletinsRanges.erreurVisible != null) r.put("visible", BulletinsRanges.erreurVisible);
             } catch (Exception e) {
                 try {
                     r.put("erreur", e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
@@ -390,43 +392,105 @@ public class MainActivity extends Activity {
             return r.toString();
         }
 
-        /** {nb, chemin} : nombre de bulletins rangés et dossier visible. */
+        /** {nb, chemin, dossier (existe dans Documents ?), erreur (dernière copie visible ratée)}. */
         @JavascriptInterface
         public String bulletinsInfo() {
             JSONObject r = new JSONObject();
             try {
                 r.put("nb", BulletinsRanges.nombre(MainActivity.this));
                 r.put("chemin", BulletinsRanges.cheminVisible());
+                r.put("dossier", BulletinsRanges.visibleExiste());
+                if (BulletinsRanges.erreurVisible != null) r.put("erreur", BulletinsRanges.erreurVisible);
             } catch (org.json.JSONException e) {
                 // impossible
             }
             return r.toString();
         }
 
-        /** Ouvre Documents/Planning Commandes dans l'application Fichiers ; renvoie "" ou un message. */
+        /** Liste des bulletins rangés : [{rel, nom, dossier}], du plus récent au plus ancien. */
         @JavascriptInterface
-        public String ouvrirDossierBulletins() {
-            new Thread(() -> BulletinsRanges.synchroniserVisible(MainActivity.this)).start();
-            final String id = "primary:" + android.os.Environment.DIRECTORY_DOCUMENTS + "/" + BulletinsRanges.DOSSIER_VISIBLE;
-            final Uri dossier = android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", id);
+        public String bulletinsListe() {
+            JSONArray l = new JSONArray();
+            java.io.File r = BulletinsRanges.racine(MainActivity.this);
+            java.util.List<java.io.File> tous = BulletinsRanges.tous(r);
+            java.util.Collections.reverse(tous);
+            for (java.io.File f : tous) {
+                try {
+                    String rel = BulletinsRanges.relatif(r, f);
+                    JSONObject o = new JSONObject();
+                    o.put("rel", rel);
+                    o.put("nom", f.getName().replaceAll("(?i)\\.pdf$", ""));
+                    o.put("dossier", rel.contains("/") ? rel.substring(0, rel.lastIndexOf('/')) : "");
+                    l.put(o);
+                } catch (org.json.JSONException e) {
+                    // impossible
+                }
+            }
+            return l.toString();
+        }
+
+        /** Ouvre un bulletin rangé dans la visionneuse PDF du téléphone ; renvoie "" ou un message. */
+        @JavascriptInterface
+        public String ouvrirBulletin(String rel) {
+            if (BulletinsRanges.fichier(MainActivity.this, rel) == null) return "Bulletin introuvable.";
+            final Uri u = BulletinsFournisseur.adresse(rel);
             runOnUiThread(() -> {
                 Intent voir = new Intent(Intent.ACTION_VIEW);
-                voir.setDataAndType(dossier, "vnd.android.document/directory");
+                voir.setDataAndType(u, "application/pdf");
                 voir.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 try {
                     startActivity(voir);
-                    return;
                 } catch (Exception e) {
-                    // pas d'application qui ouvre un dossier : sélecteur de dossiers du système, placé dessus
-                }
-                Intent arbre = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                if (Build.VERSION.SDK_INT >= 26) arbre.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, dossier);
-                try {
-                    startActivity(arbre);
-                } catch (Exception e) {
-                    appelerPage("__dossierBulletins", "{\"erreur\":\"Ouvrez l'application Fichiers : " + BulletinsRanges.cheminVisible() + "\"}");
+                    appelerPage("__dossierBulletins", "{\"erreur\":\"Aucune application ne sait ouvrir un PDF sur ce téléphone.\"}");
                 }
             });
+            return "";
+        }
+
+        /** Ouvre Documents/Planning Commandes dans l'application Fichiers ; renvoie "" ou un message. */
+        @JavascriptInterface
+        public String ouvrirDossierBulletins() {
+            if (BulletinsRanges.nombre(MainActivity.this) == 0)
+                return "Aucun bulletin rangé pour l'instant : le dossier sera créé au premier bulletin ajouté.";
+            if (Build.VERSION.SDK_INT < 29) demanderStockage();
+            new Thread(() -> {
+                BulletinsRanges.synchroniserVisible(MainActivity.this);     // copies manquantes (dossier effacé…)
+                final boolean existe = BulletinsRanges.visibleExiste();
+                final String erreur = BulletinsRanges.erreurVisible;
+                runOnUiThread(() -> {
+                    if (!existe) {
+                        JSONObject m = new JSONObject();
+                        try {
+                            m.put("erreur", "Le dossier " + BulletinsRanges.cheminVisible() + " n'a pas pu être créé"
+                                    + (erreur != null ? " (" + erreur + ")" : "") + ". Les bulletins restent dans la liste ci-dessous et dans le ZIP.");
+                        } catch (org.json.JSONException ignore) {
+                            // impossible
+                        }
+                        appelerPage("__dossierBulletins", m.toString());
+                        return;
+                    }
+                    final String id = "primary:" + android.os.Environment.DIRECTORY_DOCUMENTS + "/" + BulletinsRanges.DOSSIER_VISIBLE;
+                    final Uri dossier = android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", id);
+                    Intent voir = new Intent(Intent.ACTION_VIEW);
+                    voir.setDataAndType(dossier, "vnd.android.document/directory");
+                    voir.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        startActivity(voir);
+                        appelerPage("__dossierBulletins", "{\"ok\":true}");
+                        return;
+                    } catch (Exception e) {
+                        // pas d'application qui ouvre un dossier : sélecteur de dossiers du système, placé dessus
+                    }
+                    Intent arbre = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                    if (Build.VERSION.SDK_INT >= 26) arbre.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, dossier);
+                    try {
+                        startActivity(arbre);
+                        appelerPage("__dossierBulletins", "{\"ok\":true}");
+                    } catch (Exception e) {
+                        appelerPage("__dossierBulletins", "{\"erreur\":\"Ouvrez l'application Fichiers : " + BulletinsRanges.cheminVisible() + "\"}");
+                    }
+                });
+            }).start();
             return "";
         }
 

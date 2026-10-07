@@ -37,6 +37,9 @@ final class BulletinsRanges {
 
     static final String DOSSIER_VISIBLE = "Planning Commandes";
 
+    /** Raison du dernier échec de la copie visible (null : la dernière copie a réussi). */
+    static volatile String erreurVisible = null;
+
     private BulletinsRanges() {
     }
 
@@ -88,44 +91,87 @@ final class BulletinsRanges {
             String chemin = rel + nomFichier;
             try {
                 copieVisible(c, rel.toString(), nomFichier, pdf);
+                erreurVisible = null;
             } catch (Exception e) {
                 // copie visible impossible (stockage plein, autorisation refusée…) : la copie privée suffit au ZIP
+                // et à la liste de l'onglet Commandes ; la raison est affichée
+                erreurVisible = raison(e);
             }
             return chemin;
         }
         throw new IOException("trop de bulletins du même nom");
     }
 
-    /** Copie dans Documents/Planning Commandes/<rel> (dossier visible dans l'application Fichiers). */
+    static String raison(Exception e) {
+        return e.getMessage() == null || e.getMessage().isEmpty() ? e.getClass().getSimpleName() : e.getMessage();
+    }
+
+    /** Dossier Documents/Planning Commandes (chemin de fichier : sert à vérifier qu'il existe, et en secours). */
+    @SuppressWarnings("deprecation")
+    static File dossierVisible() {
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), DOSSIER_VISIBLE);
+    }
+
+    /** Le dossier Documents/Planning Commandes existe-t-il sur le téléphone ? */
+    static boolean visibleExiste() {
+        try {
+            return dossierVisible().isDirectory();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Copie dans Documents/Planning Commandes/<rel> (dossier visible dans l'application Fichiers).
+     * Android 10 et plus : par le MediaStore ; s'il refuse, écriture directe du fichier (permise à l'application
+     * dans Documents depuis Android 11). Android 9 et moins : fichier (autorisation « stockage »).
+     */
     static void copieVisible(Context c, String rel, String nomFichier, byte[] pdf) throws IOException {
         if (Build.VERSION.SDK_INT >= 29) {
-            ContentResolver r = c.getContentResolver();
-            String chemin = Environment.DIRECTORY_DOCUMENTS + "/" + DOSSIER_VISIBLE + "/" + rel;
-            Uri collection = MediaStore.Files.getContentUri("external");
-            try (Cursor k = r.query(collection, new String[]{MediaStore.MediaColumns._ID},
-                    MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " + MediaStore.MediaColumns.DISPLAY_NAME + "=?",
-                    new String[]{chemin, nomFichier}, null)) {
-                if (k != null && k.moveToFirst()) return;                     // déjà là
+            try {
+                copieMediaStore(c, rel, nomFichier, pdf);
+                return;
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT < 30) throw e instanceof IOException ? (IOException) e : new IOException(raison(e));
+                try {
+                    copieFichier(rel, nomFichier, pdf);
+                    return;
+                } catch (Exception e2) {
+                    throw new IOException(raison(e) + " / " + raison(e2));
+                }
             }
-            ContentValues v = new ContentValues();
-            v.put(MediaStore.MediaColumns.DISPLAY_NAME, nomFichier);
-            v.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-            v.put(MediaStore.MediaColumns.RELATIVE_PATH, chemin);
-            Uri u = r.insert(collection, v);
-            if (u == null) throw new IOException("Documents inaccessible");
-            try (OutputStream o = r.openOutputStream(u)) {
-                if (o == null) throw new IOException("Documents inaccessible");
-                o.write(pdf);
-            }
-        } else {
-            @SuppressWarnings("deprecation")
-            File d = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), DOSSIER_VISIBLE + "/" + rel);
-            if (!d.exists() && !d.mkdirs()) throw new IOException("Documents inaccessible");
-            File f = new File(d, nomFichier);
-            if (f.exists()) return;
-            try (OutputStream o = new FileOutputStream(f)) {
-                o.write(pdf);
-            }
+        }
+        copieFichier(rel, nomFichier, pdf);
+    }
+
+    static void copieMediaStore(Context c, String rel, String nomFichier, byte[] pdf) throws IOException {
+        ContentResolver r = c.getContentResolver();
+        String chemin = Environment.DIRECTORY_DOCUMENTS + "/" + DOSSIER_VISIBLE + "/" + rel;
+        Uri collection = MediaStore.Files.getContentUri("external");
+        try (Cursor k = r.query(collection, new String[]{MediaStore.MediaColumns._ID},
+                MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " + MediaStore.MediaColumns.DISPLAY_NAME + "=?",
+                new String[]{chemin, nomFichier}, null)) {
+            if (k != null && k.moveToFirst()) return;                     // déjà là
+        }
+        ContentValues v = new ContentValues();
+        v.put(MediaStore.MediaColumns.DISPLAY_NAME, nomFichier);
+        v.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+        v.put(MediaStore.MediaColumns.RELATIVE_PATH, chemin);
+        Uri u = r.insert(collection, v);
+        if (u == null) throw new IOException("Documents refusé par Android");
+        try (OutputStream o = r.openOutputStream(u)) {
+            if (o == null) throw new IOException("Documents inaccessible");
+            o.write(pdf);
+        }
+    }
+
+    static void copieFichier(String rel, String nomFichier, byte[] pdf) throws IOException {
+        File d = new File(dossierVisible(), rel);
+        if (!d.exists() && !d.mkdirs()) throw new IOException("Documents inaccessible");
+        File f = new File(d, nomFichier);
+        if (f.exists()) return;
+        try (OutputStream o = new FileOutputStream(f)) {
+            o.write(pdf);
         }
     }
 
@@ -133,16 +179,38 @@ final class BulletinsRanges {
     static int synchroniserVisible(Context c) {
         int n = 0;
         File r = racine(c);
+        erreurVisible = null;
         for (File f : tous(r)) {
-            String rel = r.toURI().relativize(f.getParentFile().toURI()).getPath();
+            String rel = relatif(r, f.getParentFile());
             try {
                 copieVisible(c, rel, f.getName(), lire(f));
                 n++;
             } catch (Exception e) {
-                // ignoré : sera retenté
+                erreurVisible = raison(e);                                // retenté à la prochaine ouverture
             }
         }
         return n;
+    }
+
+    /** Chemin de f relatif à r, avec « / » (« 2026/10 - Octobre/… »). */
+    static String relatif(File r, File f) {
+        String a = r.getAbsolutePath(), b = f.getAbsolutePath();
+        if (b.equals(a)) return "";
+        String rel = b.startsWith(a + File.separator) ? b.substring(a.length() + 1) : f.getName();
+        rel = rel.replace(File.separatorChar, '/');
+        return f.isDirectory() ? rel + "/" : rel;
+    }
+
+    /** Bulletin rangé désigné par son chemin relatif, ou null s'il sort du dossier / n'existe pas. */
+    static File fichier(Context c, String rel) {
+        try {
+            File r = racine(c).getCanonicalFile();
+            File f = new File(r, rel).getCanonicalFile();
+            if (!f.getPath().startsWith(r.getPath() + File.separator) || !f.isFile()) return null;
+            return f;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     /** Tous les bulletins rangés (copie privée), triés par chemin. */
@@ -168,7 +236,7 @@ final class BulletinsRanges {
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         try (ZipOutputStream z = new ZipOutputStream(b)) {
             for (File f : tous(r)) {
-                String rel = r.toURI().relativize(f.toURI()).getPath();
+                String rel = relatif(r, f);
                 ZipEntry e = new ZipEntry(DOSSIER_VISIBLE + "/" + rel);
                 e.setTime(f.lastModified());
                 z.putNextEntry(e);

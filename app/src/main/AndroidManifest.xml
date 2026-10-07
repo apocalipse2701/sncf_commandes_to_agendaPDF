@@ -178,6 +178,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- bulletins rangés, prêtés en lecture à la visionneuse PDF (onglet Commandes → liste des bulletins) -->
+        <provider
+            android:name=".BulletinsFournisseur"
+            android:authorities="fr.planning.commandes.bulletins"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <!-- réponse d'Android pendant l'installation d'une mise à jour -->
         <receiver
             android:name=".RecepteurInstallation"

@@ -7,6 +7,15 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.3.1 — 7 octobre 2026
+
+**Application Android : bulletins rangés (correction)**
+- **Ouvrir le dossier** ouvrait « Téléchargements » quand le dossier `Documents/Planning Commandes` n'existait pas encore (aucun bulletin rangé). Le bouton est maintenant grisé tant qu'aucun bulletin n'est rangé, et le texte explique que le dossier est créé au premier bulletin ajouté. Avant d'ouvrir, les copies manquantes sont refaites ; si le dossier ne peut pas être créé, la raison est affichée.
+- Copie dans Documents plus sûre : si Android refuse le premier moyen, l'application écrit le fichier directement (Android 11 et plus). Un échec n'est plus silencieux.
+- Nouvelle liste **Voir les bulletins** dans Commandes → Bulletins rangés : les bulletins par année et par mois ; toucher un bulletin l'ouvre dans la visionneuse PDF du téléphone, sans passer par l'application Fichiers.
+- Le nombre de bulletins rangés se met à jour juste après un ajout.
+- Programme PC : aucun changement (il range déjà dans le dossier « commande »).
+
 ## 2.3.0 — 7 octobre 2026
 
 **Application Android : bulletins rangés comme sur le PC**
