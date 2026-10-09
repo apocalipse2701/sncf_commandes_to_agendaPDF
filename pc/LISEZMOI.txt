@@ -92,6 +92,10 @@ UTILISATION
     avec « Ouvrir… » (même sur un autre PC) pour continuer à le compléter.
   • Le PDF de sortie doit être fermé (pas ouvert dans Acrobat ou autre)
     au moment de sa mise à jour.
+  • Bulletin « Contrairement » (nom du fichier) : un avis jaune écrit en rouge
+    s'affiche au-dessus du planning (jours changés : avant → après) jusqu'à
+    « Valider », et le numéro des jours modifiés passe en violet (écran, PDF,
+    images, impression).
   • Export PNG / JPEG : le mois affiché uniquement.
   • Fichier › « Exporter en images JPEG… » : cochez les mois (Tout, par année,
     Aucun) ; un mois donne un fichier .jpg, plusieurs mois un .zip avec une

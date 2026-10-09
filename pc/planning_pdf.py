@@ -352,6 +352,17 @@ COULEURS = _tuples(REGLES["couleurs"])   # voir regles.json
 
 # codes dont la couleur de fond est imposée (regles.json, « fond_bloque ») : repos, congés, fêtes…
 _FB = REGLES["fond_bloque"]
+# bulletins « Contrairement » (regles.json) : reconnus à leur nom de fichier
+_CONTR = REGLES.get("contrairement", {})
+MOT_CONTRAIREMENT = _CONTR.get("mot", "contrairement")
+VIOLET_MODIFIE = {k: tuple(v) for k, v in _CONTR.get("couleur_modifie", {"clair": [123, 31, 162], "sombre": [225, 180, 255]}).items()}
+AVIS_FOND = "#%02x%02x%02x" % tuple(_CONTR.get("avis_fond", [255, 245, 157]))
+AVIS_TEXTE = "#%02x%02x%02x" % tuple(_CONTR.get("avis_texte", [198, 40, 40]))
+MAX_ALERTES = 40
+
+
+def est_contrairement(nom):
+    return MOT_CONTRAIREMENT in (nom or "").lower()
 FOND_BLOQUE = tuple(COULEURS[_FB["couleur"]])
 CODES_FOND_BLOQUE = frozenset(c.upper() for c in list(_FB["codes"]) + list(CODES_REPOS))
 _MOTIF_FOND_BLOQUE = re.compile(_FB["motif"], re.I) if _FB.get("motif") else None
@@ -1497,10 +1508,12 @@ def _luminance(c):
     return 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]
 
 
-def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", greves=(), theme=None):
+def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", greves=(), theme=None, modifies=()):
     """Dessine le planning. Renvoie (image PIL, {date: (x0, y0, x1, y1)}).
     greves : dates à marquer du filigrane « GRÈVE ». theme : nom dans THEMES_PLANNING
-    (par défaut le thème réglé pour le PDF)."""
+    (par défaut le thème réglé pour le PDF). modifies : dates changées par un « Contrairement »
+    (numéro du jour en violet)."""
+    modifies = set(modifies or ())
     codes_a_jour()
     jours = pour_affichage(jours)
     P = palette_theme(theme or _theme_courant["pdf"])
@@ -1604,7 +1617,11 @@ def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", 
                 c_gros = clair["gros"]
                 c_num = clair["chiffre_we"] if we else clair["chiffre"]
             base = cy0 + pad + asc_num               # ligne de base du chiffre
-            d.text((cx0 + pad, base), str(jour.day), font=f_num, fill=c_num, anchor="ls")
+            if jour in modifies:                     # modifié par un « Contrairement » : numéro en violet
+                c_num_jour = VIOLET_MODIFIE["sombre" if sombre else "clair"]
+            else:
+                c_num_jour = c_num
+            d.text((cx0 + pad, base), str(jour.day), font=f_num, fill=c_num_jour, anchor="ls")
             larg_ferie = 0
             if ferie:                                # nom du jour férié, en haut à droite
                 f_fer = police("texte", u * 0.0095)
@@ -1723,9 +1740,9 @@ def dessiner_planning(annee, mois, jours, largeur=1600, hauteur=1130, agent="", 
 A4 = (3508, 2480)        # A4 paysage, 300 dpi
 
 
-def exporter_image(chemin, annee, mois, jours, agent="", greves=()):
+def exporter_image(chemin, annee, mois, jours, agent="", greves=(), modifies=()):
     """Un seul mois en PNG / JPG."""
-    img, _ = dessiner_planning(annee, mois, jours, *A4, agent, greves)
+    img, _ = dessiner_planning(annee, mois, jours, *A4, agent, greves, modifies=modifies)
     if os.path.splitext(chemin)[1].lower() in (".jpg", ".jpeg"):
         img.save(chemin, "JPEG", quality=95, dpi=(300, 300))
     else:
@@ -1747,7 +1764,8 @@ def exporter_jpeg(chemin, planning, liste_mois):
         return 0
 
     def jpeg(a, m):
-        img, _ = dessiner_planning(a, m, planning.jours, *A4, planning.agent, planning.greves)
+        img, _ = dessiner_planning(a, m, planning.jours, *A4, planning.agent, planning.greves,
+                                   modifies=planning.modifies)
         b = io.BytesIO()
         img.save(b, "JPEG", quality=92, dpi=(300, 300))
         return b.getvalue()
@@ -1975,7 +1993,8 @@ def _pdf_des_mois(planning, liste_mois):
     from pypdf import PdfReader, PdfWriter
     writer = PdfWriter()
     for a, m in sorted(liste_mois):
-        img, _ = dessiner_planning(a, m, planning.jours, *A4, planning.agent, planning.greves)
+        img, _ = dessiner_planning(a, m, planning.jours, *A4, planning.agent, planning.greves,
+                                   modifies=planning.modifies)
         tampon = io.BytesIO()
         img.save(tampon, "PDF", resolution=300.0)
         del img
@@ -2058,6 +2077,27 @@ class Planning:
         self.importes = {}       # empreinte md5 -> fichier déjà lu dans le dossier « commande »
         self.version_lecture = VERSION_LECTURE
         self.greves = set()      # jours de grève (filigrane « GRÈVE »)
+        # bulletins « Contrairement » (même format que le téléphone) :
+        self.modifies = {}       # date -> {avant, apres, fichier, empreinte, edition} : numéro du jour en violet
+        self.alertes = []        # avis « Contrairement reçu », affichés (fond jaune, texte rouge) jusqu'à « Valider »
+
+    def alertes_actives(self):
+        return [a for a in self.alertes if not a.get("vu")]
+
+    def valider_alerte(self, cle):
+        for a in self.alertes:
+            if a.get("cle") == cle:
+                a["vu"] = True
+                return True
+        return False
+
+    def _ranger_alertes(self):
+        self.alertes.sort(key=lambda a: a.get("recu") or "")
+        while len(self.alertes) > MAX_ALERTES:
+            i = next((k for k, a in enumerate(self.alertes) if a.get("vu")), None)
+            if i is None:
+                break
+            del self.alertes[i]
 
     def integrer(self, info, changements=None):
         """Le bulletin le plus récent remplace les jours qu'il couvre.
@@ -2065,15 +2105,28 @@ class Planning:
         changements : liste complétée par (date, avant, après) pour chaque jour déjà
         connu dont le contenu change."""
         ed = info["edition"] or dt.datetime.min
+        ed_txt = info["edition"].isoformat(timespec="seconds") if info["edition"] else None
+        fichier = os.path.basename(info.get("fichier", "") or "")
+        contr = est_contrairement(fichier)
+        modifs, ajouts = [], []
         maj, ignores = 0, 0
         for date, services in sorted(info["jours"].items()):
             if date in self.edition and self.edition[date] > ed:
                 ignores += 1
                 continue
+            avant, apres = resume_services(self.jours.get(date, [])), resume_services(services)
             if changements is not None:
-                avant, apres = resume_services(self.jours.get(date, [])), resume_services(services)
                 if avant and avant != apres:
                     changements.append((date, avant, apres))
+            if contr:
+                if not avant and apres:            # jour sans commande initiale : ajouté, pas « modifié »
+                    ajouts.append([date.isoformat(), apres])
+                elif avant != apres:
+                    modifs.append([date.isoformat(), avant, apres])
+                    self.modifies[date] = {"avant": avant, "apres": apres, "fichier": fichier,
+                                           "empreinte": info.get("empreinte", ""), "edition": ed_txt}
+            else:
+                self.modifies.pop(date, None)      # nouvelle commande ordinaire : elle devient la référence
             manuels = [s for s in self.jours.get(date, []) if s["source"] == "manuel"]
             for sv in services:
                 sv["fichier"] = info.get("fichier", "")
@@ -2083,6 +2136,20 @@ class Planning:
             maj += 1
         if info["agent"]:
             self.agent = info["agent"]
+        if contr and (maj or ignores):
+            # même bulletin = même édition et même période, quel que soit le nom du fichier (copie renommée,
+            # pièce jointe du mail, autre appareil) : un seul avis
+            debut, fin = info.get("debut"), info.get("fin")
+            cle = "|".join([ed_txt or "", debut.isoformat() if debut else "", fin.isoformat() if fin else ""])
+            if ed_txt is None:
+                cle += "|" + fichier
+            if not any(a.get("cle") == cle for a in self.alertes):
+                self.alertes.append({
+                    "cle": cle, "fichier": fichier, "edition": ed_txt,
+                    "debut": debut.isoformat() if debut else None, "fin": fin.isoformat() if fin else None,
+                    "recu": dt.datetime.now().isoformat(timespec="minutes"),
+                    "changements": modifs, "ajouts": ajouts, "ignores": ignores, "vu": False})
+                self._ranger_alertes()
         return maj, ignores
 
     def supprimer(self, date, i):
@@ -2101,10 +2168,22 @@ class Planning:
             existants = [s for s in self.jours.get(date, []) if s["source"] == "manuel"]
             self.jours[date] = services + [s for s in existants if s not in services]
             self.edition[date] = ed_a
+            m_a = getattr(autre, "modifies", {}).get(date)
+            if m_a:
+                self.modifies[date] = dict(m_a)
+            else:
+                self.modifies.pop(date, None)
             n += 1
         if autre.agent and not self.agent:
             self.agent = autre.agent
         self.greves |= getattr(autre, "greves", set())
+        for a in getattr(autre, "alertes", []):        # avis réunis ; « validé » d'un côté = validé partout
+            ici = next((x for x in self.alertes if x.get("cle") == a.get("cle")), None)
+            if ici:
+                ici["vu"] = bool(ici.get("vu") or a.get("vu"))
+            else:
+                self.alertes.append(json.loads(json.dumps(a)))
+        self._ranger_alertes()
         return n
 
     # ---- sauvegarde ----------------------------------------------------
@@ -2119,6 +2198,8 @@ class Planning:
             "jours": {d.isoformat(): v for d, v in sorted(self.jours.items())},
             "edition": {d.isoformat(): (e.isoformat() if e > dt.datetime.min else None)
                         for d, e in self.edition.items()},
+            "modifies": {d.isoformat(): m for d, m in sorted(getattr(self, "modifies", {}).items())},
+            "alertes": list(getattr(self, "alertes", [])),
         }
 
     @classmethod
@@ -2136,6 +2217,12 @@ class Planning:
                      fichier=s.get("fichier", ""), empreinte=s.get("empreinte", "")) for s in v]
         for d, e in data.get("edition", {}).items():
             p.edition[dt.date.fromisoformat(d)] = dt.datetime.fromisoformat(e) if e else dt.datetime.min
+        for d, m in (data.get("modifies") or {}).items():
+            try:
+                p.modifies[dt.date.fromisoformat(d)] = dict(m)
+            except (ValueError, TypeError):
+                pass
+        p.alertes = [dict(a) for a in (data.get("alertes") or []) if isinstance(a, dict) and a.get("cle")]
         return p
 
     def sauver(self, chemin):
@@ -2285,6 +2372,8 @@ def lancer_interface():
             # ---- résumé du mois en pastilles
             self.resume = tk.Frame(self, padx=12, pady=4)
             self.resume.pack(fill="x")
+            # ---- avis « Contrairement reçu » (fond jaune, texte rouge), jusqu'à « Valider »
+            self.zone_alertes = tk.Frame(self, padx=12)
 
             # ---- barre d'état (placée avant le planning pour rester visible)
             self.statut = ttk.Label(self, anchor="w", padding=(12, 5), text=(
@@ -2354,7 +2443,7 @@ def lancer_interface():
             w = min(cw - 20, (ch - 20) * ratio)
             h = w / ratio
             img, cases = dessiner_planning(self.annee, self.mois, self.pl.jours, w, h, self.pl.agent,
-                                           self.pl.greves, theme=_theme_courant["ecran"])
+                                           self.pl.greves, theme=_theme_courant["ecran"], modifies=self.pl.modifies)
             ox, oy = (cw - w) / 2, (ch - h) / 2
             self.cases = {k: (a + ox, b + oy, c + ox, e + oy) for k, (a, b, c, e) in cases.items()}
             self._photo = ImageTk.PhotoImage(img)
@@ -2376,11 +2465,77 @@ def lancer_interface():
                     self.pl.sauver(self.fichier_etat)
                 except OSError:
                     pass
+            self.rendre_alertes()
             self.arbre.delete(*self.arbre.get_children())
             for date in sorted(self.pl.jours):
                 for i, s in enumerate(self.pl.jours[date]):
                     self.arbre.insert("", "end", iid=f"{date.isoformat()}|{i}", values=(
                         date.strftime("%d/%m/%Y"), nom_affiche(s), s["horaires"], s["libelle"]))
+            self.planifier_rendu()
+
+        def rendre_alertes(self):
+            """Avis des bulletins « Contrairement » non validés, au-dessus du planning."""
+            z = self.zone_alertes
+            for w in z.winfo_children():
+                w.destroy()
+            actives = list(reversed(self.pl.alertes_actives()))
+            if not actives:
+                z.pack_forget()
+                return
+            z.pack(fill="x", pady=(2, 4), before=self.resume)
+            for a in actives:
+                bloc = tk.Frame(z, bg=AVIS_FOND, highlightbackground=AVIS_TEXTE, highlightcolor=AVIS_TEXTE,
+                                highlightthickness=2, padx=10, pady=6)
+                bloc.pack(fill="x", pady=(0, 4))
+                per = ""
+                if a.get("debut"):
+                    d1, d2 = (dt.date.fromisoformat(a["debut"]).strftime("%d/%m/%Y"),
+                              dt.date.fromisoformat(a.get("fin") or a["debut"]).strftime("%d/%m/%Y"))
+                    per = f" du {d1}" if d1 == d2 else f" du {d1} au {d2}"
+                ed = ""
+                if a.get("edition"):
+                    e = dt.datetime.fromisoformat(a["edition"])
+                    ed = f"  (édité le {e:%d/%m/%Y} à {e:%Hh%M})"
+                texte = tk.Frame(bloc, bg=AVIS_FOND)
+                texte.pack(side="left", fill="x", expand=True)
+                tk.Label(texte, text=f"⚠  Contrairement reçu{per}", bg=AVIS_FOND, fg=AVIS_TEXTE,
+                         font=(self.police_ui, 12, "bold"), anchor="w").pack(anchor="w")
+                tk.Label(texte, text=f"{a.get('fichier', '')}{ed}", bg=AVIS_FOND, fg=AVIS_TEXTE,
+                         font=(self.police_ui, 9), anchor="w").pack(anchor="w")
+                chg = a.get("changements") or []
+                ajouts = a.get("ajouts") or []
+                if not chg and not ajouts:
+                    tk.Label(texte, bg=AVIS_FOND, fg=AVIS_TEXTE, anchor="w", font=(self.police_ui, 10),
+                             text=("Aucun jour changé : un bulletin plus récent était déjà chargé." if a.get("ignores")
+                                   else "Aucun jour changé par rapport au planning.")).pack(anchor="w")
+                for d_txt, av, ap in chg:
+                    d = dt.date.fromisoformat(d_txt)
+                    lien = tk.Label(texte, bg=AVIS_FOND, fg=AVIS_TEXTE, anchor="w", cursor="hand2",
+                                    font=(self.police_ui, 10, "underline"),
+                                    text=f"{JOURS[d.weekday()].capitalize()} {d:%d/%m/%Y} : {av or 'rien'}  →  {ap or 'rien'}")
+                    lien.pack(anchor="w")
+                    lien.bind("<Button-1>", lambda e, d=d: self.aller_au_mois(d))
+                if ajouts:
+                    n = len(ajouts)
+                    tk.Label(texte, bg=AVIS_FOND, fg=AVIS_TEXTE, anchor="w", justify="left", wraplength=900,
+                             font=(self.police_ui, 10), text=(
+                                 f"{n} jour{'s' if n > 1 else ''} ajouté{'s' if n > 1 else ''} (pas de commande avant) : "
+                                 + " · ".join(f"{dt.date.fromisoformat(d):%d/%m} {ap}" for d, ap in ajouts))).pack(anchor="w")
+                tk.Button(bloc, text="Valider", bg=AVIS_TEXTE, fg="white", activebackground="#a31f1f",
+                          activeforeground="white", relief="flat", padx=14, pady=4, font=(self.police_ui, 10, "bold"),
+                          command=lambda c=a["cle"]: self.valider_alerte(c)).pack(side="right", padx=(10, 0))
+
+        def valider_alerte(self, cle):
+            if self.pl.valider_alerte(cle):
+                try:
+                    self.pl.sauver(self.fichier_etat)
+                except OSError:
+                    pass
+                self.rendre_alertes()
+                self.statut.config(text="Avis « Contrairement » validé.")
+
+        def aller_au_mois(self, d):
+            self.annee, self.mois = d.year, d.month
             self.planifier_rendu()
 
         def decaler(self, n):
@@ -2810,7 +2965,7 @@ def lancer_interface():
 
             for k, nom in enumerate(THEMES_PLANNING):
                 img, _ = dessiner_planning(self.annee, self.mois, self.pl.jours, 320, 226, self.pl.agent,
-                                           self.pl.greves, theme=nom)
+                                           self.pl.greves, theme=nom, modifies=self.pl.modifies)
                 photo = ImageTk.PhotoImage(img)
                 fen._images.append(photo)
                 b = ttk.Button(grille, image=photo, compound="top", command=lambda n=nom: choisir(n))
@@ -3423,7 +3578,8 @@ def lancer_interface():
                                             "à chaque nouveau bulletin ouvert.")
                 return
             try:
-                exporter_image(chemin, self.annee, self.mois, self.pl.jours, self.pl.agent, self.pl.greves)
+                exporter_image(chemin, self.annee, self.mois, self.pl.jours, self.pl.agent, self.pl.greves,
+                               self.pl.modifies)
             except Exception as ex:
                 messagebox.showerror("Erreur", f"Export impossible :\n{ex}")
                 return

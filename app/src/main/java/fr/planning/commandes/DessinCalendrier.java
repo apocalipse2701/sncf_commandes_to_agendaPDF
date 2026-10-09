@@ -307,6 +307,9 @@ final class DessinCalendrier {
         if (cl == null) cl = paletteDefaut();
         JSONObject jours = cal == null ? null : cal.optJSONObject("j");
         int noir = Color.rgb(35, 35, 35);
+        // jour modifié par un « Contrairement » (j.mo = 1) : numéro en violet (regles.json, contrairement.couleur_modifie)
+        JSONObject violet = cal == null ? null : cal.optJSONObject("mo");
+        int violetClair = val(violet, "clair", Color.rgb(123, 31, 162)), violetSombre = val(violet, "sombre", Color.rgb(225, 180, 255));
         int fond = val(P, "fond", Color.WHITE), titre = val(P, "titre", noir), annee_c = val(P, "annee", noir);
         int trait = val(P, "trait", noir), grille = val(P, "grille", Color.rgb(190, 190, 190));
         int weekend = val(P, "weekend", fond), weekendEntete = val(P, "weekend_entete", weekend);
@@ -421,7 +424,8 @@ final class DessinCalendrier {
             String numTxt = String.valueOf(numero);
             if (v.quinzaine && (numero == 1 || k == 0))       // 15 jours : le mois au 1er et sur la 1re case
                 numTxt += " " + MOIS_COURTS[Integer.parseInt(cases[k].substring(5, 7)) - 1];
-            texte(numTxt, cx0 + pad, base, serif, tNum, cNum, "ls");
+            int cNumero = j != null && j.optInt("mo", 0) == 1 ? (sombre ? violetSombre : violetClair) : cNum;
+            texte(numTxt, cx0 + pad, base, serif, tNum, cNumero, "ls");
             float largFerie = 0;
             if (!ferie.isEmpty()) {                                    // nom du férié, en haut à droite
                 float tFer = u * 0.0095f;

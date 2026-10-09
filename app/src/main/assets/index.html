@@ -97,6 +97,26 @@ button { cursor: pointer; }
 .case.colore .num { color: #4a4f57; }
 .case.fonce.colore .num { color: rgba(255,255,255,.85); }
 .case.sel { outline: 2.5px solid var(--accent); outline-offset: 1px; }
+/* jour modifié par un « Contrairement » : numéro en violet (regles.json, contrairement.couleur_modifie) */
+:root { --violet: #7b1fa2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --violet: #e1b4ff; } }
+:root[data-theme="dark"], :root[data-apparence="gos"] { --violet: #e1b4ff; }
+.case.modifie .num { color: var(--violet); font-weight: 800; }
+.case.colore.modifie .num { color: #7b1fa2; }
+.case.fonce.modifie .num { color: #e1b4ff; }
+.modifie-note { margin: 0 0 6px; color: var(--violet); font-weight: 700; font-size: .9rem; }
+/* avis « Contrairement reçu » : fond jaune, texte rouge, jusqu'à « Valider » (mêmes couleurs dans tous les thèmes) */
+.alertes { display: grid; gap: 10px; margin-bottom: 12px; }
+.alerte-contr { background: #fff59d; color: #c62828; border: 2px solid #c62828; border-radius: var(--r); padding: 12px 14px;
+  box-shadow: var(--shadow); }
+.alerte-contr .alerte-titre { display: flex; gap: 8px; align-items: baseline; font-size: 1.05rem; }
+.alerte-contr small { display: block; color: #c62828; opacity: .85; overflow-wrap: anywhere; margin-top: 2px; }
+.alerte-contr p { margin: 8px 0 0; }
+.alerte-liste { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.alerte-jour { all: unset; cursor: pointer; color: #c62828; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+  overflow-wrap: anywhere; }
+.alerte-jour:focus-visible { outline: 2px solid #c62828; outline-offset: 2px; }
+.btn.alerte-valider { margin-top: 10px; background: #c62828; color: #fff; border-color: #c62828; }
 .case.aujourdhui::after { content: ""; position: absolute; inset: 2px; border: 2px solid var(--today); border-radius: 6px; pointer-events: none; }
 .case .greve { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .case .greve span { transform: rotate(-28deg); color: rgba(200, 0, 0, .42); font-weight: 900; font-size: .8rem; letter-spacing: .06em; }
@@ -219,6 +239,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 @media (prefers-reduced-motion: no-preference) { .case { transition: transform .08s; } .case:active { transform: scale(.97); } }
 </style>
 <div class="appli" id="appli">
+  <div id="alertes" class="alertes" aria-live="polite" hidden></div>
   <!-- PLANNING -->
   <section id="v-planning" data-vue="planning">
     <div class="entete">
@@ -407,8 +428,8 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <div id="couche"></div>
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
-window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) : il figure dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."}};
-window.VERSION_APPLI = "2.4.0";
+window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) : il figure dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]}};
+window.VERSION_APPLI = "2.6.0";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -878,18 +899,55 @@ PGVRVSD    ; [date]
   // ---------------------------------------------------------------- planning
   // format identique à Planning.vers_dict() du programme PC
   function planningVide() {
-    return { agent: "", jours: {}, edition: {}, greves: [], importes: {} };
+    return { agent: "", jours: {}, edition: {}, greves: [], importes: {}, modifies: {}, alertes: [] };
   }
+
+  // ---------------------------------------------------------------- bulletins « Contrairement »
+  // Reconnus à leur nom de fichier. Les jours qu'ils changent sont notés dans pl.modifies
+  // (numéro du jour en violet) et un avis est ajouté à pl.alertes, affiché jusqu'à « Valider ».
+  // Même format que le programme PC (Planning.modifies / Planning.alertes).
+  const CONTR = REGLES.contrairement || { mot: "contrairement" };
+  const MAX_ALERTES = 40;
+  const estContrairement = nom => (nom || "").toLowerCase().includes(CONTR.mot);
+  const nomCourt = f => (f || "").split(/[\\/]/).pop();
+  function maintenant() {
+    const d = new Date(), p = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function alertesActives(pl) { return (pl.alertes || []).filter(a => !a.vu); }
+  function validerAlerte(pl, cle) {
+    const a = (pl.alertes || []).find(x => x.cle === cle);
+    if (a) a.vu = true;
+    return !!a;
+  }
+  function rangerAlertes(pl) {           // les plus récentes gardées ; toujours toutes les non validées
+    pl.alertes.sort((a, b) => (a.recu || "").localeCompare(b.recu || ""));
+    while (pl.alertes.length > MAX_ALERTES) {
+      const i = pl.alertes.findIndex(a => a.vu);
+      if (i < 0) break;
+      pl.alertes.splice(i, 1);
+    }
+  }
+
   function integrer(pl, info, fichier = "", empreinte = "") {
     const ed = info.edition || null;
     let maj = 0, ignores = 0;
-    const touches = new Set(), changements = [];
+    const touches = new Set(), changements = [], modifs = [], ajouts = [];
+    const contr = estContrairement(fichier);
+    pl.modifies = pl.modifies || {}; pl.alertes = pl.alertes || [];
     for (const d of Object.keys(info.jours).sort()) {
       const services = info.jours[d];
       const edD = pl.edition[d] || null;
       if (d in pl.edition && edD && (!ed || edD > ed)) { ignores++; continue; }
       const avant = resumeServices(pl.jours[d] || []), apres = resumeServices(services);
       if (avant && avant !== apres) changements.push([d, avant, apres]);
+      if (contr) {
+        if (!avant && apres) ajouts.push([d, apres]);      // jour sans commande initiale : ajouté, pas « modifié »
+        else if (avant !== apres) {
+          modifs.push([d, avant, apres]);
+          pl.modifies[d] = { avant, apres, fichier: nomCourt(fichier), empreinte, edition: ed };
+        }
+      } else delete pl.modifies[d];      // nouvelle commande ordinaire : elle devient la référence du jour
       const manuels = (pl.jours[d] || []).filter(s => s.source === "manuel");
       pl.jours[d] = services.map(sv => ({ ...sv, fichier, empreinte })).concat(manuels);
       pl.edition[d] = ed;
@@ -897,7 +955,18 @@ PGVRVSD    ; [date]
       maj++;
     }
     if (info.agent) pl.agent = info.agent;
-    return { maj, ignores, touches, changements };
+    let alerte = null;
+    if (contr && (maj || ignores)) {
+      // même bulletin = même édition et même période, quel que soit le nom du fichier : un seul avis (comme le PC)
+      const cle = [ed || "", info.debut || "", info.fin || ""].join("|") + (ed ? "" : "|" + nomCourt(fichier));
+      if (!pl.alertes.some(a => a.cle === cle)) {
+        alerte = { cle, fichier: nomCourt(fichier), edition: ed, debut: info.debut || null, fin: info.fin || null,
+          recu: maintenant(), changements: modifs, ajouts, ignores, vu: false };
+        pl.alertes.push(alerte);
+        rangerAlertes(pl);
+      }
+    }
+    return { maj, ignores, touches, changements, contrairement: contr, alerte };
   }
   function fusionner(pl, autre) {           // autre : dict au format vers_dict
     let n = 0; const touches = new Set();
@@ -911,11 +980,21 @@ PGVRVSD    ; [date]
       pl.jours[d] = services.map(s => ({ ...service(s.code || "", s.horaires || "", s.libelle || "", s.source || "manuel", s.intitule || ""),
         fichier: s.fichier || "", empreinte: s.empreinte || "" })).concat(ex.filter(s => !vus.has(cle(s))));
       pl.edition[d] = edA;
+      pl.modifies = pl.modifies || {};
+      const mA = (autre.modifies || {})[d];
+      if (mA) pl.modifies[d] = { ...mA }; else delete pl.modifies[d];
       touches.add(d.slice(0, 7)); n++;
     }
     if (autre.agent && !pl.agent) pl.agent = autre.agent;
     const g = new Set([...(pl.greves || []), ...(autre.greves || [])]);
     pl.greves = [...g].sort();
+    pl.alertes = pl.alertes || [];
+    for (const a of autre.alertes || []) {             // avis : réunis, « validé » d'un côté = validé partout
+      const ici = pl.alertes.find(x => x.cle === a.cle);
+      if (ici) ici.vu = ici.vu || !!a.vu;
+      else pl.alertes.push(JSON.parse(JSON.stringify(a)));
+    }
+    rangerAlertes(pl);
     return { n, touches };
   }
   function versDict(pl) {
@@ -926,7 +1005,8 @@ PGVRVSD    ; [date]
       edition[d] = pl.edition[d] || null;
     }
     return { version: 1, agent: pl.agent, sortie: "", importes: {}, version_lecture: 4,
-      greves: [...pl.greves].sort(), jours, edition };
+      greves: [...pl.greves].sort(), jours, edition,
+      modifies: JSON.parse(JSON.stringify(pl.modifies || {})), alertes: JSON.parse(JSON.stringify(pl.alertes || [])) };
   }
 
   // ---------------------------------------------------------------- jours fériés
@@ -1049,7 +1129,7 @@ PGVRVSD    ; [date]
     return L.flatMap(icsPlier).join("\r\n") + "\r\n";
   }
 
-  const api = { JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, FOND_BLOQUE, fondBloque, cap, couleur, lireCodes,
+  const api = { estContrairement, alertesActives, validerAlerte, CONTR, JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, FOND_BLOQUE, fondBloque, cap, couleur, lireCodes,
     nomCouleur, ecrireCodes, paletteCouleurs, reglerCodes, infosCode, codeAffiche, nomAffiche, iso, decaler,
     jourSemaine, semainesDuMois, aujourdhui, dateLongue, CODE_DN, estNuit, service, avecDn, pourAffichage,
     lignesHoraires, planningVide, integrer, fusionner, versDict, REGLES, paques, joursFeries, nomFerie, dureeService,
@@ -1083,6 +1163,9 @@ PGVRVSD    ; [date]
 
   function dessiner(ctx, W, H, annee, mois, joursBruts, opts = {}) {
     const agent = opts.agent || "", greves = new Set(opts.greves || []);
+    // jours modifiés par un « Contrairement » : numéro en violet (regles.json, contrairement.couleur_modifie)
+    const modifies = new Set(Array.isArray(opts.modifies) ? opts.modifies : Object.keys(opts.modifies || {}));
+    const VIOLET = ((M.REGLES.contrairement || {}).couleur_modifie) || { clair: [123, 31, 162], sombre: [225, 180, 255] };
     const jours = M.pourAffichage(joursBruts);
     const P = palette(opts.theme || "Classique");
     const mesureCache = new Map();
@@ -1191,7 +1274,8 @@ PGVRVSD    ; [date]
       }
       const base = cy0 + pad + ascNum;
       const numTxt = String(+jour.slice(8));
-      texte(numTxt, cx0 + pad, base, fNum, cNum, "ls");
+      const modifie = modifies.has(jour);
+      texte(numTxt, cx0 + pad, base, fNum, modifie ? (sombre ? VIOLET.sombre : VIOLET.clair) : cNum, "ls");
       let largFerie = 0;
       if (ferie) {                                      // nom du jour férié, en haut à droite
         const fFer = police("texte", u * .0095);
@@ -1438,6 +1522,7 @@ PGVRVSD    ; [date]
     },
     reglages() {
       return { agent: E.pl.agent, greves: [...E.pl.greves].sort(), importes: E.pl.importes, codesTxt: E.codesTxt,
+        modifies: E.pl.modifies || {}, alertes: E.pl.alertes || [],
         theme: E.theme, derniereCopie: E.derniereCopie, rappelReporte: E.rappelReporte,
         majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee, apparence: E.apparence };
     },
@@ -1490,9 +1575,44 @@ PGVRVSD    ; [date]
     rendre();
   }
   function rendre() {
+    rendreAlertes();
     if (ongletActif === "planning") rendrePlanning();
     else if (ongletActif === "commandes") rendreCommandes();
     else rendreReglages();
+  }
+
+  // ------------------------------------------------------------------ avis « Contrairement »
+  // Fond jaune, texte rouge, sur tous les onglets, jusqu'à « Valider ». Toucher un jour l'ouvre dans le planning.
+  function rendreAlertes() {
+    const z = $("#alertes"); z.replaceChildren();
+    const l = M.alertesActives(E.pl).slice().reverse();
+    z.hidden = !l.length;
+    for (const a of l) {
+      const ed = a.edition ? ` (édité le ${dateFr(a.edition.slice(0, 10))} à ${a.edition.slice(11, 16)})` : "";
+      const per = a.debut ? (a.debut === a.fin ? ` du ${dateFr(a.debut)}` : ` du ${dateFr(a.debut)} au ${dateFr(a.fin)}`) : "";
+      const bloc = el("div", { class: "alerte-contr", role: "alert" },
+        el("div", { class: "alerte-titre" }, el("span", { "aria-hidden": "true", text: "⚠" }), el("b", { text: `Contrairement reçu${per}` })),
+        el("small", { text: `${a.fichier}${ed}` }));
+      if (a.changements && a.changements.length) {
+        const ul = el("ul", { class: "alerte-liste" });
+        for (const [d, av, ap] of a.changements) {
+          ul.append(el("li", {}, el("button", { type: "button", class: "alerte-jour", onclick: () => { allerA(d); montrerOnglet("planning"); } },
+            `${M.cap(M.JOURS[(new Date(d + "T12:00").getDay() + 6) % 7].slice(0, 3))}. ${dateFr(d).slice(0, 5)} : ${av || "rien"} → ${ap || "rien"}`)));
+        }
+        bloc.append(ul);
+      }
+      if (a.ajouts && a.ajouts.length) {
+        const n = a.ajouts.length;
+        bloc.append(el("p", { text: `${n} jour${n > 1 ? "s" : ""} ajouté${n > 1 ? "s" : ""} (pas de commande avant) : ` +
+          a.ajouts.map(([d, ap]) => `${dateFr(d).slice(0, 5)} ${ap}`).join(" · ") }));
+      }
+      if (!(a.changements || []).length && !(a.ajouts || []).length)
+        bloc.append(el("p", { text: a.ignores ? "Aucun jour changé : un bulletin plus récent était déjà chargé." : "Aucun jour changé par rapport au planning." }));
+      bloc.append(el("button", { type: "button", class: "btn alerte-valider", onclick: () => {
+        M.validerAlerte(E.pl, a.cle); Stock.marquer([], true); rendreAlertes(); toast("Avis validé.");
+      } }, "Valider"));
+      z.append(bloc);
+    }
   }
 
   // ------------------------------------------------------------------ planning
@@ -1587,12 +1707,15 @@ PGVRVSD    ; [date]
         if (fonce(x.fond)) classes.push("fonce");
         if (d === E.sel) classes.push("sel");
         if (d === auj) classes.push("aujourdhui");
+        const modif = (E.pl.modifies || {})[d];
+        if (modif) classes.push("modifie");
         const nomSp = x.special ? M.nomAffiche(x.special) : "";
         const b = el("button", { class: classes.join(" "), type: "button",
           "aria-label": `${M.dateLongue(d)}${nomSp ? ", " + nomSp : ""}${x.gros ? ", " + M.nomAffiche(x.gros) : ""}`,
           onclick: () => { E.sel = d; rendreGrille(); rendreDetail(); } },
           el("span", { class: "num", text: String(+d.slice(8)) }));
         if (ferie) b.setAttribute("aria-label", b.getAttribute("aria-label") + ", " + ferie);
+        if (modif) b.setAttribute("aria-label", b.getAttribute("aria-label") + ", modifié par un contrairement");
         if (ferie && !x.fond) b.append(el("span", { class: "fer", text: "férié" }));
         if (x.fond) b.style.background = rgb(x.fond);
         if (nomSp) b.append(el("span", { class: "nom" + (nomSp.length > 8 ? " long" : ""), text: nomSp }));
@@ -1614,7 +1737,7 @@ PGVRVSD    ; [date]
     const W = Math.round(largeurCss * dpr), H = Math.round(W * 2480 / 3508);
     toile.width = W; toile.height = H;
     const ctx = toile.getContext("2d");
-    casesA4 = R.dessiner(ctx, W, H, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: E.theme });
+    casesA4 = R.dessiner(ctx, W, H, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, modifies: E.pl.modifies, theme: E.theme });
     if (casesA4[E.sel]) {
       const [a, b, c, d] = casesA4[E.sel];
       ctx.strokeStyle = "#1c4f8f"; ctx.lineWidth = Math.max(2, W / 600);
@@ -1647,6 +1770,8 @@ PGVRVSD    ; [date]
     pad.append(el("div", { class: "rangee", style: "justify-content:space-between;margin-bottom:6px" },
       el("h3", { text: M.dateLongue(d) }), greve ? el("span", { class: "badge-greve", text: "Jour de grève" }) : null));
     if (M.nomFerie(d)) pad.append(el("p", { style: "margin:0 0 6px;color:#b0463f;font-weight:700", text: "Jour férié : " + M.nomFerie(d) }));
+    const mod = (E.pl.modifies || {})[d];
+    if (mod) pad.append(el("p", { class: "modifie-note", text: `Modifié par un contrairement${mod.edition ? " édité le " + dateFr(mod.edition.slice(0, 10)) : ""}. Avant : ${mod.avant || "rien"}.` }));
     const aff = M.pourAffichage(E.pl.jours)[d] || [];
     const vrais = E.pl.jours[d] || [];
     if (!aff.length) pad.append(el("p", { class: "discret", text: "Rien de prévu ce jour-là dans les commandes importées." }));
@@ -1808,6 +1933,7 @@ PGVRVSD    ; [date]
     etat.textContent = "Terminé. Le planning est à jour.";
     if (dernier) allerA(dernier);
     rendreCommandes();
+    rendreAlertes();
   }
   $("#fichiers-pdf").addEventListener("change", e => { const f = e.target.files; if (f && f.length) importer(f).finally(() => { e.target.value = ""; }); });
 
@@ -1915,6 +2041,7 @@ PGVRVSD    ; [date]
       touches.add(d.slice(0, 7));
     }
     delete E.pl.importes[hash];
+    for (const [d, m] of Object.entries(E.pl.modifies || {})) if (m.empreinte === hash) delete E.pl.modifies[d];
     Stock.marquer([...touches], true); rendreListeCommandes(); toast("Commande retirée du planning.");
   }
 
@@ -1954,6 +2081,8 @@ PGVRVSD    ; [date]
     for (const [cle, P] of [["t", R.palette(E.theme)], ["c", R.palette("Classique")]]) {
       for (const [k, v] of Object.entries(P)) if (Array.isArray(v)) cal[cle][k] = hex(v);
     }
+    const violet = (M.REGLES.contrairement || {}).couleur_modifie;
+    if (violet) cal.mo = { clair: hex(violet.clair), sombre: hex(violet.sombre) };
     const [an, mo] = du.split("-").map(Number);
     const debutCal = new Date(Date.UTC(an, mo - 2, 1)).toISOString().slice(0, 10);   // 1er du mois précédent
     const finCal = new Date(Date.UTC(an, mo + 2, 0)).toISOString().slice(0, 10);
@@ -1968,6 +2097,7 @@ PGVRVSD    ; [date]
       if (x.lignes.length) j.l = x.lignes;
       if (x.gros) j.gr = x.gros;
       if (g) j.g = 1;
+      if ((E.pl.modifies || {})[d]) j.mo = 1;             // modifié par un contrairement : numéro violet
       // horaires courts (PS–FS) : affichés à la place des lignes détaillées quand la case est petite
       const ic = infosCase(d, aff), pr = ic.special || ic.gros || ic.services.find(sv => sv.code);
       const hc = (ic.heure || (pr && pr !== ic.special ? M.horaireCourt(pr) : "")).replace(/\s*–\s*/g, "–");
@@ -2314,7 +2444,7 @@ PGVRVSD    ; [date]
     const z = $("#themes"); z.replaceChildren();
     for (const nom of Object.keys(R.THEMES)) {
       const c = el("canvas", { width: 480, height: 339, "aria-hidden": "true" });
-      R.dessiner(c.getContext("2d"), 480, 339, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: nom });
+      R.dessiner(c.getContext("2d"), 480, 339, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, modifies: E.pl.modifies, theme: nom });
       z.append(el("button", { "aria-pressed": nom === E.theme, onclick: () => { E.theme = nom; Stock.marquer([], true); rendreThemes(); toast(`Thème : ${nom}.`); } }, c, nom));
     }
   }
@@ -2589,7 +2719,7 @@ PGVRVSD    ; [date]
       for (const [i, k] of liste.entries()) {
         etat.textContent = `Image ${i + 1} / ${liste.length}…`;
         await new Promise(r => setTimeout(r, 0));
-        R.dessiner(ctx, 3508, 2480, +k.slice(0, 4), +k.slice(5), E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: E.theme });
+        R.dessiner(ctx, 3508, 2480, +k.slice(0, 4), +k.slice(5), E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, modifies: E.pl.modifies, theme: E.theme });
         const blob = await new Promise(r => toile.toBlob(r, "image/jpeg", 0.92));
         if (!blob) throw new Error("image non créée");
         images.push({ nom: `Planning ${nomMois(k)}.jpg`, octets: new Uint8Array(await blob.arrayBuffer()) });
@@ -2607,7 +2737,7 @@ PGVRVSD    ; [date]
       for (const [i, k] of liste.entries()) {
         etat.textContent = `Page ${i + 1} / ${liste.length}…`;
         await new Promise(r => setTimeout(r, 0));
-        R.dessiner(ctx, 3508, 2480, +k.slice(0, 4), +k.slice(5), E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, theme: E.theme });
+        R.dessiner(ctx, 3508, 2480, +k.slice(0, 4), +k.slice(5), E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, modifies: E.pl.modifies, theme: E.theme });
         const blob = await new Promise(r => toile.toBlob(r, "image/jpeg", 0.9));
         const img = await doc.embedJpg(await blob.arrayBuffer());
         const page = doc.addPage([841.89, 595.28]);
@@ -2688,6 +2818,7 @@ PGVRVSD    ; [date]
       const { reg, moisDocs } = await Stock.charger();
       if (reg) {
         E.pl.agent = reg.agent || ""; E.pl.greves = reg.greves || []; E.pl.importes = reg.importes || {};
+        E.pl.modifies = reg.modifies || {}; E.pl.alertes = reg.alertes || [];
         if (reg.codesTxt) E.codesTxt = reg.codesTxt;
         if (reg.theme && R.THEMES[reg.theme]) E.theme = reg.theme;
         E.derniereCopie = reg.derniereCopie || null; E.rappelReporte = reg.rappelReporte || null;
@@ -2701,6 +2832,8 @@ PGVRVSD    ; [date]
       // copie modifiable (les données lues peuvent être figées)
       E.pl.jours = JSON.parse(JSON.stringify(E.pl.jours));
       E.pl.importes = JSON.parse(JSON.stringify(E.pl.importes));
+      E.pl.modifies = JSON.parse(JSON.stringify(E.pl.modifies || {}));
+      E.pl.alertes = JSON.parse(JSON.stringify(E.pl.alertes || []));
       E.pl.greves = [...E.pl.greves];
       M.reglerCodes(E.codesTxt);
     } catch (e) {

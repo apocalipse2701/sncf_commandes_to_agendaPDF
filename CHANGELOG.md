@@ -7,6 +7,15 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.6.0 — 9 octobre 2026
+
+**Bulletins « Contrairement » (PC et Android)** — reconnus à leur nom de fichier, comme pour le rangement
+- **Avis jaune écrit en rouge** « Contrairement reçu » : période, édition, chaque jour changé (**avant → après**, toucher/cliquer ouvre le mois) et les jours ajoutés ; il reste affiché (téléphone : sur tous les onglets ; PC : au-dessus du planning) **jusqu'à « Valider »**.
+- **Numéro du jour en violet** pour chaque jour modifié par rapport à la commande initiale : calendrier (compact et page A4), PDF, images JPEG, impression, programme PC et widget Android « Calendrier ». Le détail du jour dit « Modifié par un contrairement » et ce qu'il y avait avant. Une nouvelle commande ordinaire plus récente sur ce jour efface le violet.
+- Un même contrairement relu (copie renommée, autre appareil) ne donne qu'un avis ; avis et jours modifiés passent dans les copies échangées PC ⇄ téléphone (un avis validé d'un côté l'est aussi de l'autre).
+- Version « mail » d'Android : la notification s'intitule « Contrairement reçu » (en rouge).
+- Couleurs réglables dans `regles.json` (`contrairement`).
+
 ## 2.5.0 — 7 octobre 2026
 
 **Programme PC : export en images de plusieurs mois**

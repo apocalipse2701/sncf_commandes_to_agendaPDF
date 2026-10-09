@@ -292,12 +292,17 @@ public class ReleveMail extends JobService {
         ouvrir.setAction(ACTION_COMMANDES);
         ouvrir.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pi = PendingIntent.getActivity(c, 7, ouvrir, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        int total = enAttente(c).length;
+        File[] attente = enAttente(c);
+        int total = attente.length;
+        boolean contrairement = false;                       // un « Contrairement » : dit tout de suite dans le titre
+        for (File f : attente) if (f.getName().toLowerCase(java.util.Locale.ROOT).contains("contrairement")) contrairement = true;
         @SuppressWarnings("deprecation")
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, CANAL) : new Notification.Builder(c);
         b.setSmallIcon(R.drawable.ic_notif_commande)
-                .setContentTitle(total > 1 ? total + " nouvelles commandes" : "Nouvelle commande")
-                .setContentText("Touchez pour mettre à jour le planning.")
+                .setContentTitle(contrairement ? (total > 1 ? "Contrairement reçu (+ " + (total - 1) + " autre" + (total > 2 ? "s" : "") + ")" : "Contrairement reçu")
+                        : total > 1 ? total + " nouvelles commandes" : "Nouvelle commande")
+                .setContentText(contrairement ? "Votre service change : touchez pour voir les jours modifiés." : "Touchez pour mettre à jour le planning.")
+                .setColor(contrairement ? 0xFFC62828 : 0xFF1C4F8F)
                 .setContentIntent(pi)
                 .setAutoCancel(true);
         try {

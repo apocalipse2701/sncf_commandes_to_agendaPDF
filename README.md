@@ -77,6 +77,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les
 - Récapitulatif du mois : heures de service, nuits, dimanches et fériés travaillés, repos.
 
 **Garder, partager, imprimer**
+- Bulletin **« Contrairement »** : avis jaune écrit en rouge jusqu'à **Valider** (jours changés, avant → après) et numéro des jours modifiés en **violet** (calendrier, PDF, images, widget « Calendrier »).
 - Bouton **Exporter** : **PDF** du planning (A4 paysage, un mois par page) à enregistrer ou **imprimer**, ou **JPEG** (une image par mois, ZIP pour plusieurs mois).
 - **Export vers l'agenda** (.ics) : un rendez-vous par service dans Google Agenda, Outlook ou l'agenda du téléphone.
 - **Échange PC ↔ téléphone** et copies de sauvegarde.
