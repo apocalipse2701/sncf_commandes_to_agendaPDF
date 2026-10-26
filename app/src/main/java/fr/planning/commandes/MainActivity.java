@@ -342,6 +342,54 @@ public class MainActivity extends Activity {
             return ReleveMail.ACTIF;
         }
 
+        /** Confirmation de réception : true si l'application peut l'envoyer elle-même (SMTP). */
+        @JavascriptInterface
+        public boolean mailPeutConfirmer() {
+            return ReleveMail.peutConfirmer(MainActivity.this);
+        }
+
+        /** Envoie la confirmation {id, a, sujet, corps, enReponseA} ; réponse dans window.__confirmation({id, ok, texte}). */
+        @JavascriptInterface
+        public void mailConfirmer(final String json) {
+            new Thread(() -> {
+                JSONObject o;
+                try {
+                    o = new JSONObject(json);
+                } catch (org.json.JSONException e) {
+                    o = new JSONObject();
+                }
+                JSONObject r = ReleveMail.confirmer(MainActivity.this, o);
+                try {
+                    r.put("id", o.optString("id", ""));
+                } catch (org.json.JSONException e) {
+                    // impossible
+                }
+                appelerPage("__confirmation", r.toString());
+            }).start();
+        }
+
+        /** Sans envoi direct : l'application mail du téléphone s'ouvre avec le message prêt (l'utilisateur envoie). */
+        @JavascriptInterface
+        public String ouvrirMail(String a, String sujet, String corps) {
+            String dest = a == null ? "" : a.trim();
+            if (!dest.isEmpty() && !EnvoiMail.adresseValide(dest)) return "Adresse du destinataire incorrecte.";
+            final Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + dest));
+            i.putExtra(Intent.EXTRA_SUBJECT, sujet == null ? "" : sujet);
+            i.putExtra(Intent.EXTRA_TEXT, corps == null ? "" : corps);
+            try {
+                runOnUiThread(() -> {
+                    try {
+                        startActivity(i);
+                    } catch (Exception e) {
+                        appelerPage("__confirmation", "{\"ok\":false,\"texte\":\"Aucune application mail sur ce téléphone.\"}");
+                    }
+                });
+                return "";
+            } catch (Exception e) {
+                return "Aucune application mail sur ce téléphone.";
+            }
+        }
+
         /** Réglages du relevé (sans le mot de passe) : {actif, adresse, serveur, port, expediteurs, motDePasse, etat, enAttente}. */
         @JavascriptInterface
         public String mailReglages() {
@@ -570,6 +618,10 @@ public class MainActivity extends Activity {
                     o.put("id", f.getName());
                     o.put("nom", ReleveMail.nomAffiche(f.getName()));
                     o.put("b64", Base64.encodeToString(b.toByteArray(), Base64.NO_WRAP));
+                    JSONObject x = ReleveMail.lireInfos(f);           // pour la confirmation de réception
+                    o.put("expediteur", x.optString("expediteur", ""));
+                    o.put("messageId", x.optString("messageId", ""));
+                    o.put("sujet", x.optString("sujet", ""));
                     l.put(o);
                     total += f.length();
                 } catch (Exception e) {
@@ -586,7 +638,10 @@ public class MainActivity extends Activity {
                 JSONArray ids = new JSONArray(jsonIds);
                 java.util.Set<String> noms = new java.util.HashSet<>();
                 for (int i = 0; i < ids.length(); i++) noms.add(ids.optString(i, ""));
-                for (java.io.File f : ReleveMail.enAttente(MainActivity.this)) if (noms.contains(f.getName())) f.delete();
+                for (java.io.File f : ReleveMail.enAttente(MainActivity.this)) if (noms.contains(f.getName())) {
+                    f.delete();
+                    ReleveMail.infos(f).delete();
+                }
             } catch (Exception e) {
                 // rien à effacer
             }

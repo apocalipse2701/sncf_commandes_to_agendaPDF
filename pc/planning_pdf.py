@@ -1031,10 +1031,26 @@ def pdf_du_message(brut, expediteurs=None):
     return pieces
 
 
+def infos_message(brut):
+    """De quoi répondre à un mail reçu (confirmation de réception) : adresse de réponse (Reply-To, sinon From),
+    Message-ID et sujet."""
+    import email
+    from email import policy
+    from email.utils import parseaddr
+    try:
+        msg = email.message_from_bytes(brut, policy=policy.default)
+        rep = str(msg.get("Reply-To", "") or "") or str(msg.get("From", "") or "")
+        return {"expediteur": parseaddr(rep)[1].strip().lower(), "message_id": str(msg.get("Message-ID", "") or "").strip(),
+                "sujet": str(msg.get("Subject", "") or "")}
+    except Exception:
+        return {"expediteur": "", "message_id": "", "sujet": ""}
+
+
 def relever_mail(adresse, mot_de_passe, expediteurs, uid_validite=0, dernier_uid=0,
-                 serveur=MAIL_SERVEUR, port=MAIL_PORT, ssl=True):
+                 serveur=MAIL_SERVEUR, port=MAIL_PORT, ssl=True, infos=None):
     """Lit la boîte (sans rien modifier : lecture seule, BODY.PEEK) ; renvoie
-    ([(uid, nom, octets)], uid_validite, dernier_uid). Lève OSError avec un message clair."""
+    ([(uid, nom, octets)], uid_validite, dernier_uid). Lève OSError avec un message clair.
+    infos : dict complété par {uid: infos_message} (pour la confirmation de réception)."""
     import imaplib
     if not expediteurs:
         raise OSError("aucun expéditeur indiqué")
@@ -1071,7 +1087,10 @@ def relever_mail(adresse, mot_de_passe, expediteurs, uid_validite=0, dernier_uid
             typ, data = imap.uid("FETCH", str(uid), "(BODY.PEEK[])")
             brut = next((x[1] for x in data if isinstance(x, tuple)), None) if typ == "OK" else None
             if brut:
-                pieces += [(uid, nom, octets) for nom, octets in pdf_du_message(brut, expediteurs)]
+                trouves = [(uid, nom, octets) for nom, octets in pdf_du_message(brut, expediteurs)]
+                pieces += trouves
+                if trouves and infos is not None:
+                    infos[uid] = infos_message(brut)
         return pieces, validite, plus_grand
     finally:
         try:
@@ -1228,8 +1247,9 @@ def chercher_expediteurs(adresse, mot_de_passe, serveur=MAIL_SERVEUR, port=MAIL_
             pass
 
 
-def ranger_pieces_mail(pieces, dossier=None):
-    """Dépose les PDF reçus dans le dossier « commande » (sauf s'il y est déjà) ; renvoie les chemins créés."""
+def ranger_pieces_mail(pieces, dossier=None, infos=None, recus=None):
+    """Dépose les PDF reçus dans le dossier « commande » (sauf s'il y est déjà) ; renvoie les chemins créés.
+    infos {uid: infos_message} et recus (dict) : recus[md5 du PDF] = expéditeur, Message-ID, sujet, nom, date."""
     import hashlib
     dossier = dossier or dossier_commandes()
     connus = set()
@@ -1252,7 +1272,107 @@ def ranger_pieces_mail(pieces, dossier=None):
         with open(chemin, "wb") as fh:
             fh.write(octets)
         crees.append(chemin)
+        if recus is not None:
+            recus[h] = dict((infos or {}).get(_uid, {}), nom=os.path.basename(chemin),
+                            recu=dt.datetime.now().isoformat(timespec="minutes"))
     return crees
+
+
+# ---------------------------------------------------------------------------
+#  Confirmation de réception d'une commande (message à l'expéditeur)
+# ---------------------------------------------------------------------------
+CONF_DEFAUT = REGLES.get("confirmation", {
+    "sujet": "Bien reçu : {type} du {debut} au {fin}",
+    "corps": "Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin} (édition du {edition}).\n\nCordialement,\n{agent}"})
+R_ADRESSE = re.compile(r"^[^@\s<>\"]+@[^@\s<>\"]+\.[^@\s<>\"]+$")
+
+
+def nom_agent(agent):
+    """« AGENT EXEMPLE » → « Agent Exemple »."""
+    return re.sub(r"(^|[\s-])(\w)", lambda m: m.group(1) + m.group(2).upper(), (agent or "").lower())
+
+
+def remplir_modele(modele, c):
+    """Remplace {type} {debut} {fin} {edition} {agent} {fichier} (c : contrairement, debut, fin, edition, agent, fichier)."""
+    ed = c.get("edition")
+    val = {"type": "commande « contrairement »" if c.get("contrairement") else "commande",
+           "debut": c["debut"].strftime("%d/%m/%Y") if c.get("debut") else "",
+           "fin": c["fin"].strftime("%d/%m/%Y") if c.get("fin") else "",
+           "edition": ed.strftime("%d/%m/%Y à %Hh%M") if ed else "",
+           "agent": nom_agent(c.get("agent", "")), "fichier": c.get("fichier", "")}
+    t = re.sub(r"\{(type|debut|fin|edition|agent|fichier)\}", lambda m: val[m.group(1)], modele or "")
+    return t.replace(" (édition du )", "").replace(" du  au ", " ")
+
+
+def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, en_reponse_a="", contexte=None):
+    """Envoie la confirmation (SMTP authentifié, toujours chiffré : port 465 = SSL, sinon STARTTLS obligatoire).
+    Lève OSError avec un message clair."""
+    import smtplib
+    import ssl as ssl_
+    from email.message import EmailMessage
+    from email.utils import formatdate, make_msgid
+    if not (serveur or "").strip():
+        raise OSError("serveur d'envoi (SMTP) non indiqué")
+    if not R_ADRESSE.match((a or "").strip()):
+        raise OSError("adresse du destinataire incorrecte")
+    m = EmailMessage()
+    m["From"], m["To"], m["Subject"] = adresse, a.strip(), sujet or ""
+    m["Date"] = formatdate(localtime=True)
+    m["Message-ID"] = make_msgid(domain=adresse.rsplit("@", 1)[-1] if "@" in adresse else None)
+    if re.match(r"^<[^<>\s]+>$", (en_reponse_a or "").strip()):
+        m["In-Reply-To"] = m["References"] = en_reponse_a.strip()
+    m.set_content(corps or "", charset="utf-8")
+    ctx = contexte or ssl_.create_default_context()
+    try:
+        if int(port) == 465:
+            smtp = smtplib.SMTP_SSL(serveur.strip(), int(port), timeout=30, context=ctx)
+        else:
+            smtp = smtplib.SMTP(serveur.strip(), int(port), timeout=30)
+            smtp.ehlo()
+            if not smtp.has_extn("starttls"):
+                smtp.quit()
+                raise OSError("le serveur n'accepte pas de connexion chiffrée sur ce port (essayez 465)")
+            smtp.starttls(context=ctx)
+            smtp.ehlo()
+    except OSError as ex:
+        if "chiffrée" in str(ex):
+            raise
+        raise OSError(f"serveur d'envoi {serveur} injoignable ({ex})")
+    try:
+        try:
+            smtp.login(adresse, mot_de_passe)
+        except smtplib.SMTPAuthenticationError:
+            raise OSError("envoi refusé : adresse ou mot de passe incorrect (ou mot de passe d'application nécessaire)")
+        except smtplib.SMTPException as ex:
+            raise OSError(f"authentification impossible ({ex})")
+        try:
+            smtp.send_message(m)
+        except smtplib.SMTPRecipientsRefused:
+            raise OSError("destinataire refusé par le serveur")
+        except smtplib.SMTPException as ex:
+            raise OSError(f"envoi refusé par le serveur ({ex})")
+    finally:
+        try:
+            smtp.quit()
+        except Exception:
+            pass
+
+
+def mailto(a, sujet, corps):
+    """Lien « mailto: » : la messagerie du PC s'ouvre avec le message prêt (version sans envoi direct)."""
+    from urllib.parse import quote
+    return f"mailto:{(a or '').strip()}?subject={quote(sujet or '')}&body={quote(corps or '')}"
+
+
+def chemin_par_empreinte(emp, dossier=None):
+    """Fichier du dossier « commande » dont l'empreinte md5 est emp (ou None)."""
+    for f in _tous_les_pdf(dossier or dossier_commandes()):
+        try:
+            if _empreinte(f) == emp:
+                return f
+        except OSError:
+            pass
+    return None
 
 
 def synchroniser_dossier(planning, dossier=None, changements=None):
@@ -2080,6 +2200,9 @@ class Planning:
         # bulletins « Contrairement » (même format que le téléphone) :
         self.modifies = {}       # date -> {avant, apres, fichier, empreinte, edition} : numéro du jour en violet
         self.alertes = []        # avis « Contrairement reçu », affichés (fond jaune, texte rouge) jusqu'à « Valider »
+        # confirmation de réception (clé : empreinte md5 du bulletin, comme « importes »)
+        self.recus_mail = {}     # md5 -> {expediteur, message_id, sujet, nom, recu} : bulletins reçus par mail
+        self.confirmations = {}  # md5 -> {le, a, via} : confirmation envoyée (via « direct » ou « messagerie »)
 
     def alertes_actives(self):
         return [a for a in self.alertes if not a.get("vu")]
@@ -2200,6 +2323,8 @@ class Planning:
                         for d, e in self.edition.items()},
             "modifies": {d.isoformat(): m for d, m in sorted(getattr(self, "modifies", {}).items())},
             "alertes": list(getattr(self, "alertes", [])),
+            "recus_mail": dict(getattr(self, "recus_mail", {})),
+            "confirmations": dict(getattr(self, "confirmations", {})),
         }
 
     @classmethod
@@ -2223,6 +2348,8 @@ class Planning:
             except (ValueError, TypeError):
                 pass
         p.alertes = [dict(a) for a in (data.get("alertes") or []) if isinstance(a, dict) and a.get("cle")]
+        p.recus_mail = {k: dict(v) for k, v in (data.get("recus_mail") or {}).items() if isinstance(v, dict)}
+        p.confirmations = {k: dict(v) for k, v in (data.get("confirmations") or {}).items() if isinstance(v, dict)}
         return p
 
     def sauver(self, chemin):
@@ -3274,6 +3401,8 @@ def lancer_interface():
             fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
+            fichier.add_command(label="Confirmer la réception d'une commande…", command=self.fenetre_confirmations)
+            fichier.add_command(label="Message de confirmation…", command=self.fenetre_message_confirmation)
             fichier.add_separator()
             fichier.add_command(label="Exporter…", accelerator=f"{ctrl}+E", command=self.exporter)
             fichier.add_command(label="Exporter en images JPEG…", command=self.exporter_images)
@@ -3975,23 +4104,27 @@ def lancer_interface():
 
             def travail():
                 crees, erreur = [], None
+                recus = {}
                 try:
+                    infos = {}
                     pieces, validite, dernier = relever_mail(
                         adresse, deproteger(protege), exp, pr.get("mail_uidvalidite", 0), pr.get("mail_dernier_uid", 0),
-                        pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT))
-                    crees = ranger_pieces_mail(pieces)
+                        pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT), infos=infos)
+                    crees = ranger_pieces_mail(pieces, infos=infos, recus=recus)
                     ecrire_pref("mail_uidvalidite", validite)
                     ecrire_pref("mail_dernier_uid", dernier)
                 except OSError as ex:
                     erreur = str(ex)
                 except Exception as ex:                                     # réponse inattendue du serveur
                     erreur = f"{type(ex).__name__} : {ex}"
-                self.after(0, lambda: self._resultat_mail(manuel, crees, erreur, fini))
+                self.after(0, lambda: self._resultat_mail(manuel, crees, erreur, fini, recus))
 
             threading.Thread(target=travail, daemon=True).start()
 
-        def _resultat_mail(self, manuel, crees, erreur, fini):
+        def _resultat_mail(self, manuel, crees, erreur, fini, recus=None):
             self._mail_en_cours = False
+            if recus:
+                self.pl.recus_mail.update(recus)
             heure = dt.datetime.now().strftime("%d/%m %H:%M")
             if erreur:
                 etat = f"Relevé le {heure} : échec ({erreur})"
@@ -4003,12 +4136,238 @@ def lancer_interface():
             if crees:
                 self.actualiser()                       # range les PDF et les ajoute au planning
                 self.statut.config(text=f"{len(crees)} commande(s) reçue(s) par mail et ajoutée(s) au planning.")
+                if recus:                               # proposer tout de suite la confirmation de réception
+                    self.fenetre_confirmations(list(recus))
             elif manuel:
                 self.statut.config(text=etat)
                 if erreur:
                     messagebox.showwarning("Commandes par mail", etat)
             if fini:
                 fini(etat, bool(erreur))
+
+        # ---- confirmation de réception -------------------------------------------
+        def _conf_reglee(self):
+            pr = lire_prefs()
+            return {"sujet": pr.get("conf_sujet") or CONF_DEFAUT["sujet"], "corps": pr.get("conf_corps") or CONF_DEFAUT["corps"],
+                    "adresse": pr.get("conf_adresse", "")}
+
+        def _envoi_direct(self):
+            """Envoi par le programme : version « mail », adresse, mot de passe et serveur d'envoi enregistrés."""
+            pr = lire_prefs()
+            return bool(MAIL_DISPONIBLE and pr.get("mail_adresse") and pr.get("mail_mdp") and pr.get("mail_smtp"))
+
+        def fenetre_message_confirmation(self):
+            """Réglage du message envoyé à l'expéditeur pour confirmer la réception d'une commande."""
+            conf = self._conf_reglee()
+            fen = tk.Toplevel(self)
+            fen.title("Message de confirmation")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            ttk.Label(c, text="Confirmation de réception", font=("", 12, "bold")).pack(anchor="w")
+            ttk.Label(c, foreground="#555", wraplength=480, justify="left", text=(
+                "Envoyé à l'expéditeur d'une commande par « Confirmer la réception ». "
+                + ("Le programme l'envoie lui-même depuis votre boîte." if self._envoi_direct() else
+                   "Votre messagerie s'ouvre avec le message prêt." if not MAIL_DISPONIBLE else
+                   "Pour qu'il parte directement, réglez la boîte et son serveur d'envoi (Fichier › Commandes par mail) ; "
+                   "en attendant, votre messagerie s'ouvre avec le message prêt.")
+                + "\nRemplacés à l'envoi : {type}, {debut}, {fin}, {edition}, {agent}.")).pack(anchor="w", pady=(2, 8))
+            ttk.Label(c, text="Objet :").pack(anchor="w")
+            v_sujet = tk.StringVar(value=conf["sujet"])
+            ttk.Entry(c, textvariable=v_sujet, width=70).pack(anchor="w", fill="x")
+            ttk.Label(c, text="Message :").pack(anchor="w", pady=(8, 0))
+            txt = tk.Text(c, width=70, height=9, wrap="word", font=(self.police_ui, 10))
+            txt.insert("1.0", conf["corps"])
+            txt.pack(anchor="w", fill="both", expand=True)
+            ttk.Label(c, text="Destinataire des bulletins ajoutés à la main (facultatif) :").pack(anchor="w", pady=(8, 0))
+            v_adr = tk.StringVar(value=conf["adresse"])
+            ttk.Entry(c, textvariable=v_adr, width=40).pack(anchor="w")
+
+            def enregistrer():
+                adr = v_adr.get().strip()
+                if adr and not R_ADRESSE.match(adr):
+                    messagebox.showwarning("Message de confirmation", "Adresse mail incorrecte.", parent=fen)
+                    return
+                ecrire_pref("conf_sujet", v_sujet.get())
+                ecrire_pref("conf_corps", txt.get("1.0", "end-1c"))
+                ecrire_pref("conf_adresse", adr)
+                self.statut.config(text="Message de confirmation enregistré.")
+                fen.destroy()
+
+            def origine():
+                v_sujet.set(CONF_DEFAUT["sujet"])
+                txt.delete("1.0", "end")
+                txt.insert("1.0", CONF_DEFAUT["corps"])
+            b = ttk.Frame(c, padding=(0, 10, 0, 0))
+            b.pack(fill="x")
+            ttk.Button(b, text="Enregistrer", command=enregistrer).pack(side="left")
+            ttk.Button(b, text="Message d'origine", command=origine).pack(side="left", padx=6)
+            ttk.Button(b, text="Annuler", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+
+        def _commandes_connues(self):
+            """[(md5, chemin)] des bulletins du dossier « commande » lus au planning, du plus récent au plus ancien."""
+            l = []
+            for f in _tous_les_pdf(dossier_commandes()):
+                try:
+                    emp = _empreinte(f)
+                except OSError:
+                    continue
+                rel = self.pl.importes.get(emp, "")
+                if emp in self.pl.importes and not str(rel).startswith("ignoré"):
+                    l.append((emp, f))
+            l.sort(key=lambda x: os.path.getmtime(x[1]), reverse=True)
+            return l
+
+        def fenetre_confirmations(self, empreintes=None):
+            """Commandes (les plus récentes, ou celles qui viennent d'arriver) avec « Confirmer la réception »."""
+            connues = self._commandes_connues()
+            if empreintes:
+                connues = [x for x in connues if x[0] in set(empreintes)]
+            connues = connues[:20]
+            if not connues:
+                if not empreintes:
+                    messagebox.showinfo("Confirmer la réception", "Aucun bulletin dans le dossier « commande » pour l'instant.")
+                return
+            fen = tk.Toplevel(self)
+            fen.title("Confirmer la réception")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            ttk.Label(c, text=("Commande reçue par mail" if empreintes and len(connues) == 1 else
+                               "Commandes reçues par mail" if empreintes else "Confirmer la réception d'une commande"),
+                      font=("", 12, "bold")).pack(anchor="w")
+            ttk.Label(c, foreground="#555", wraplength=520, justify="left", text=(
+                "« Confirmer… » prépare le message à l'expéditeur (Fichier › Message de confirmation…) : "
+                "vous pouvez le relire avant l'envoi.")).pack(anchor="w", pady=(2, 8))
+            liste = ttk.Frame(c)
+            liste.pack(fill="both", expand=True)
+
+            def remplir():
+                for w in liste.winfo_children():
+                    w.destroy()
+                for i, (emp, chemin) in enumerate(connues):
+                    recu = self.pl.recus_mail.get(emp, {})
+                    conf = self.pl.confirmations.get(emp)
+                    ttk.Label(liste, text=os.path.basename(chemin)).grid(row=i, column=0, sticky="w", pady=2)
+                    if conf:
+                        le = dt.datetime.fromisoformat(conf["le"])
+                        etat = (("Confirmation préparée dans la messagerie" if conf.get("via") == "messagerie" else "Réception confirmée")
+                                + f" à {conf.get('a', '')} le {le:%d/%m/%Y} ({le:%H:%M})")
+                        ttk.Label(liste, text="✓ " + etat, foreground="#1e7a3c").grid(row=i, column=1, sticky="w", padx=10)
+                    else:
+                        ttk.Label(liste, foreground="#555", text=(f"reçue de {recu['expediteur']}" if recu.get("expediteur")
+                                                                  else "ajoutée à la main")).grid(row=i, column=1, sticky="w", padx=10)
+                    ttk.Button(liste, text="Confirmer…" if not conf else "Renvoyer…",
+                               command=lambda e=emp, ch=chemin: self.dialogue_confirmation(e, ch, apres=remplir)).grid(
+                        row=i, column=2, sticky="e", pady=2)
+            remplir()
+            ttk.Button(c, text="Fermer", command=fen.destroy).pack(anchor="e", pady=(10, 0))
+            fen.bind("<Escape>", lambda e: fen.destroy())
+
+        def dialogue_confirmation(self, emp, chemin, apres=None):
+            """Message de confirmation prérempli (modifiable), puis envoi direct ou messagerie."""
+            import threading
+            try:
+                info = lire_bulletin(chemin)
+            except Exception:
+                info = {"debut": None, "fin": None, "edition": None, "agent": ""}
+            conf = self._conf_reglee()
+            recu = self.pl.recus_mail.get(emp, {})
+            c_info = {"contrairement": est_contrairement(os.path.basename(chemin)), "debut": info.get("debut"), "fin": info.get("fin"),
+                      "edition": info.get("edition"), "agent": info.get("agent") or self.pl.agent, "fichier": os.path.basename(chemin)}
+            pr = lire_prefs()
+            connues = []
+            for a in [recu.get("expediteur", ""), conf["adresse"]] + list(pr.get("mail_expediteurs") or []) \
+                    + [r.get("expediteur", "") for r in self.pl.recus_mail.values()]:
+                a = (a or "").strip().lower()
+                if R_ADRESSE.match(a) and a not in connues:
+                    connues.append(a)
+            direct = self._envoi_direct()
+            fen = tk.Toplevel(self)
+            fen.title("Confirmer la réception")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            ttk.Label(c, foreground="#555", wraplength=520, justify="left", text=(
+                f"Envoyé directement depuis {pr.get('mail_adresse')}" + (", en réponse au mail reçu." if recu.get("message_id") else ".")
+                if direct else "Votre messagerie va s'ouvrir avec ce message : il restera à l'envoyer.")).grid(
+                row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
+            ttk.Label(c, text="À :").grid(row=1, column=0, sticky="w")
+            v_a = tk.StringVar(value=connues[0] if connues else "")
+            ttk.Combobox(c, textvariable=v_a, values=connues, width=50).grid(row=1, column=1, sticky="we", pady=2)
+            ttk.Label(c, text="Objet :").grid(row=2, column=0, sticky="w")
+            v_s = tk.StringVar(value=remplir_modele(conf["sujet"], c_info))
+            ttk.Entry(c, textvariable=v_s, width=60).grid(row=2, column=1, sticky="we", pady=2)
+            ttk.Label(c, text="Message :").grid(row=3, column=0, sticky="nw", pady=(4, 0))
+            txt = tk.Text(c, width=60, height=9, wrap="word", font=(self.police_ui, 10))
+            txt.insert("1.0", remplir_modele(conf["corps"], c_info))
+            txt.grid(row=3, column=1, sticky="nsew", pady=(4, 0))
+            etat = ttk.Label(c, foreground="#555", wraplength=520)
+            etat.grid(row=5, column=0, columnspan=2, sticky="w", pady=(6, 0))
+
+            def marquer(a, via):
+                self.pl.confirmations[emp] = {"le": dt.datetime.now().isoformat(timespec="minutes"), "a": a, "via": via}
+                try:
+                    self.pl.sauver(self.fichier_etat)
+                except OSError:
+                    pass
+                if apres:
+                    try:
+                        apres()
+                    except tk.TclError:
+                        pass
+
+            def envoyer():
+                a = v_a.get().strip()
+                if not R_ADRESSE.match(a):
+                    etat.config(text="Indiquez l'adresse mail du destinataire.", foreground="#b00020")
+                    return
+                sujet, corps = v_s.get(), txt.get("1.0", "end-1c")
+                if not direct:
+                    import webbrowser
+                    webbrowser.open(mailto(a, sujet, corps))
+                    marquer(a, "messagerie")
+                    self.statut.config(text="Message de confirmation prêt dans votre messagerie : envoyez-le.")
+                    fen.destroy()
+                    return
+                b_env.state(["disabled"])
+                etat.config(text="Envoi en cours…", foreground="#555")
+                p = lire_prefs()
+
+                def travail():
+                    try:
+                        envoyer_confirmation(p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465), p.get("mail_adresse"),
+                                             deproteger(p.get("mail_mdp", "")), a, sujet, corps, recu.get("message_id", ""))
+                        err = None
+                    except OSError as ex:
+                        err = str(ex)
+                    except Exception as ex:
+                        err = f"{type(ex).__name__} : {ex}"
+                    self.after(0, lambda: fini(err))
+
+                def fini(err):
+                    if err:
+                        try:
+                            b_env.state(["!disabled"])
+                            etat.config(text=f"Confirmation non envoyée : {err}.", foreground="#b00020")
+                        except tk.TclError:
+                            messagebox.showwarning("Confirmer la réception", f"Confirmation non envoyée : {err}.")
+                        return
+                    marquer(a, "direct")
+                    self.statut.config(text=f"Confirmation envoyée à {a}.")
+                    try:
+                        fen.destroy()
+                    except tk.TclError:
+                        pass
+                threading.Thread(target=travail, daemon=True).start()
+            b = ttk.Frame(c, padding=(0, 10, 0, 0))
+            b.grid(row=4, column=0, columnspan=2, sticky="we")
+            b_env = ttk.Button(b, text="Envoyer" if direct else "Ouvrir dans la messagerie", command=envoyer)
+            b_env.pack(side="left")
+            ttk.Button(b, text="Annuler", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+            return fen
 
         def fenetre_mail(self):
             """Réglages du relevé des commandes dans la boîte mail."""
@@ -4024,7 +4383,8 @@ def lancer_interface():
                 "Le programme relève la boîte mail au démarrage puis toutes les heures, et dépose dans le dossier "
                 "« commande » les bulletins envoyés par les expéditeurs ci-dessous (pièces jointes PDF dont le nom contient "
                 "« bulletin de commande » ou « contrairement ») : ils sont ajoutés au planning. "
-                "Il ne fait que lire : aucun message n'est envoyé, effacé, déplacé ni marqué comme lu.")).grid(
+                "Il ne fait que lire : aucun message n'est effacé, déplacé ni marqué comme lu ; un message n'est envoyé "
+                "que si vous cliquez sur « Confirmer la réception » (serveur d'envoi ci-dessous).")).grid(
                 row=1, column=0, columnspan=2, sticky="w", pady=(2, 10))
             v_actif = tk.BooleanVar(value=bool(pr.get("mail_actif")))
             v_adr = tk.StringVar(value=pr.get("mail_adresse", ""))
@@ -4033,6 +4393,9 @@ def lancer_interface():
             v_e1, v_e2 = tk.StringVar(value=exp[0]), tk.StringVar(value=exp[1])
             v_srv = tk.StringVar(value=pr.get("mail_serveur") or MAIL_SERVEUR)
             v_port = tk.StringVar(value=str(pr.get("mail_port") or MAIL_PORT))
+            f_init = fournisseur_pour_serveur(v_srv.get()) or {}
+            v_smtp = tk.StringVar(value=pr.get("mail_smtp") or f_init.get("smtp", ""))
+            v_psmtp = tk.StringVar(value=str(pr.get("mail_port_smtp") or f_init.get("port_smtp") or 465))
             ttk.Checkbutton(c, text="Relever automatiquement (au démarrage puis toutes les heures)",
                             variable=v_actif).grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 8))
             # boîte mail : le choix du fournisseur remplit le serveur ; reconnu aussi d'après l'adresse
@@ -4055,6 +4418,9 @@ def lancer_interface():
                 if f and f["serveur"]:
                     v_srv.set(f["serveur"])
                     v_port.set(str(f.get("port") or MAIL_PORT))
+                if f and f.get("smtp"):
+                    v_smtp.set(f["smtp"])
+                    v_psmtp.set(str(f.get("port_smtp") or 465))
                 elif f:
                     v_srv.set("" if fournisseur_pour_serveur(v_srv.get())["id"] != "autre" else v_srv.get())
                 montrer_aide()
@@ -4069,7 +4435,8 @@ def lancer_interface():
             cb_four.bind("<<ComboboxSelected>>", choisir_fournisseur)
             lignes = ((5, "Adresse mail complète :", v_adr, None), (6, "Mot de passe de la boîte :", v_mdp, "•"),
                       (7, "Expéditeur des commandes 1 :", v_e1, None), (8, "Expéditeur des commandes 2 :", v_e2, None),
-                      (10, "Serveur IMAP (SSL) :", v_srv, None), (11, "Port :", v_port, None))
+                      (10, "Serveur IMAP (SSL) :", v_srv, None), (11, "Port :", v_port, None),
+                      (15, "Serveur d'envoi (SMTP) :", v_smtp, None), (16, "Port d'envoi (465 SSL, 587 STARTTLS) :", v_psmtp, None))
             champs = {}
             for ligne, lib, var, cache in lignes:
                 ttk.Label(c, text=lib).grid(row=ligne, column=0, sticky="w", pady=2)
@@ -4213,6 +4580,11 @@ def lancer_interface():
                 ecrire_pref("mail_expediteurs", exps)
                 ecrire_pref("mail_serveur", v_srv.get().strip() or MAIL_SERVEUR)
                 ecrire_pref("mail_port", port)
+                ecrire_pref("mail_smtp", v_smtp.get().strip())
+                try:
+                    ecrire_pref("mail_port_smtp", int(v_psmtp.get() or 465))
+                except ValueError:
+                    ecrire_pref("mail_port_smtp", 465)
                 if mdp:
                     try:
                         ecrire_pref("mail_mdp", proteger(mdp))
@@ -4249,7 +4621,7 @@ def lancer_interface():
                 note.config(text="Mot de passe oublié, relevé arrêté.")
 
             b = ttk.Frame(c, padding=(0, 12, 0, 0))
-            b.grid(row=13, column=0, columnspan=2, sticky="we")
+            b.grid(row=17, column=0, columnspan=2, sticky="we")
             ttk.Button(b, text="Enregistrer", command=lambda: enregistrer() and fen.destroy()).pack(side="left")
             b_rel = ttk.Button(b, text="Relever maintenant", command=relever)
             b_rel.pack(side="left", padx=6)

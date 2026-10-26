@@ -92,6 +92,8 @@ public class ReleveMail extends JobService {
             o.put("adresse", p.getString("adresse", ""));
             o.put("serveur", p.getString("serveur", SERVEUR_DEFAUT));
             o.put("port", p.getInt("port", PORT_DEFAUT));
+            o.put("smtp", p.getString("smtp", ""));
+            o.put("portSmtp", p.getInt("port_smtp", 465));
             o.put("expediteurs", new JSONArray(expediteurs(p)));
             o.put("motDePasse", !p.getString("mdp", "").isEmpty());
             o.put("etat", p.getString("etat", ""));
@@ -114,6 +116,8 @@ public class ReleveMail extends JobService {
         String serveur = o.optString("serveur", "").trim();
         ed.putString("serveur", serveur.isEmpty() ? SERVEUR_DEFAUT : serveur);
         ed.putInt("port", o.optInt("port", PORT_DEFAUT) > 0 ? o.optInt("port", PORT_DEFAUT) : PORT_DEFAUT);
+        if (o.has("smtp")) ed.putString("smtp", o.optString("smtp", "").trim());           // envoi des confirmations
+        if (o.optInt("portSmtp", 0) > 0) ed.putInt("port_smtp", o.optInt("portSmtp", 465));
         JSONArray ex = o.optJSONArray("expediteurs");
         StringBuilder b = new StringBuilder();
         if (ex != null) for (int i = 0; i < ex.length(); i++) {
@@ -175,6 +179,17 @@ public class ReleveMail extends JobService {
                     File f = new File(d, piece.uid + "-" + (k++) + "-" + piece.nom);
                     try (FileOutputStream out = new FileOutputStream(f)) {
                         out.write(piece.octets);
+                    }
+                    // à côté du PDF : de quoi répondre à l'expéditeur (confirmation de réception)
+                    try (FileOutputStream out = new FileOutputStream(infos(f))) {
+                        JSONObject x = new JSONObject();
+                        x.put("expediteur", piece.repondreA);
+                        x.put("messageId", piece.messageId);
+                        x.put("sujet", piece.sujet);
+                        x.put("date", piece.date);
+                        out.write(x.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    } catch (Exception e) {
+                        // sans ces infos, la confirmation proposera les expéditeurs réglés
                     }
                     nouveaux++;
                 }
@@ -256,6 +271,73 @@ public class ReleveMail extends JobService {
     }
 
     /** PDF reçus et pas encore importés, du plus ancien au plus récent. */
+    /** Infos du mail reçu (expéditeur, Message-ID, sujet), gardées à côté du PDF : « <pdf>.json ». */
+    static File infos(File pdf) {
+        return new File(pdf.getPath() + ".json");
+    }
+
+    static JSONObject lireInfos(File pdf) {
+        File f = infos(pdf);
+        if (!f.exists()) return new JSONObject();
+        try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+            java.io.ByteArrayOutputStream b = new java.io.ByteArrayOutputStream();
+            byte[] bloc = new byte[4096];
+            int n;
+            while ((n = in.read(bloc)) > 0) b.write(bloc, 0, n);
+            return new JSONObject(new String(b.toByteArray(), java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            return new JSONObject();
+        }
+    }
+
+    /**
+     * Confirmation de réception envoyée par l'application (SMTP), avec l'adresse et le mot de passe du relevé.
+     * @param o {a, sujet, corps, enReponseA}. Renvoie {ok, texte}. Ne lève jamais d'exception.
+     */
+    static JSONObject confirmer(Context c, JSONObject o) {
+        JSONObject res = new JSONObject();
+        boolean ok = false;
+        String texte;
+        try {
+            if (!ACTIF) throw new IOException("envoi direct seulement dans la version « mail »");
+            SharedPreferences p = prefs(c);
+            String adresse = p.getString("adresse", ""), mdpChiffre = p.getString("mdp", "");
+            if (adresse.isEmpty() || mdpChiffre.isEmpty()) throw new IOException("adresse ou mot de passe de la boîte non enregistré (Réglages › Commandes par mail)");
+            String mdp;
+            try {
+                mdp = CoffreMail.dechiffrer(mdpChiffre);
+            } catch (Exception e) {
+                throw new IOException("mot de passe à ressaisir dans les réglages");
+            }
+            String smtp = p.getString("smtp", "");
+            if (smtp.isEmpty()) throw new IOException("serveur d'envoi (SMTP) non réglé (Réglages › Commandes par mail)");
+            String a = o.optString("a", "").trim();
+            new EnvoiMail().envoyer(smtp, p.getInt("port_smtp", 465), adresse, mdp, a,
+                    o.optString("sujet", ""), o.optString("corps", ""), o.optString("enReponseA", ""));
+            ok = true;
+            texte = "Confirmation envoyée à " + a + ".";
+        } catch (Exception e) {
+            String m = e.getMessage();
+            if (e instanceof java.net.UnknownHostException) m = "pas d'Internet ou serveur introuvable";
+            else if (e instanceof java.net.SocketTimeoutException) m = "le serveur ne répond pas";
+            texte = "Confirmation non envoyée : " + (m == null || m.isEmpty() ? e.getClass().getSimpleName() : m) + ".";
+        }
+        try {
+            res.put("ok", ok);
+            res.put("texte", texte);
+        } catch (org.json.JSONException e) {
+            // impossible
+        }
+        return res;
+    }
+
+    /** Envoi direct possible : version « mail », adresse, mot de passe et serveur SMTP enregistrés. */
+    static boolean peutConfirmer(Context c) {
+        SharedPreferences p = prefs(c);
+        return ACTIF && !p.getString("adresse", "").isEmpty() && !p.getString("mdp", "").isEmpty()
+                && !p.getString("smtp", "").isEmpty();
+    }
+
     static File[] enAttente(Context c) {
         File[] f = dossier(c).listFiles((dir, nom) -> nom.toLowerCase(Locale.ROOT).endsWith(".pdf"));
         if (f == null) return new File[0];

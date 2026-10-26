@@ -97,6 +97,15 @@ button { cursor: pointer; }
 .case.colore .num { color: #4a4f57; }
 .case.fonce.colore .num { color: rgba(255,255,255,.85); }
 .case.sel { outline: 2.5px solid var(--accent); outline-offset: 1px; }
+/* confirmation de réception d'une commande */
+label.champ textarea { font-weight: 400; line-height: 1.45; resize: vertical; }
+.ic-envoi { display: inline-grid; place-items: center; }
+.ic-envoi svg { width: 16px; height: 16px; }
+.btn.btn-confirmer { margin-top: 8px; font-size: .85rem; padding: 7px 12px; border-color: var(--accent); color: var(--accent); }
+.lien-confirmer { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;
+  color: var(--accent); font-weight: 700; font-size: .85rem; }
+.lien-confirmer:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.liste .txt small.confirme { color: var(--ok); font-weight: 600; }
 /* jour modifié par un « Contrairement » : numéro en violet (regles.json, contrairement.couleur_modifie) */
 :root { --violet: #7b1fa2; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --violet: #e1b4ff; } }
@@ -303,6 +312,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         <li><button class="ligne" data-page="apparence"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor"/></svg></span><span class="txt"><b>Apparence</b><small id="res-apparence"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li><button class="ligne" data-page="codes"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg></span><span class="txt"><b>Codes et couleurs</b><small id="res-codes"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-mail" hidden><button class="ligne" data-page="mail"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/></svg></span><span class="txt"><b>Commandes par mail</b><small id="res-mail"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li><button class="ligne" data-page="confirmation"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4L10 15"/><path d="M21 4l-7 17-4-6-6-4z"/></svg></span><span class="txt"><b>Confirmation de réception</b><small id="res-confirmation"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li><button class="ligne" data-page="agenda"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span><span class="txt"><b>Agenda du téléphone</b><small id="res-agenda"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li><button class="ligne" data-page="sauvegarde"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 19h14"/></svg></span><span class="txt"><b>Sauvegarde et PC</b><small id="res-sauvegarde"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-maj" hidden><button class="ligne" data-page="maj"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></span><span class="txt"><b>Mise à jour</b><small id="res-maj"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
@@ -354,7 +364,10 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
           <div class="grille-champs" style="margin-top:8px">
             <label class="champ" for="mail-serveur">Serveur IMAP<input type="text" id="mail-serveur" autocomplete="off" autocapitalize="none" placeholder="imap.free.fr"></label>
             <label class="champ" for="mail-port">Port (SSL)<input type="number" id="mail-port" placeholder="993"></label>
-          </div></details>
+            <label class="champ" for="mail-smtp">Serveur d'envoi (SMTP)<input type="text" id="mail-smtp" autocomplete="off" autocapitalize="none" placeholder="smtp.free.fr"></label>
+            <label class="champ" for="mail-port-smtp">Port d'envoi<input type="number" id="mail-port-smtp" placeholder="465"></label>
+          </div>
+          <p class="discret" style="margin:8px 0 0">Le serveur d'envoi sert aux confirmations de réception (465 : SSL ; 587 : STARTTLS). Il est rempli d'après le fournisseur.</p></details>
       </div></div>
       <h2>Expéditeurs des commandes</h2>
       <div class="carte"><div class="pad">
@@ -377,6 +390,22 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
       </div>
       <p class="discret" id="mail-etat" style="margin:10px 4px 0"></p>
     </div>
+    </div>
+    <div class="page-reglage" data-page="confirmation" hidden>
+      <div class="carte"><div class="pad">
+        <p style="margin:0 0 10px" id="conf-mode"></p>
+        <div class="grille-champs" style="grid-template-columns:1fr">
+          <label class="champ" for="conf-sujet">Objet<input type="text" id="conf-sujet" autocomplete="off"></label>
+          <label class="champ" for="conf-corps">Message<textarea id="conf-corps" rows="8"></textarea></label>
+        </div>
+        <p class="discret" style="margin:6px 0 10px">Remplacés à l'envoi : {type} (commande, ou commande « contrairement »), {debut}, {fin}, {edition}, {agent}.</p>
+        <label class="champ" for="conf-adresse">Destinataire des bulletins ajoutés à la main (facultatif)<input type="email" id="conf-adresse" autocomplete="off" autocapitalize="none" placeholder="commandes@exemple.fr"></label>
+        <p class="discret" style="margin:6px 0 10px">Pour un bulletin reçu par mail, la confirmation part toujours à son expéditeur.</p>
+        <div class="rangee">
+          <button class="btn accent" id="conf-enregistrer" type="button">Enregistrer</button>
+          <button class="btn fantome" id="conf-defaut" type="button">Message d'origine</button>
+        </div>
+      </div></div>
     </div>
     <div class="page-reglage" data-page="agenda" hidden>
     <div class="bloc" id="bloc-agenda">      <div class="carte"><div class="pad">
@@ -428,8 +457,8 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <div id="couche"></div>
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
-window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) : il figure dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]}};
-window.VERSION_APPLI = "2.6.0";
+window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"smtp":"smtp.free.fr","port_smtp":465,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"smtp":"smtp.orange.fr","port_smtp":465,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"smtp":"smtp.sfr.fr","port_smtp":465,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"smtp":"smtp.bbox.fr","port_smtp":465,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"smtp":"smtp.laposte.net","port_smtp":465,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"smtp":"smtp.gmail.com","port_smtp":465,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"smtp":"smtp.mail.yahoo.com","port_smtp":465,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"smtp":"smtp.mail.me.com","port_smtp":587,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"smtp":"mail.gmx.net","port_smtp":587,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"smtp":"mail.infomaniak.com","port_smtp":465,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"smtp":"","port_smtp":465,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) et, pour envoyer les confirmations, son serveur SMTP (port 465 en SSL, ou 587 avec STARTTLS) : ils figurent dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]},"_lisezmoi_confirmation":"Message de confirmation de réception envoyé à l'expéditeur d'une commande (bouton « Confirmer la réception »). Valeurs par défaut, modifiables dans les réglages. Champs remplacés : {type} (commande / contrairement), {debut}, {fin}, {edition}, {agent}, {fichier}.","confirmation":{"sujet":"Bien reçu : {type} du {debut} au {fin}","corps":"Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin} (édition du {edition}).\n\nCordialement,\n{agent}"}};
+window.VERSION_APPLI = "2.7.0";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -1129,7 +1158,7 @@ PGVRVSD    ; [date]
     return L.flatMap(icsPlier).join("\r\n") + "\r\n";
   }
 
-  const api = { estContrairement, alertesActives, validerAlerte, CONTR, JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, FOND_BLOQUE, fondBloque, cap, couleur, lireCodes,
+  const api = { maintenant, estContrairement, alertesActives, validerAlerte, CONTR, JOURS, MOIS_LONG, MOIS_ABREGE, CODES_REPOS, CODES_TXT_DEFAUT, ENTETE_CODES, COULEURS, FOND_BLOQUE, fondBloque, cap, couleur, lireCodes,
     nomCouleur, ecrireCodes, paletteCouleurs, reglerCodes, infosCode, codeAffiche, nomAffiche, iso, decaler,
     jourSemaine, semainesDuMois, aujourdhui, dateLongue, CODE_DN, estNuit, service, avecDn, pourAffichage,
     lignesHoraires, planningVide, integrer, fusionner, versDict, REGLES, paques, joursFeries, nomFerie, dureeService,
@@ -1447,6 +1476,7 @@ PGVRVSD    ; [date]
   const E = {
     pl: M.planningVide(), codesTxt: M.CODES_TXT_DEFAUT, derniereCopie: null, rappelReporte: null,
     majVerifieeLe: null, majReportee: null, apparence: "auto",
+    confirmation: null,                 // {sujet, corps, adresse} : message de confirmation de réception (null = celui de regles.json)
     theme: "Classique", annee: +auj.slice(0, 4), mois: +auj.slice(5, 7), sel: auj,
     vue: window.innerWidth >= 900 ? "a4" : "compacte", zoom: false,
   };
@@ -1522,7 +1552,7 @@ PGVRVSD    ; [date]
     },
     reglages() {
       return { agent: E.pl.agent, greves: [...E.pl.greves].sort(), importes: E.pl.importes, codesTxt: E.codesTxt,
-        modifies: E.pl.modifies || {}, alertes: E.pl.alertes || [],
+        modifies: E.pl.modifies || {}, alertes: E.pl.alertes || [], confirmation: E.confirmation,
         theme: E.theme, derniereCopie: E.derniereCopie, rappelReporte: E.rappelReporte,
         majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee, apparence: E.apparence };
     },
@@ -1911,7 +1941,11 @@ PGVRVSD    ; [date]
         const deja = E.pl.importes[hash];
         rangerBulletin(f.name, info, brut);
         const r = M.integrer(E.pl, info, f.name, hash);
-        E.pl.importes[hash] = { nom: f.name, debut: info.debut, fin: info.fin, edition: info.edition, jours: nbJours, le: new Date().toISOString() };
+        const meta = f.__mail || {};                // reçu par mail : de quoi répondre à l'expéditeur
+        E.pl.importes[hash] = { nom: f.name, debut: info.debut, fin: info.fin, edition: info.edition, jours: nbJours, le: new Date().toISOString(),
+          contrairement: M.estContrairement(f.name),
+          de: meta.expediteur || (deja && deja.de) || "", msgId: meta.messageId || (deja && deja.msgId) || "",
+          sujetMail: meta.sujet || (deja && deja.sujetMail) || "", confirme: (deja && deja.confirme) || null };
         Stock.marquer([...r.touches], true);
         const jours = Object.keys(info.jours).sort();
         dernier = jours[0];
@@ -1925,6 +1959,10 @@ PGVRVSD    ; [date]
           el("ul", { class: "changements" }, r.changements.map(([d, a, b]) => el("li", { text: M.texteChangement(d, a, b) }))));
         }
         li.append(el("span", { class: "ok", text: "✓" }), bloc);
+        if (!E.pl.importes[hash].confirme) {
+          bloc.append(el("button", { type: "button", class: "btn btn-confirmer", "data-hash": hash, onclick: () => feuilleConfirmation(hash) },
+            iconeEnvoi(), meta.expediteur ? `Confirmer la réception à ${meta.expediteur}` : "Confirmer la réception"));
+        }
       } catch (e) {
         li.append(el("span", { class: "ko", text: "✕" }), el("div", { class: "txt" }, el("b", { text: f.name }),
           el("small", { text: "Non importé : " + (e && e.message ? e.message : e) })));
@@ -2017,9 +2055,12 @@ PGVRVSD    ; [date]
     if (!liste.length) { ul.append(el("li", {}, el("div", { class: "txt discret", text: "Aucune commande importée sur cet appareil." }))); return; }
     for (const [hash, c] of liste) {
       const n = Object.values(E.pl.jours).reduce((s, v) => s + (v.some(sv => sv.empreinte === hash) ? 1 : 0), 0);
-      const li = el("li", {},
-        el("div", { class: "txt" }, el("b", { text: `Du ${dateFr(c.debut)} au ${dateFr(c.fin)}` }),
-          el("small", { text: `${c.nom}${c.edition ? " · édité le " + dateFr(c.edition.slice(0, 10)) + " à " + c.edition.slice(11, 16) : ""} · ${n} jour(s) au planning` })));
+      const txt = el("div", { class: "txt" }, el("b", { text: `Du ${dateFr(c.debut)} au ${dateFr(c.fin)}` }),
+          el("small", { text: `${c.nom}${c.edition ? " · édité le " + dateFr(c.edition.slice(0, 10)) + " à " + c.edition.slice(11, 16) : ""} · ${n} jour(s) au planning` }));
+      if (c.confirme) txt.append(el("small", { class: "confirme", text: (c.confirmeVia === "appli" ? "✓ Confirmation préparée dans l'application mail" : "✓ Réception confirmée")
+        + `${c.confirmeA ? " à " + c.confirmeA : ""} le ${dateFr(c.confirme.slice(0, 10))} (${c.confirme.slice(11, 16)})` }));
+      else txt.append(el("button", { type: "button", class: "lien-confirmer", onclick: () => feuilleConfirmation(hash) }, iconeEnvoi(), "Confirmer la réception"));
+      const li = el("li", {}, txt);
       const b = el("button", { class: "icone-btn", "aria-label": "Retirer cette commande" });
       b.innerHTML = ICONE_POUBELLE;
       b.addEventListener("click", () => {
@@ -2218,6 +2259,7 @@ PGVRVSD    ; [date]
   function choisirFournisseur() {
     const f = FOURNISSEURS.find(x => x.id === $("#mail-fournisseur").value);
     if (f && f.serveur) { $("#mail-serveur").value = f.serveur; $("#mail-port").value = f.port || 993; }
+    if (f && f.smtp) { $("#mail-smtp").value = f.smtp; $("#mail-port-smtp").value = f.port_smtp || 465; }
     else if (f && fournisseurServeur($("#mail-serveur").value).id !== "autre") { $("#mail-serveur").value = ""; $("#mail-port").value = 993; }
     aideMail();
   }
@@ -2247,6 +2289,8 @@ PGVRVSD    ; [date]
     $("#mail-port").value = r.port || 993;
     const f = (!r.serveur && fournisseurAdresse(r.adresse)) || fournisseurServeur(r.serveur || "imap.free.fr");
     if (f) $("#mail-fournisseur").value = f.id;
+    $("#mail-smtp").value = r.smtp || (f && f.smtp) || "";
+    $("#mail-port-smtp").value = (r.smtp ? r.portSmtp : f && f.port_smtp) || 465;
     aideMail();
     $("#mail-trouves").hidden = true;
     $("#mail-oublier").hidden = !r.motDePasse;
@@ -2264,11 +2308,118 @@ PGVRVSD    ; [date]
       if (!expediteurs.length) { toast("Indiquez au moins un expéditeur des commandes."); return false; }
     }
     const err = window.Android.mailEnregistrer(JSON.stringify({ actif: oublier ? false : actif, adresse, motDePasse: mdp, expediteurs,
-      serveur: $("#mail-serveur").value.trim(), port: +$("#mail-port").value || 993, oublier: !!oublier }));
+      serveur: $("#mail-serveur").value.trim(), port: +$("#mail-port").value || 993, oublier: !!oublier,
+      smtp: $("#mail-smtp").value.trim(), portSmtp: +$("#mail-port-smtp").value || 465 }));
     if (err) { toast(err); return false; }
     rendreMail();
     return true;
   }
+  // ------------------------------------------------------------------ confirmation de réception
+  // Bouton « Confirmer la réception » d'une commande : message réglable (Réglages › Confirmation de réception)
+  // envoyé à l'expéditeur. Version « mail » avec boîte réglée : envoyé par l'application (SMTP, Android.mailConfirmer),
+  // en réponse au mail reçu. Sinon : l'application mail du téléphone (ou du navigateur) s'ouvre avec le message prêt.
+  const CONF_DEFAUT = (M.REGLES && M.REGLES.confirmation) || { sujet: "Bien reçu : {type} du {debut} au {fin}", corps: "Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin}.\n\nCordialement,\n{agent}" };
+  const confReglee = () => ({ sujet: CONF_DEFAUT.sujet, corps: CONF_DEFAUT.corps, adresse: "", ...(E.confirmation || {}) });
+  const envoiDirect = () => MAIL_POSSIBLE && typeof window.Android.mailPeutConfirmer === "function" && !!window.Android.mailPeutConfirmer();
+  const adresseOk = a => /^[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+$/.test((a || "").trim());
+  function iconeEnvoi() {
+    const i = el("span", { class: "ic-envoi", "aria-hidden": "true" });
+    i.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4L10 15"/><path d="M21 4l-7 17-4-6-6-4z"/></svg>';
+    return i;
+  }
+  const nomAgent = () => (E.pl.agent || "").toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  function remplirModele(modele, c) {
+    const ed = c.edition ? `${dateFr(c.edition.slice(0, 10))} à ${c.edition.slice(11, 13)}h${c.edition.slice(14, 16)}` : "";
+    const val = { type: c.contrairement ? "commande « contrairement »" : "commande", debut: c.debut ? dateFr(c.debut) : "", fin: c.fin ? dateFr(c.fin) : "",
+      edition: ed, agent: nomAgent(), fichier: c.nom || "" };
+    return (modele || "").replace(/\{(type|debut|fin|edition|agent|fichier)\}/g, (m, k) => val[k])
+      .replace(/ \(édition du \)/g, "").replace(/ du  au /g, " ");
+  }
+  function adressesConnues() {
+    const l = [];
+    const r = MAIL_POSSIBLE ? (mailReglagesLus || lireMail() || {}) : {};
+    for (const a of [confReglee().adresse, ...(r.expediteurs || []), ...Object.values(E.pl.importes).map(c => c.de)]) {
+      if (adresseOk(a) && !l.includes(a.trim().toLowerCase())) l.push(a.trim().toLowerCase());
+    }
+    return l;
+  }
+  let confirmationEnCours = null;
+  function feuilleConfirmation(hash) {
+    const c = E.pl.importes[hash];
+    if (!c) return;
+    const conf = confReglee(), direct = envoiDirect();
+    const connues = adressesConnues();
+    const a = el("input", { type: "email", id: "conf-a", autocomplete: "off", autocapitalize: "none", list: "conf-adresses",
+      value: c.de || conf.adresse || connues[0] || "" });
+    const liste = el("datalist", { id: "conf-adresses" }, connues.map(x => el("option", { value: x })));
+    const sujet = el("input", { type: "text", id: "conf-objet", value: remplirModele(conf.sujet, c) });
+    const corps = el("textarea", { id: "conf-message", rows: "8" }); corps.value = remplirModele(conf.corps, c);
+    const etat = el("p", { class: "discret", style: "margin:10px 0 0" });
+    const r = MAIL_POSSIBLE ? (mailReglagesLus || lireMail() || {}) : {};
+    const go = el("button", { type: "button", class: "btn accent plein" }, direct ? "Envoyer" : "Ouvrir dans l'application mail");
+    const contenu = el("div", {},
+      el("p", { style: "margin:0 0 10px", text: direct ? `Envoyé directement depuis ${r.adresse}${c.de ? ", en réponse au mail reçu" : ""}.`
+        : MAIL_POSSIBLE ? "Envoi direct impossible tant que la boîte (adresse, mot de passe, serveur d'envoi) n'est pas réglée : l'application mail s'ouvrira avec ce message."
+        : "L'application mail s'ouvrira avec ce message : il restera à l'envoyer." }),
+      el("div", { class: "grille-champs", style: "grid-template-columns:1fr" },
+        el("label", { class: "champ", for: "conf-a" }, "À", a, liste),
+        el("label", { class: "champ", for: "conf-objet" }, "Objet", sujet),
+        el("label", { class: "champ", for: "conf-message" }, "Message", corps)),
+      el("div", { style: "margin-top:12px" }, go), etat);
+    const fermer = feuille("Confirmer la réception", contenu, () => { confirmationEnCours = null; });
+    go.addEventListener("click", () => {
+      const dest = a.value.trim();
+      if (!adresseOk(dest)) { etat.className = "ko"; etat.textContent = "Indiquez l'adresse mail du destinataire."; a.focus(); return; }
+      const marquer = via => {
+        c.confirme = M.maintenant ? M.maintenant() : new Date().toISOString().slice(0, 16);
+        c.confirmeA = dest; c.confirmeVia = via;
+        Stock.marquer([], true); rendreListeCommandes();
+        document.querySelectorAll(`.btn-confirmer[data-hash="${hash}"]`).forEach(b => b.remove());
+      };
+      if (!direct) {
+        if (ANDROID && typeof window.Android.ouvrirMail === "function") {
+          const m = window.Android.ouvrirMail(dest, sujet.value, corps.value);
+          if (m) { etat.className = "ko"; etat.textContent = m; return; }
+        } else {
+          location.href = `mailto:${dest}?subject=${encodeURIComponent(sujet.value)}&body=${encodeURIComponent(corps.value)}`;
+        }
+        marquer("appli");
+        fermer(); toast("Message prêt dans l'application mail : envoyez-le.");
+        return;
+      }
+      go.disabled = true; etat.className = "discret"; etat.textContent = "Envoi en cours…";
+      const id = "c" + Date.now();
+      confirmationEnCours = { id, fini: rep => {
+        go.disabled = false;
+        if (rep.ok) { marquer("direct"); fermer(); toast(rep.texte || "Confirmation envoyée."); rendreCommandes(); }
+        else { etat.className = "ko"; etat.textContent = rep.texte || "Confirmation non envoyée."; }
+      } };
+      window.Android.mailConfirmer(JSON.stringify({ id, a: dest, sujet: sujet.value, corps: corps.value, enReponseA: c.msgId || "" }));
+    });
+  }
+  window.__confirmation = rep => {
+    const e = confirmationEnCours;
+    if (e && (!rep.id || rep.id === e.id)) { confirmationEnCours = null; e.fini(rep || {}); }
+    else if (rep && rep.texte) toast(rep.texte);
+  };
+  function rendreConfirmation() {
+    const c = confReglee(), r = MAIL_POSSIBLE ? (mailReglagesLus || lireMail() || {}) : {};
+    $("#conf-sujet").value = c.sujet; $("#conf-corps").value = c.corps; $("#conf-adresse").value = c.adresse || "";
+    $("#conf-mode").textContent = envoiDirect()
+      ? `Le bouton « Confirmer la réception » d'une commande envoie ce message à son expéditeur, directement depuis ${r.adresse}.`
+      : MAIL_POSSIBLE ? "Pour l'envoyer directement depuis l'application, réglez la boîte (adresse, mot de passe et serveur d'envoi) dans Commandes par mail. En attendant, l'application mail s'ouvre avec le message prêt."
+      : "Le bouton « Confirmer la réception » d'une commande ouvre l'application mail avec ce message prêt à envoyer.";
+  }
+  $("#conf-enregistrer").addEventListener("click", () => {
+    const adr = $("#conf-adresse").value.trim();
+    if (adr && !adresseOk(adr)) { toast("Adresse mail incorrecte."); return; }
+    E.confirmation = { sujet: $("#conf-sujet").value, corps: $("#conf-corps").value, adresse: adr };
+    Stock.marquer([], true); toast("Message de confirmation enregistré.");
+  });
+  $("#conf-defaut").addEventListener("click", () => {
+    $("#conf-sujet").value = CONF_DEFAUT.sujet; $("#conf-corps").value = CONF_DEFAUT.corps;
+  });
+
   async function importerCommandesMail() {
     if (!MAIL_POSSIBLE || importMailEnCours) return;
     importMailEnCours = true;
@@ -2280,7 +2431,9 @@ PGVRVSD    ; [date]
       const fichiers = liste.map(x => {
         const bin = atob(x.b64), o = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i);
-        return new File([o], x.nom || "commande.pdf", { type: "application/pdf" });
+        const f = new File([o], x.nom || "commande.pdf", { type: "application/pdf" });
+        f.__mail = { expediteur: x.expediteur || "", messageId: x.messageId || "", sujet: x.sujet || "" };
+        return f;
       });
       montrerOnglet("commandes");
       toast(liste.length > 1 ? `${liste.length} commandes reçues par mail : ajout au planning…` : "Commande reçue par mail : ajout au planning…");
@@ -2380,7 +2533,7 @@ PGVRVSD    ; [date]
 
   // ------------------------------------------------------------------ réglages
   // Réglages : un menu (une ligne par rubrique, avec un résumé) puis une page par rubrique (pageReglage)
-  const TITRES_REGLAGES = { apparence: "Apparence", codes: "Codes et couleurs", mail: "Commandes par mail",
+  const TITRES_REGLAGES = { apparence: "Apparence", codes: "Codes et couleurs", mail: "Commandes par mail", confirmation: "Confirmation de réception",
     agenda: "Agenda du téléphone", sauvegarde: "Sauvegarde et PC", maj: "Mise à jour", danger: "Nouveau planning" };
   function ouvrirPageReglage(nom) {
     if (nom === "mail" && !MAIL_POSSIBLE) nom = null;
@@ -2403,13 +2556,14 @@ PGVRVSD    ; [date]
     $("#menu-mail").hidden = !MAIL_POSSIBLE;
     $("#res-mail").textContent = r.actif ? "Relevé automatique · " + (r.adresse || "") : "Relevé désactivé";
     $("#res-agenda").textContent = "Exporter les services vers l'agenda";
+    $("#res-confirmation").textContent = envoiDirect() ? "Envoyée par l'application à l'expéditeur" : "Message prêt dans l'application mail";
     $("#res-sauvegarde").textContent = E.derniereCopie ? "Dernière copie le " + dateFr(E.derniereCopie) : "Copie, échange avec le PC";
     $("#menu-maj").hidden = !majPossible();
     $("#res-maj").textContent = majPossible() ? (nouvelle() ? "Nouvelle version disponible" : `Version ${VERSION}`) : "";
     $("#res-danger").textContent = "Effacer tous les jours, notes et grèves";
   }
   function rendreReglages() {
-    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail();
+    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail(); rendreConfirmation();
     ouvrirPageReglage(pageReglage);
     $("#version-appli").textContent = `Planning Commandes ${VERSION}` + (MAIL_POSSIBLE ? " · version mail" : ANDROID ? " · version manuelle" : "");
     const web = !ANDROID && !!window.claude;
@@ -2819,6 +2973,7 @@ PGVRVSD    ; [date]
       if (reg) {
         E.pl.agent = reg.agent || ""; E.pl.greves = reg.greves || []; E.pl.importes = reg.importes || {};
         E.pl.modifies = reg.modifies || {}; E.pl.alertes = reg.alertes || [];
+        E.confirmation = reg.confirmation || null;
         if (reg.codesTxt) E.codesTxt = reg.codesTxt;
         if (reg.theme && R.THEMES[reg.theme]) E.theme = reg.theme;
         E.derniereCopie = reg.derniereCopie || null; E.rappelReporte = reg.rappelReporte || null;

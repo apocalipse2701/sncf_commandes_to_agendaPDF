@@ -50,6 +50,8 @@ final class CourrierImap {
         final long uid;
         final String nom, expediteur, date;
         final byte[] octets;
+        /** Pour répondre (confirmation de réception) : adresse de réponse, Message-ID et sujet du mail reçu. */
+        String repondreA = "", messageId = "", sujet = "";
 
         Piece(long uid, String nom, String expediteur, String date, byte[] octets) {
             this.uid = uid;
@@ -137,7 +139,11 @@ final class CourrierImap {
                 if (!expediteurAccepte(msg.de, expediteurs)) continue;
                 for (Mime.Partie p : msg.pdf) {
                     if (!nomAccepte(p.nom)) continue;                       // annexe, autre document…
-                    r.pieces.add(new Piece(uid, p.nom.isEmpty() ? "commande-" + uid + ".pdf" : p.nom, msg.de, msg.date, p.octets));
+                    Piece piece = new Piece(uid, p.nom.isEmpty() ? "commande-" + uid + ".pdf" : p.nom, msg.de, msg.date, p.octets);
+                    piece.repondreA = adresse(msg.repondreA.isEmpty() ? msg.de : msg.repondreA);
+                    piece.messageId = msg.messageId;
+                    piece.sujet = msg.sujet;
+                    r.pieces.add(piece);
                 }
             }
             r.dernierUid = max;
@@ -437,7 +443,7 @@ final class CourrierImap {
         }
 
         static final class Message {
-            String de = "", date = "";
+            String de = "", date = "", repondreA = "", messageId = "", sujet = "";
             final List<Partie> pdf = new ArrayList<>();
         }
 
@@ -470,6 +476,9 @@ final class CourrierImap {
                     case "content-transfer-encoding": encodage = val.toLowerCase(Locale.ROOT); break;
                     case "from": if (racine) m.de = motsEncodes(val); break;
                     case "date": if (racine) m.date = val; break;
+                    case "reply-to": if (racine) m.repondreA = motsEncodes(val); break;
+                    case "message-id": if (racine) m.messageId = val.trim(); break;
+                    case "subject": if (racine) m.sujet = motsEncodes(val); break;
                     default: break;
                 }
             }
