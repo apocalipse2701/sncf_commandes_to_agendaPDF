@@ -7,6 +7,15 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.8.3 — 27 octobre 2026
+
+**Programme PC : noms des codes perdus quand l'exe est lancé ailleurs (correction)**
+- Un exe téléchargé et lancé depuis « Téléchargements » ne trouvait pas `codes.txt` (resté dans le dossier PlanningPDF) : le planning affichait les codes bruts (`GIV002`) au lieu de leurs noms.
+- Le programme retient maintenant son dossier habituel (celui où se trouve votre `codes.txt`) et s'en sert même lancé ailleurs : codes, dossier « commande », polices.
+- Si aucun dossier n'est encore connu, il demande une fois où il se trouve.
+- La page de téléchargement rappelle de placer l'exe dans le dossier PlanningPDF.
+- Application Android : aucun changement.
+
 ## 2.8.2 — 27 octobre 2026
 
 **Confirmation de réception : seulement pour les commandes reçues par mail (PC et Android)**

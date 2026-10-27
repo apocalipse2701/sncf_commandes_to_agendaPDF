@@ -288,6 +288,8 @@ jobs:
             echo "| **Téléphone Android** | [PlanningCommandes.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes.apk) | [PlanningCommandes-mail.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes-mail.apk) |"
             echo "| **PC Windows** | [PlanningPDF.exe](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningPDF.exe) | [PlanningPDF-mail.exe](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningPDF-mail.exe) |"
             echo
+            echo "**PC** : placez l'exe dans votre dossier PlanningPDF habituel (celui qui contient \`codes.txt\` et le dossier \`commande\`), à la place de l'ancien — pas dans Téléchargements."
+            echo
             echo "Une fois installées, l'application et le programme PC se mettent à jour d'eux-mêmes à partir d'ici."
             echo "Toutes les versions : [Releases](https://github.com/${DEPOT_MAJ}/releases)."
             echo

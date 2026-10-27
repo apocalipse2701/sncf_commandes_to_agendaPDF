@@ -431,8 +431,44 @@ CODES = {}
 _codes_etat = {"mtime": None, "erreurs": []}
 
 
+_DOSSIER_PROG = {}
+
+
+def _codes_par_defaut(chemin):
+    """codes.txt absent, ou jamais modifié (créé tout seul par un exe lancé ailleurs, ex. dans Téléchargements)."""
+    try:
+        with open(chemin, encoding="utf-8-sig") as f:
+            return f.read().strip() == CODES_TXT_DEFAUT.strip()
+    except (OSError, UnicodeDecodeError):
+        return not os.path.exists(chemin)
+
+
+def dossier_programme():
+    """Dossier des fichiers de l'utilisateur (codes.txt, dossier « commande », polices…).
+    En principe celui du programme. Mais si l'exe est lancé ailleurs (ex. téléchargé dans « Téléchargements »,
+    sans les codes à côté) : le dossier habituel, retenu lors d'un lancement précédent ou indiqué par l'utilisateur."""
+    if "d" in _DOSSIER_PROG:
+        return _DOSSIER_PROG["d"]
+    d = APP_DIR
+    if not _codes_par_defaut(os.path.join(APP_DIR, FICHIER_CODES)):
+        if lire_prefs().get("dossier_programme") != APP_DIR:
+            ecrire_pref("dossier_programme", APP_DIR)            # retenu pour un exe lancé ailleurs plus tard
+    else:
+        connu = str(lire_prefs().get("dossier_programme") or "")
+        if connu and os.path.normcase(connu) != os.path.normcase(APP_DIR) and os.path.isfile(os.path.join(connu, FICHIER_CODES)):
+            d = connu
+    _DOSSIER_PROG["d"] = d
+    return d
+
+
+def changer_dossier_programme(d):
+    ecrire_pref("dossier_programme", d)
+    _DOSSIER_PROG["d"] = d
+    _codes_etat["mtime"] = None                                   # codes.txt relu au prochain affichage
+
+
 def chemin_codes():
-    return os.path.join(APP_DIR, FICHIER_CODES)
+    return os.path.join(dossier_programme(), FICHIER_CODES)
 
 
 def _couleur(txt):
@@ -790,7 +826,7 @@ R_EDITION = re.compile(r"Edition\s+le\s*(\d{2})/(\d{2})/(\d{4})\s*,?\s*(\d{1,2})
 
 
 def dossier_commandes():
-    d = os.path.join(APP_DIR, DOSSIER_COMMANDES)
+    d = os.path.join(dossier_programme(), DOSSIER_COMMANDES)
     os.makedirs(d, exist_ok=True)
     return d
 
@@ -1468,7 +1504,7 @@ _CACHE = {}
 
 
 def _dossiers_polices():
-    d = [os.path.join(APP_DIR, "polices")]
+    d = list(dict.fromkeys([os.path.join(dossier_programme(), "polices"), os.path.join(APP_DIR, "polices")]))
     if sys.platform.startswith("win"):
         d.append(os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"))
         d.append(os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "Windows", "Fonts"))
@@ -2597,6 +2633,7 @@ def lancer_interface():
                 self.canvas.bind("<Button-2>", self.menu_case)
             self.protocol("WM_DELETE_WINDOW", self.quitter)
             self.bind("<FocusIn>", self.verifier_codes)     # codes.txt modifié pendant ce temps ?
+            self._verifier_dossier_programme()                         # exe lancé hors de son dossier habituel ?
             codes_a_jour()
             self.after(300, lambda: self.actualiser(silencieux=True))   # range + lit le dossier « commande »
             self._maj_prete = False                                     # nouvelle version téléchargée ?
@@ -2636,6 +2673,31 @@ def lancer_interface():
                                              tags="aujourdhui")
             self.lbl_mois.config(text=f"{MOIS_LONG[self.mois - 1].capitalize()} {self.annee}")
             self.maj_resume()
+
+        def _verifier_dossier_programme(self):
+            """Exe lancé hors du dossier PlanningPDF (ex. téléchargé dans « Téléchargements ») : sans codes.txt à côté,
+            les noms affichés seraient les codes bruts (GIV002…). On propose d'indiquer le dossier habituel (une fois)."""
+            if not getattr(sys, "frozen", False) or dossier_programme() != APP_DIR:
+                return
+            if not _codes_par_defaut(os.path.join(APP_DIR, FICHIER_CODES)) or lire_prefs().get("dossier_programme_refus") == APP_DIR:
+                return
+            if not messagebox.askyesno("Dossier du programme", (
+                    f"Ce programme est lancé depuis :\n{APP_DIR}\n\n"
+                    "Vos codes (codes.txt) et votre dossier « commande » ne sont pas à côté. "
+                    "S'il a été téléchargé à part (dans « Téléchargements » par exemple), indiquez votre dossier "
+                    "PlanningPDF habituel : il sera utilisé à chaque lancement.\n\n"
+                    "Le mieux reste de placer l'exe dans ce dossier.\n\nIndiquer le dossier maintenant ?")):
+                ecrire_pref("dossier_programme_refus", APP_DIR)
+                return
+            while True:
+                d = filedialog.askdirectory(title="Votre dossier PlanningPDF (celui qui contient codes.txt)")
+                if not d:
+                    return
+                if os.path.isfile(os.path.join(d, FICHIER_CODES)):
+                    changer_dossier_programme(os.path.normpath(d))
+                    return
+                if not messagebox.askretrycancel("Dossier du programme", f"Pas de codes.txt dans :\n{d}"):
+                    return
 
         def tout_rafraichir(self, sauver=True):
             if sauver:
