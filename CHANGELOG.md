@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.8.1 — 27 octobre 2026
+
+**Application Android : correction**
+- Réglages › Commandes par mail : l'adresse mail tapée s'effaçait quand on touchait le champ du mot de passe.
+  - Cause : l'ouverture du clavier redimensionne la fenêtre, et l'application redessinait alors toutes les pages, réglages compris.
+  - Désormais, seul le planning est redessiné : rien de ce qui est en cours de saisie ne s'efface (adresse, mot de passe, expéditeurs, message de confirmation…).
+- Programme PC : aucun changement.
+
 ## 2.8.0 — 27 octobre 2026
 
 **Mises à jour depuis un dépôt public dédié (PC et Android)**
