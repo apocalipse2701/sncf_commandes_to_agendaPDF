@@ -7,6 +7,15 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.1 — 27 octobre 2026
+
+**Partage du planning : mode d'emploi dans l'application (Android)**
+- Réglages › Partage du planning : nouvelle rubrique dépliable « Comment faire ? », avec les étapes pas à pas.
+  - Téléphone principal : offre kDrive avec WebDAV, numéro du kDrive, mot de passe d'application (à copier tout de suite), code de partage, installation de la version lecture chez le proche.
+  - Version lecture : mêmes réglages et même code, notifications, widgets.
+- Elle rappelle aussi : envoi quand l'application est ouverte, changement de code, dossier à créer soi-même si besoin, arrêt du partage.
+- Programme PC : aucun changement.
+
 ## 2.9.0 — 27 octobre 2026
 
 **Nouvelle application « Planning (lecture) » : votre planning à jour sur le téléphone d'un proche**
