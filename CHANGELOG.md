@@ -7,6 +7,12 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.8.4 — 27 octobre 2026
+
+**Application Android : vos codes protégés (correction)**
+- Une copie du planning faite par un programme PC sans vos codes (exe lancé hors de son dossier, voir 2.8.3) remplaçait les codes du téléphone par les codes d'exemple : le planning affichait `GIV002` au lieu de son nom. Une copie qui ne contient que les codes d'exemple ne remplace plus vos codes.
+- Réglages › Codes et couleurs : si le téléphone n'a que les codes d'exemple, un avis le dit et explique comment importer les vôtres (« Importer un codes.txt », ou copie envoyée par le PC). Le menu l'indique aussi.
+
 ## 2.8.3 — 27 octobre 2026
 
 **Programme PC : noms des codes perdus quand l'exe est lancé ailleurs (correction)**
