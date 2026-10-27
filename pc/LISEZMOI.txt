@@ -168,8 +168,8 @@ COMMANDES PAR MAIL (Fichier › Commandes par mail…) — PlanningPDF-mail.exe 
     est envoyé par le programme à l'expéditeur, en réponse à son mail
     (serveur d'envoi SMTP rempli d'après le fournisseur ; port 465 SSL ou
     587 STARTTLS). Fichier › Confirmer la réception d'une commande… liste
-    les dernières commandes. Version manuelle : la messagerie du PC s'ouvre
-    avec le message prêt.
+    les dernières commandes reçues par mail (rien pour un bulletin ajouté
+    à la main).
   • Le mot de passe est protégé par Windows (lisible seulement par votre
     compte Windows, sur ce PC). « Oublier le mot de passe » l'efface.
   • Premier relevé : les messages des 30 derniers jours ; ensuite seulement

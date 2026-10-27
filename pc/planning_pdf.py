@@ -3453,8 +3453,9 @@ def lancer_interface():
             fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
-            fichier.add_command(label="Confirmer la réception d'une commande…", command=self.fenetre_confirmations)
-            fichier.add_command(label="Message de confirmation…", command=self.fenetre_message_confirmation)
+                # confirmation de réception : seulement pour les commandes reçues par mail
+                fichier.add_command(label="Confirmer la réception d'une commande…", command=self.fenetre_confirmations)
+                fichier.add_command(label="Message de confirmation…", command=self.fenetre_message_confirmation)
             fichier.add_separator()
             fichier.add_command(label="Exporter…", accelerator=f"{ctrl}+E", command=self.exporter)
             fichier.add_command(label="Exporter en images JPEG…", command=self.exporter_images)
@@ -4200,8 +4201,7 @@ def lancer_interface():
         # ---- confirmation de réception -------------------------------------------
         def _conf_reglee(self):
             pr = lire_prefs()
-            return {"sujet": pr.get("conf_sujet") or CONF_DEFAUT["sujet"], "corps": pr.get("conf_corps") or CONF_DEFAUT["corps"],
-                    "adresse": pr.get("conf_adresse", "")}
+            return {"sujet": pr.get("conf_sujet") or CONF_DEFAUT["sujet"], "corps": pr.get("conf_corps") or CONF_DEFAUT["corps"]}
 
         def _envoi_direct(self):
             """Envoi par le programme : version « mail », adresse, mot de passe et serveur d'envoi enregistrés."""
@@ -4218,7 +4218,7 @@ def lancer_interface():
             c.pack(fill="both", expand=True)
             ttk.Label(c, text="Confirmation de réception", font=("", 12, "bold")).pack(anchor="w")
             ttk.Label(c, foreground="#555", wraplength=480, justify="left", text=(
-                "Envoyé à l'expéditeur d'une commande par « Confirmer la réception ». "
+                "Envoyé à l'expéditeur d'une commande reçue par mail, par « Confirmer la réception ». "
                 + ("Le programme l'envoie lui-même depuis votre boîte." if self._envoi_direct() else
                    "Votre messagerie s'ouvre avec le message prêt." if not MAIL_DISPONIBLE else
                    "Pour qu'il parte directement, réglez la boîte et son serveur d'envoi (Fichier › Commandes par mail) ; "
@@ -4231,18 +4231,12 @@ def lancer_interface():
             txt = tk.Text(c, width=70, height=9, wrap="word", font=(self.police_ui, 10))
             txt.insert("1.0", conf["corps"])
             txt.pack(anchor="w", fill="both", expand=True)
-            ttk.Label(c, text="Destinataire des bulletins ajoutés à la main (facultatif) :").pack(anchor="w", pady=(8, 0))
-            v_adr = tk.StringVar(value=conf["adresse"])
-            ttk.Entry(c, textvariable=v_adr, width=40).pack(anchor="w")
+            ttk.Label(c, foreground="#555", text="Seulement pour les commandes reçues par mail : la confirmation part à leur expéditeur.").pack(
+                anchor="w", pady=(8, 0))
 
             def enregistrer():
-                adr = v_adr.get().strip()
-                if adr and not R_ADRESSE.match(adr):
-                    messagebox.showwarning("Message de confirmation", "Adresse mail incorrecte.", parent=fen)
-                    return
                 ecrire_pref("conf_sujet", v_sujet.get())
                 ecrire_pref("conf_corps", txt.get("1.0", "end-1c"))
-                ecrire_pref("conf_adresse", adr)
                 self.statut.config(text="Message de confirmation enregistré.")
                 fen.destroy()
 
@@ -4266,7 +4260,8 @@ def lancer_interface():
                 except OSError:
                     continue
                 rel = self.pl.importes.get(emp, "")
-                if emp in self.pl.importes and not str(rel).startswith("ignoré"):
+                # seulement les commandes reçues par mail (pas celles ajoutées à la main)
+                if emp in self.pl.importes and not str(rel).startswith("ignoré") and emp in self.pl.recus_mail:
                     l.append((emp, f))
             l.sort(key=lambda x: os.path.getmtime(x[1]), reverse=True)
             return l
@@ -4279,7 +4274,8 @@ def lancer_interface():
             connues = connues[:20]
             if not connues:
                 if not empreintes:
-                    messagebox.showinfo("Confirmer la réception", "Aucun bulletin dans le dossier « commande » pour l'instant.")
+                    messagebox.showinfo("Confirmer la réception", "Aucune commande reçue par mail pour l'instant.\n"
+                                        "(La confirmation ne concerne que les commandes reçues par mail.)")
                 return
             fen = tk.Toplevel(self)
             fen.title("Confirmer la réception")
@@ -4309,7 +4305,7 @@ def lancer_interface():
                         ttk.Label(liste, text="✓ " + etat, foreground="#1e7a3c").grid(row=i, column=1, sticky="w", padx=10)
                     else:
                         ttk.Label(liste, foreground="#555", text=(f"reçue de {recu['expediteur']}" if recu.get("expediteur")
-                                                                  else "ajoutée à la main")).grid(row=i, column=1, sticky="w", padx=10)
+                                                                  else "reçue par mail")).grid(row=i, column=1, sticky="w", padx=10)
                     ttk.Button(liste, text="Confirmer…" if not conf else "Renvoyer…",
                                command=lambda e=emp, ch=chemin: self.dialogue_confirmation(e, ch, apres=remplir)).grid(
                         row=i, column=2, sticky="e", pady=2)
@@ -4330,7 +4326,7 @@ def lancer_interface():
                       "edition": info.get("edition"), "agent": info.get("agent") or self.pl.agent, "fichier": os.path.basename(chemin)}
             pr = lire_prefs()
             connues = []
-            for a in [recu.get("expediteur", ""), conf["adresse"]] + list(pr.get("mail_expediteurs") or []) \
+            for a in [recu.get("expediteur", "")] + list(pr.get("mail_expediteurs") or []) \
                     + [r.get("expediteur", "") for r in self.pl.recus_mail.values()]:
                 a = (a or "").strip().lower()
                 if R_ADRESSE.match(a) and a not in connues:

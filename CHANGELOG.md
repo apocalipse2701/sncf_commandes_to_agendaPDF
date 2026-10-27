@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.8.2 — 27 octobre 2026
+
+**Confirmation de réception : seulement pour les commandes reçues par mail (PC et Android)**
+- Le bouton « Confirmer la réception » n'apparaît plus pour un bulletin ajouté à la main (ni partagé depuis une autre application) : seulement pour une commande reçue par mail.
+- Les versions manuelles (sans relevé du mail) n'ont plus cette fonction : ni bouton, ni réglage.
+- Réglages › Confirmation de réception : le champ « Destinataire des bulletins ajoutés à la main » est retiré.
+- PC : Fichier › Confirmer la réception… ne liste que les commandes reçues par mail ; les deux menus de confirmation n'existent que dans la version « mail ».
+
 ## 2.8.1 — 27 octobre 2026
 
 **Application Android : correction**
