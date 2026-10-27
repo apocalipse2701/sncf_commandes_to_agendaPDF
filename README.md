@@ -92,7 +92,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les
 - Les widgets changent de jour tout seuls, même téléphone en veille ou après un redémarrage.
 
 **Toujours à jour**
-- Une fois par jour, l'application et l'exe regardent la page **Releases** de ce dépôt. S'il y a une nouvelle version, ils proposent de **la télécharger et l'installer** sans passer par le navigateur. Le planning est conservé.
+- Une fois par jour, l'application et l'exe regardent le dépôt public des mises à jour **[planning-commandes-maj](https://github.com/apocalipse2701/planning-commandes-maj)**. S'il y a une nouvelle version, ils proposent de **la télécharger et l'installer** sans passer par le navigateur. Le planning est conservé.
 
 ---
 
@@ -107,7 +107,7 @@ Même planning et mêmes réglages : on passe de l'une à l'autre en installant 
 
 ## 📲 Installer sur le téléphone
 
-1. Sur le téléphone, ouvrez **[Releases → dernière version](../../releases/latest)**.
+1. Sur le téléphone, ouvrez **[planning-commandes-maj](https://github.com/apocalipse2701/planning-commandes-maj)** (liens directs vers la dernière version).
 2. Touchez **`PlanningCommandes.apk`** (ou **`PlanningCommandes-mail.apk`**), puis ouvrez le fichier téléchargé.
 3. Autorisez l'installation depuis cette source si Android le demande, puis **Installer**.
 4. Si Play Protect signale une « appli inconnue » (normal hors Play Store) : **Plus de détails → Installer quand même**.
@@ -116,7 +116,7 @@ Android 7.0 ou plus récent. Les versions suivantes se proposent toutes seules (
 
 ## 💻 Installer sur le PC
 
-1. Ouvrez **[Releases → exe](../../releases/tag/exe)** et téléchargez **`PlanningPDF.exe`** (ou **`PlanningPDF-mail.exe`**).
+1. Ouvrez **[planning-commandes-maj](https://github.com/apocalipse2701/planning-commandes-maj)** et téléchargez **`PlanningPDF.exe`** (ou **`PlanningPDF-mail.exe`**).
 2. Placez-le dans un dossier à vous (par exemple `Documents\PlanningPDF`) et double-cliquez dessus. Si Windows affiche « Windows a protégé votre ordinateur » : **Informations complémentaires → Exécuter quand même**.
 
 Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une mise à jour…**) : l'exe se remplace à la fermeture et se relance.

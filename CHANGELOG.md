@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.8.0 — 27 octobre 2026
+
+**Mises à jour depuis un dépôt public dédié (PC et Android)**
+- Les nouvelles versions sont publiées dans un dépôt GitHub **public et séparé**, `planning-commandes-maj`.
+  - Il ne contient que les APK, les exe, une page de téléchargement avec des liens directs et les nouveautés.
+  - Le dépôt du code peut ainsi devenir **privé**.
+- L'application et le programme PC y cherchent leurs mises à jour :
+  - ils affichent le **numéro de version** (2.8.0…) et les **nouveautés** avant d'installer ;
+  - ils vérifient l'**empreinte SHA-256** du fichier téléchargé (fichier abîmé ou incomplet refusé).
+- **Transition automatique** : cette version est aussi publiée à l'ancienne place. Les téléphones et PC déjà installés s'y mettent à jour seuls, puis regardent le nouveau dépôt.
+
 ## 2.7.0 — 26 octobre 2026
 
 **Confirmer la réception d'une commande à l'expéditeur (PC et Android)**

@@ -697,7 +697,10 @@ public class MainActivity extends Activity {
                 try {
                     r.put("installee", MiseAJour.versionInstallee(MainActivity.this));
                     try {
-                        r.put("publiee", MiseAJour.versionPubliee(MainActivity.this));
+                        MiseAJour.Publication pub = MiseAJour.publication(MainActivity.this);
+                        r.put("publiee", pub.version);
+                        r.put("nom", pub.nom);
+                        r.put("notes", pub.notes);
                         r.put("ok", true);
                     } catch (java.net.UnknownHostException e) {
                         r.put("ok", false).put("erreur", "pas de connexion Internet");

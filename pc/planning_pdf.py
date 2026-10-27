@@ -155,9 +155,11 @@ FICHIER_PREFS = "preferences.json"
 
 
 # ---------------------------------------------------------------------------
-#  Mise à jour automatique de PlanningPDF.exe (release « exe » du dépôt GitHub)
-#  La recette GitHub intègre version_build.json : {"version": N, "depot": "pseudo/planning-commandes"}
-#  et publie version.json ({"version": N}) à côté de PlanningPDF.exe dans la release « exe ».
+#  Mise à jour automatique de PlanningPDF.exe
+#  La recette GitHub intègre version_build.json : {"version": N, "depot": "pseudo/planning-commandes-maj"}.
+#  Dépôt public des mises à jour : fiche releases/latest/download/maj.json
+#    {"version": N, "nom": "2.8.0", "tag": "v2.8.0-28", "notes": "…", "fichiers": {"PlanningPDF.exe": {"sha256": …}, …}}
+#  (ancien format, encore lu si la fiche manque : release « exe » avec version.json = {"version": N}).
 # ---------------------------------------------------------------------------
 FICHIER_VERSION = "version_build.json"
 
@@ -215,7 +217,7 @@ def _ouvrir_url(adresse, delai=20):
             return urllib.request.urlopen(req, timeout=delai, context=ctx)
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                raise OSError("aucune version publiée trouvée (dépôt privé ou release « exe » absente)")
+                raise _Absent("aucune version publiée trouvée")
             raise OSError(f"réponse {e.code} de GitHub")
         except urllib.error.URLError as e:
             derniere = e
@@ -229,18 +231,60 @@ def _ouvrir_url(adresse, delai=20):
     raise OSError("pas de connexion Internet")
 
 
-def version_publiee(depot):
-    """Numéro de la dernière version de l'exe publiée sur GitHub."""
-    with _ouvrir_url(_adresse_release(depot, "version.json")) as r:
+class _Absent(OSError):
+    """Fichier absent sur GitHub (404)."""
+
+
+_PUBLICATIONS = {}          # dépôt -> dernière fiche lue (tag, empreintes) pour le téléchargement
+
+
+def lire_fiche_maj(texte):
+    """Fiche maj.json → dict (version, nom, tag, notes, fichiers) ; None si elle est illisible."""
+    try:
+        d = json.loads(texte)
+        v, tag = int(d.get("version")), str(d.get("tag") or "")
+        if v <= 0 or not re.fullmatch(r"[\w.-]+", tag):
+            return None
+        return {"version": v, "nom": str(d.get("nom") or ""), "tag": tag, "notes": str(d.get("notes") or ""),
+                "fichiers": d.get("fichiers") if isinstance(d.get("fichiers"), dict) else {}, "fiche": True}
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def publication(depot):
+    """Dernière version publiée : fiche maj.json du dépôt des mises à jour, sinon ancien version.json."""
+    try:
+        with _ouvrir_url(f"https://github.com/{depot}/releases/latest/download/maj.json") as r:
+            p = lire_fiche_maj(r.read(262144).decode("utf-8", "replace"))
+        if p is None:
+            raise OSError("fiche de version illisible")
+    except _Absent:
         try:
-            return int(json.loads(r.read(65536).decode("utf-8")).get("version"))
+            with _ouvrir_url(_adresse_release(depot, "version.json")) as r:
+                p = {"version": int(json.loads(r.read(65536).decode("utf-8")).get("version")), "nom": "", "tag": "",
+                     "notes": "", "fichiers": {}, "fiche": False}
+        except _Absent:
+            raise OSError("aucune version publiée trouvée")
         except (ValueError, TypeError, AttributeError):
             raise OSError("fichier de version illisible")
+    _PUBLICATIONS[depot] = p
+    return p
+
+
+def version_publiee(depot):
+    """Numéro de la dernière version de l'exe publiée sur GitHub."""
+    return publication(depot)["version"]
 
 
 def telecharger_exe(depot, destination, progression=None):
-    """Télécharge la nouvelle PlanningPDF.exe dans « destination » (vérifie que c'est bien un programme Windows)."""
-    with _ouvrir_url(_adresse_release(depot, NOM_EXE), delai=60) as r:          # même variante
+    """Télécharge la nouvelle PlanningPDF.exe dans « destination » (vérifie que c'est bien un programme Windows,
+    et son empreinte SHA-256 si la fiche maj.json la donne)."""
+    import hashlib
+    pub = _PUBLICATIONS.get(depot) or publication(depot)
+    adresse = (f"https://github.com/{depot}/releases/download/{pub['tag']}/{NOM_EXE}" if pub.get("fiche")
+               else _adresse_release(depot, NOM_EXE))
+    attendu = str((pub.get("fichiers", {}).get(NOM_EXE) or {}).get("sha256") or "").lower()
+    with _ouvrir_url(adresse, delai=60) as r:          # même variante
         total = int(r.headers.get("Content-Length") or 0)
         lu, dernier = 0, -1
         with open(destination + ".tmp", "wb") as f:
@@ -258,6 +302,14 @@ def telecharger_exe(depot, destination, progression=None):
         if f.read(2) != b"MZ" or lu < 1_000_000:
             os.remove(destination + ".tmp")
             raise OSError("le fichier téléchargé n'est pas un programme Windows")
+    if attendu:
+        h = hashlib.sha256()
+        with open(destination + ".tmp", "rb") as f:
+            for bloc in iter(lambda: f.read(1 << 20), b""):
+                h.update(bloc)
+        if h.hexdigest() != attendu:
+            os.remove(destination + ".tmp")
+            raise OSError("le fichier téléchargé est abîmé (empreinte différente) : réessayez")
     os.replace(destination + ".tmp", destination)
 
 
@@ -4679,9 +4731,16 @@ def lancer_interface():
                     self.statut.config(text="")
                     messagebox.showinfo("Mise à jour", f"Vous avez la dernière version (n° {version}).")
                 return
+            pub = _PUBLICATIONS.get(version_build()[1]) or {}
+            nom = f"version {pub['nom']}" if pub.get("nom") else f"n° {publiee}"
+            notes = re.sub(r"\*\*|`", "", pub.get("notes", "")).strip()
+            if len(notes) > 1200:
+                notes = notes[:1200].rsplit("\n", 1)[0] + "\n…"
             if not messagebox.askyesno("Mise à jour disponible",
-                                       f"Une nouvelle version de Planning PDF est disponible : n° {publiee} "
-                                       f"(vous avez le n° {version}).\n\nLa télécharger et l'installer maintenant ?\n"
+                                       f"Une nouvelle version de Planning PDF est disponible : {nom} "
+                                       f"(vous avez la version {version_appli()}).\n\n"
+                                       + (f"Nouveautés :\n{notes}\n\n" if notes else "")
+                                       + "La télécharger et l'installer maintenant ?\n"
                                        "Votre planning, vos codes et vos réglages sont conservés."):
                 return
             self._installer_maj(publiee)

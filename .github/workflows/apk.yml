@@ -7,12 +7,27 @@ on:
 permissions:
   contents: write
 
+# Dépôt PUBLIC des mises à jour (« planning-commandes-maj ») : APK, exe et fiche maj.json y sont publiés par le job
+# « publier », avec le secret MAJ_TOKEN (jeton GitHub limité à ce dépôt, Contents : lecture et écriture).
+# Sans ce secret, tout reste comme avant : l'appli et l'exe cherchent leurs mises à jour dans ce dépôt-ci.
+env:
+  NOM_DEPOT_MAJ: planning-commandes-maj
+
 jobs:
   # ---------------------------------------------------------------- application Android
   apk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Dépôt des mises à jour
+        shell: bash
+        env:
+          MAJ_TOKEN: ${{ secrets.MAJ_TOKEN }}
+        run: |
+          if [ -n "$MAJ_TOKEN" ]; then DEPOT="${{ github.repository_owner }}/${NOM_DEPOT_MAJ}"; else DEPOT="${{ github.repository }}"; fi
+          echo "DEPOT_MAJ=$DEPOT" >> "$GITHUB_ENV"
+          echo "Les mises à jour seront cherchées dans : $DEPOT"
 
       - uses: actions/setup-java@v4
         with:
@@ -111,6 +126,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Dépôt des mises à jour
+        shell: bash
+        env:
+          MAJ_TOKEN: ${{ secrets.MAJ_TOKEN }}
+        run: |
+          if [ -n "$MAJ_TOKEN" ]; then DEPOT="${{ github.repository_owner }}/${NOM_DEPOT_MAJ}"; else DEPOT="${{ github.repository }}"; fi
+          echo "DEPOT_MAJ=$DEPOT" >> "$GITHUB_ENV"
+          echo "Les mises à jour seront cherchées dans : $DEPOT"
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -122,7 +146,7 @@ jobs:
       - name: Numéro de version, dépôt et version « manuelle »
         shell: bash
         run: |
-          echo '{"version": ${{ github.run_number }}, "depot": "${{ github.repository }}", "mail": false}' > pc/version_build.json
+          echo "{\"version\": ${{ github.run_number }}, \"depot\": \"$DEPOT_MAJ\", \"mail\": false}" > pc/version_build.json
           echo '{"version": ${{ github.run_number }}}' > version.json
 
       - name: Fabriquer PlanningPDF.exe (version manuelle, sans mail)
@@ -140,7 +164,7 @@ jobs:
       - name: Version « mail »
         shell: bash
         run: |
-          echo '{"version": ${{ github.run_number }}, "depot": "${{ github.repository }}", "mail": true}' > pc/version_build.json
+          echo "{\"version\": ${{ github.run_number }}, \"depot\": \"$DEPOT_MAJ\", \"mail\": true}" > pc/version_build.json
 
       - name: Fabriquer PlanningPDF-mail.exe (commandes récupérées dans la boîte mail)
         working-directory: pc
@@ -193,3 +217,85 @@ jobs:
             --title "Planning PDF (Windows) — version ${VERSION} (fabrication ${{ github.run_number }})" \
             --notes "Deux versions, à choisir : PlanningPDF.exe (manuelle : bulletins déposés dans le dossier commande ou ajoutés à la main) ; PlanningPDF-mail.exe (en plus, récupère les commandes dans la boîte mail). Placez l'exe dans votre dossier PlanningPDF (à côté de codes.txt et du dossier commande)." \
             --latest=false
+
+  # ---------------------------------------------------------------- dépôt public des mises à jour
+  # Une release par version (« v2.8.0-28 », marquée « latest ») : les 4 fichiers + maj.json (numéro, nom, nouveautés,
+  # empreintes SHA-256). L'appli et l'exe lisent https://github.com/<dépôt>/releases/latest/download/maj.json.
+  publier:
+    needs: [apk, exe]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Jeton du dépôt des mises à jour
+        env:
+          MAJ_TOKEN: ${{ secrets.MAJ_TOKEN }}
+        run: |
+          if [ -z "$MAJ_TOKEN" ]; then
+            echo "::notice::Secret MAJ_TOKEN absent : rien n'est publié dans le dépôt des mises à jour (les releases « apk » et « exe » de ce dépôt suffisent)."
+            echo "PUBLIER=non" >> "$GITHUB_ENV"
+          else
+            echo "PUBLIER=oui" >> "$GITHUB_ENV"
+            echo "DEPOT_MAJ=${{ github.repository_owner }}/${NOM_DEPOT_MAJ}" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/download-artifact@v4
+        if: env.PUBLIER == 'oui'
+        with:
+          path: fichiers
+          merge-multiple: true
+
+      - name: Fiche maj.json et nouveautés
+        if: env.PUBLIER == 'oui'
+        run: |
+          VERSION="$(tr -d '\r\n' < pc/VERSION)"
+          TAG="v${VERSION}-${{ github.run_number }}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          awk -v v="$VERSION" 'index($0, "## " v " ") == 1 {f = 1; next} /^## / {f = 0} f' CHANGELOG.md > notes.md || true
+          ls -l fichiers
+          python3 - "$VERSION" "$TAG" "${{ github.run_number }}" <<'PY'
+          import hashlib, json, os, sys, datetime
+          version, tag, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
+          fichiers = {}
+          for nom in ("PlanningCommandes.apk", "PlanningCommandes-mail.apk", "PlanningPDF.exe", "PlanningPDF-mail.exe"):
+              chemin = os.path.join("fichiers", nom)
+              donnees = open(chemin, "rb").read()
+              fichiers[nom] = {"sha256": hashlib.sha256(donnees).hexdigest(), "taille": len(donnees)}
+          fiche = {"version": n, "nom": version, "tag": tag, "date": datetime.date.today().isoformat(),
+                   "notes": open("notes.md", encoding="utf-8").read().strip(), "fichiers": fichiers}
+          json.dump(fiche, open("fichiers/maj.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+          print(json.dumps({k: v for k, v in fiche.items() if k != "notes"}, ensure_ascii=False, indent=1))
+          PY
+
+      - name: Publier dans le dépôt des mises à jour
+        if: env.PUBLIER == 'oui'
+        env:
+          GH_TOKEN: ${{ secrets.MAJ_TOKEN }}
+        run: |
+          printf '\n---\n**Téléphone** : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk (commandes par mail). **Windows** : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. Les applications installées se mettent à jour toutes seules (Réglages › Mise à jour ; sur PC, au démarrage).\n' >> notes.md
+          gh release create "$TAG" fichiers/PlanningCommandes.apk fichiers/PlanningCommandes-mail.apk \
+            fichiers/PlanningPDF.exe fichiers/PlanningPDF-mail.exe fichiers/maj.json \
+            --repo "$DEPOT_MAJ" --title "Version ${VERSION}" --notes-file notes.md --latest
+          # page d'accueil du dépôt : liens directs vers la dernière version
+          {
+            echo "# Planning Commandes — mises à jour"
+            echo
+            echo "Dernière version : **${VERSION}** ($(date +%d/%m/%Y))."
+            echo
+            echo "| | Version manuelle | Version « mail » (commandes relevées dans la boîte mail) |"
+            echo "|---|---|---|"
+            echo "| **Téléphone Android** | [PlanningCommandes.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes.apk) | [PlanningCommandes-mail.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes-mail.apk) |"
+            echo "| **PC Windows** | [PlanningPDF.exe](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningPDF.exe) | [PlanningPDF-mail.exe](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningPDF-mail.exe) |"
+            echo
+            echo "Une fois installées, l'application et le programme PC se mettent à jour d'eux-mêmes à partir d'ici."
+            echo "Toutes les versions : [Releases](https://github.com/${DEPOT_MAJ}/releases)."
+            echo
+            echo "## Nouveautés de la version ${VERSION}"
+            echo
+            awk -v v="$VERSION" 'index($0, "## " v " ") == 1 {f = 1; next} /^## / {f = 0} f' CHANGELOG.md
+          } > LISEZ.md
+          SHA="$(gh api "repos/${DEPOT_MAJ}/contents/README.md" --jq .sha 2>/dev/null || true)"
+          gh api -X PUT "repos/${DEPOT_MAJ}/contents/README.md" -f message="Version ${VERSION}" \
+            -f content="$(base64 -w0 LISEZ.md)" ${SHA:+-f sha="$SHA"} > /dev/null
+          echo "Publié : https://github.com/${DEPOT_MAJ}/releases/tag/${TAG}"
