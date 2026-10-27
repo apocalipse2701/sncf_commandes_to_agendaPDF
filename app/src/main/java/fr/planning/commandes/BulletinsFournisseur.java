@@ -18,10 +18,13 @@ import java.io.FileNotFoundException;
  */
 public class BulletinsFournisseur extends ContentProvider {
 
-    static final String AUTORITE = "fr.planning.commandes.bulletins";
+    /** « <applicationId>.bulletins » : chaque variante (manuelle/mail, lecture) a le sien. */
+    static String autorite(android.content.Context c) {
+        return c.getPackageName() + ".bulletins";
+    }
 
-    static Uri adresse(String rel) {
-        Uri.Builder b = new Uri.Builder().scheme("content").authority(AUTORITE);
+    static Uri adresse(android.content.Context c, String rel) {
+        Uri.Builder b = new Uri.Builder().scheme("content").authority(autorite(c));
         for (String morceau : rel.split("/")) if (!morceau.isEmpty()) b.appendPath(morceau);
         return b.build();
     }

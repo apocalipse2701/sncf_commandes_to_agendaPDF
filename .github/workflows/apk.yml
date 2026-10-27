@@ -69,16 +69,17 @@ jobs:
           fi
           echo "KEYSTORE_FILE=$CLE" >> "$GITHUB_ENV"
 
-      # deux versions : manuelle (sans mail, comme avant) et « mail » (commandes récupérées dans la boîte mail)
-      - name: Construire l'application (2 versions)
+      # trois versions : manuelle, « mail » (commandes récupérées dans la boîte mail) et « lecture » (planning partagé, pour un proche)
+      - name: Construire l'application (3 versions)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle assembleManuelRelease assembleMailRelease --no-daemon --stacktrace
+        run: gradle assembleManuelRelease assembleMailRelease assembleLectureRelease --no-daemon --stacktrace
 
       - name: Préparer les fichiers
         run: |
           cp app/build/outputs/apk/manuel/release/app-manuel-release.apk PlanningCommandes.apk
           cp app/build/outputs/apk/mail/release/app-mail-release.apk PlanningCommandes-mail.apk
+          cp app/build/outputs/apk/lecture/release/app-lecture-release.apk PlanningCommandes-lecture.apk
           # numéro de version lu par l'application pour proposer la mise à jour
           echo '{"version": ${{ github.run_number }}}' > version.json
 
@@ -88,6 +89,7 @@ jobs:
           path: |
             PlanningCommandes.apk
             PlanningCommandes-mail.apk
+            PlanningCommandes-lecture.apk
 
       # archive permanente de cette fabrication (rien n'est jamais effacé) : release « vX.Y.Z-N », complétée par les 2 jobs
       - name: Archiver dans « Version X.Y.Z (fabrication N) »
@@ -258,7 +260,7 @@ jobs:
           import hashlib, json, os, sys, datetime
           version, tag, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
           fichiers = {}
-          for nom in ("PlanningCommandes.apk", "PlanningCommandes-mail.apk", "PlanningPDF.exe", "PlanningPDF-mail.exe"):
+          for nom in ("PlanningCommandes.apk", "PlanningCommandes-mail.apk", "PlanningCommandes-lecture.apk", "PlanningPDF.exe", "PlanningPDF-mail.exe"):
               chemin = os.path.join("fichiers", nom)
               donnees = open(chemin, "rb").read()
               fichiers[nom] = {"sha256": hashlib.sha256(donnees).hexdigest(), "taille": len(donnees)}
@@ -273,8 +275,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.MAJ_TOKEN }}
         run: |
-          printf '\n---\n**Téléphone** : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk (commandes par mail). **Windows** : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. Les applications installées se mettent à jour toutes seules (Réglages › Mise à jour ; sur PC, au démarrage).\n' >> notes.md
-          gh release create "$TAG" fichiers/PlanningCommandes.apk fichiers/PlanningCommandes-mail.apk \
+          printf '\n---\n**Téléphone** : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk (commandes par mail) ; PlanningCommandes-lecture.apk pour un proche qui consulte le planning partagé. **Windows** : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. Les applications installées se mettent à jour toutes seules (Réglages › Mise à jour ; sur PC, au démarrage).\n' >> notes.md
+          gh release create "$TAG" fichiers/PlanningCommandes.apk fichiers/PlanningCommandes-mail.apk fichiers/PlanningCommandes-lecture.apk \
             fichiers/PlanningPDF.exe fichiers/PlanningPDF-mail.exe fichiers/maj.json \
             --repo "$DEPOT_MAJ" --title "Version ${VERSION}" --notes-file notes.md --latest
           # page d'accueil du dépôt : liens directs vers la dernière version
@@ -287,6 +289,8 @@ jobs:
             echo "|---|---|---|"
             echo "| **Téléphone Android** | [PlanningCommandes.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes.apk) | [PlanningCommandes-mail.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes-mail.apk) |"
             echo "| **PC Windows** | [PlanningPDF.exe](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningPDF.exe) | [PlanningPDF-mail.exe](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningPDF-mail.exe) |"
+            echo
+            echo "**Pour un proche** (conjoint…) qui veut seulement voir votre planning à jour : [PlanningCommandes-lecture.apk](https://github.com/${DEPOT_MAJ}/releases/latest/download/PlanningCommandes-lecture.apk) — à régler avec le kDrive et le code de partage (Réglages › Partage du planning sur votre téléphone)."
             echo
             echo "**PC** : placez l'exe dans votre dossier PlanningPDF habituel (celui qui contient \`codes.txt\` et le dossier \`commande\`), à la place de l'ancien — pas dans Téléchargements."
             echo

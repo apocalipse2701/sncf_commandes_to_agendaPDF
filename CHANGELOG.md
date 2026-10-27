@@ -5,7 +5,18 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 - **MINEUR** (2.1.0) : nouvelle fonction ou changement visible ;
 - **MAJEUR** (3.0.0) : grand changement (fonctionnement, fichiers, versions de l'application).
 
-Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
+Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
+
+## 2.9.0 — 27 octobre 2026
+
+**Nouvelle application « Planning (lecture) » : votre planning à jour sur le téléphone d'un proche**
+- Nouveau fichier `PlanningCommandes-lecture.apk`, à installer sur le téléphone de la personne qui veut consulter votre planning (conjoint…). Les deux autres versions ne changent pas ; celle-ci s'installe à côté sans les remplacer.
+- Elle affiche le planning (mois, page A4, détail du jour, export PDF/JPEG, agenda), les widgets et les avis « Contrairement » (fond jaune et notification), sans rien pouvoir modifier : pas d'onglet Commandes, ni note, ni grève.
+- Le planning vient de votre téléphone, par votre **kDrive Infomaniak** (WebDAV) : Réglages › **Partage du planning**, à régler sur les deux téléphones avec le même compte, le même dossier et le même **code de partage**.
+- Votre téléphone envoie le planning quelques secondes après chaque changement (commande ajoutée, reçue par mail, note, grève…), et à l'ouverture de l'application. Le téléphone du proche le relit à l'ouverture et toutes les heures, et met ses widgets à jour.
+- Le fichier déposé sur le kDrive est **chiffré** (AES-256) avec le code de partage : sans ce code, il est illisible.
+- Les avis « Contrairement » se valident séparément sur chaque téléphone ; seuls ceux des 14 derniers jours sont montrés au proche.
+- Programme PC : aucun changement (le partage part du téléphone).
 
 ## 2.8.4 — 27 octobre 2026
 

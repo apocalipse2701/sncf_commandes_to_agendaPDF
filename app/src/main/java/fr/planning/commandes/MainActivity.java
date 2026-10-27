@@ -65,6 +65,7 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         setContentView(web);
         ReleveMail.programmer(this);           // tâche de relevé à jour (annulée si désactivée ou version manuelle)
+        PartagePlanning.programmer(this);      // version « lecture » : relève du planning partagé toutes les heures
         barreEtatOrigine = getWindow().getStatusBarColor();
         barreNavOrigine = getWindow().getNavigationBarColor();
         drapeauxOrigine = getWindow().getDecorView().getSystemUiVisibility();
@@ -228,6 +229,7 @@ public class MainActivity extends Activity {
             }
             return;
         }
+        if (BuildConfig.LECTURE) return;                                        // lecture : aucun bulletin à importer
         Uri u = null;
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             u = intent.getData();
@@ -287,6 +289,18 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (BuildConfig.LECTURE) recevoirPartage();
+    }
+
+    /** Lecture : relit le planning partagé ; la page reçoit window.__partageRecu({ok, texte, nouveau}). */
+    private void recevoirPartage() {
+        if (!PartagePlanning.prefs(this).getBoolean("actif", false)) return;
+        new Thread(() -> appelerPage("__partageRecu", PartagePlanning.recevoir(MainActivity.this, false).toString())).start();
+    }
+
+    @Override
     protected void onPause() {
         // enregistre tout de suite ce qui est en attente
         web.evaluateJavascript("window.__sauverMaintenant && window.__sauverMaintenant()", null);
@@ -334,6 +348,57 @@ public class MainActivity extends Activity {
     }
 
     private class Passerelle {
+        // ---- partage du planning (kDrive / WebDAV) ----
+
+        /** true dans PlanningCommandes-lecture.apk : la page n'affiche que le planning partagé, sans rien modifier. */
+        @JavascriptInterface
+        public boolean modeLecture() {
+            return BuildConfig.LECTURE;
+        }
+
+        /** {actif, adresse, identifiant, dossier, motDePasse, code, etat, recu}. */
+        @JavascriptInterface
+        public String partageReglages() {
+            return PartagePlanning.reglages(MainActivity.this).toString();
+        }
+
+        /** Enregistre les réglages du partage ; renvoie "" ou un message d'erreur. */
+        @JavascriptInterface
+        public String partageEnregistrer(String json) {
+            try {
+                JSONObject o = new JSONObject(json);
+                PartagePlanning.enregistrer(MainActivity.this, o);
+                if (BuildConfig.LECTURE && o.optBoolean("actif", false)) demanderNotifications();
+                return "";
+            } catch (Exception e) {
+                return "Enregistrement impossible : " + PartagePlanning.raison(e);
+            }
+        }
+
+        /** Code de partage proposé (12 caractères). */
+        @JavascriptInterface
+        public String partageNouveauCode() {
+            return PartagePlanning.nouveauCode();
+        }
+
+        /** Application principale : dépose le paquet chiffré ; réponse dans window.__partageEnvoye({ok, texte}). */
+        @JavascriptInterface
+        public void partageEnvoyer(final String paquet) {
+            new Thread(() -> appelerPage("__partageEnvoye", PartagePlanning.envoyer(MainActivity.this, paquet).toString())).start();
+        }
+
+        /** Lecture : relit tout de suite ; réponse dans window.__partageRecu({ok, texte, nouveau}). */
+        @JavascriptInterface
+        public void partageRecevoir() {
+            new Thread(() -> appelerPage("__partageRecu", PartagePlanning.recevoir(MainActivity.this, false).toString())).start();
+        }
+
+        /** Lecture : dernier planning reçu (texte JSON du paquet) ou "". */
+        @JavascriptInterface
+        public String partageDonnees() {
+            return PartagePlanning.donnees(MainActivity.this);
+        }
+
         // ---- commandes reçues par mail (ReleveMail), version « mail » seulement ----
 
         /** true dans PlanningCommandes-mail.apk : la page affiche « Commandes reçues par mail ». */
@@ -481,7 +546,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String ouvrirBulletin(String rel) {
             if (BulletinsRanges.fichier(MainActivity.this, rel) == null) return "Bulletin introuvable.";
-            final Uri u = BulletinsFournisseur.adresse(rel);
+            final Uri u = BulletinsFournisseur.adresse(MainActivity.this, rel);
             runOnUiThread(() -> {
                 Intent voir = new Intent(Intent.ACTION_VIEW);
                 voir.setDataAndType(u, "application/pdf");

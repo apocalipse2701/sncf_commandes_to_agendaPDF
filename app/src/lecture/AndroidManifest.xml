@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Version « lecture » (PlanningCommandes-lecture.apk) : ajouté au manifeste principal à la fabrication.
+     Affiche le planning partagé par l'application principale (kDrive / WebDAV), sans rien modifier. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- avis « Contrairement reçu » (Android 13 et plus) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- relève seulement quand le téléphone a Internet (tâche JobScheduler avec condition réseau) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application>
+        <!-- relève du planning partagé, toutes les heures (JobScheduler) -->
+        <service
+            android:name=".PartagePlanning"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+    </application>
+</manifest>

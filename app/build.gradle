@@ -30,12 +30,27 @@ android {
         manuel {
             dimension "version"
             buildConfigField "boolean", "RELEVE_MAIL", "false"
+            buildConfigField "boolean", "LECTURE", "false"
             resValue "string", "nom_apk", "PlanningCommandes.apk"
+            resValue "string", "nom_appli", "Planning Commandes"
         }
         mail {
             dimension "version"
             buildConfigField "boolean", "RELEVE_MAIL", "true"
+            buildConfigField "boolean", "LECTURE", "false"
             resValue "string", "nom_apk", "PlanningCommandes-mail.apk"
+            resValue "string", "nom_appli", "Planning Commandes"
+        }
+        // lecture : pour un proche (conjoint…) qui ne fait que CONSULTER le planning, reçu tout seul
+        // (partage chiffré déposé dans un kDrive par l'application principale). Application distincte (autre
+        // applicationId) : elle s'installe à côté des deux autres sans les remplacer.
+        lecture {
+            dimension "version"
+            applicationIdSuffix ".lecture"
+            buildConfigField "boolean", "RELEVE_MAIL", "false"
+            buildConfigField "boolean", "LECTURE", "true"
+            resValue "string", "nom_apk", "PlanningCommandes-lecture.apk"
+            resValue "string", "nom_appli", "Planning (lecture)"
         }
     }
     buildFeatures {

@@ -12,7 +12,7 @@
     <!-- (version « mail » : notifications et relevé des commandes ajoutés par src/mail/AndroidManifest.xml) -->
 
     <application
-        android:label="Planning Commandes"
+        android:label="@string/nom_appli"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:theme="@style/Theme.Planning">
@@ -181,7 +181,7 @@
         <!-- bulletins rangés, prêtés en lecture à la visionneuse PDF (onglet Commandes → liste des bulletins) -->
         <provider
             android:name=".BulletinsFournisseur"
-            android:authorities="fr.planning.commandes.bulletins"
+            android:authorities="${applicationId}.bulletins"
             android:exported="false"
             android:grantUriPermissions="true" />
 

@@ -309,16 +309,17 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
     <div class="entete"><button class="btn-retour" id="reglages-retour" type="button" aria-label="Retour aux réglages" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h1 id="reglages-titre">Réglages</h1></div>
     <div id="menu-reglages">
       <div class="carte"><ul class="liste menu-reglages">
-        <li><button class="ligne" data-page="apparence"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor"/></svg></span><span class="txt"><b>Apparence</b><small id="res-apparence"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
-        <li><button class="ligne" data-page="codes"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg></span><span class="txt"><b>Codes et couleurs</b><small id="res-codes"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li id="menu-apparence"><button class="ligne" data-page="apparence"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor"/></svg></span><span class="txt"><b>Apparence</b><small id="res-apparence"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li id="menu-codes"><button class="ligne" data-page="codes"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg></span><span class="txt"><b>Codes et couleurs</b><small id="res-codes"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-mail" hidden><button class="ligne" data-page="mail"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/></svg></span><span class="txt"><b>Commandes par mail</b><small id="res-mail"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-confirmation" hidden><button class="ligne" data-page="confirmation"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4L10 15"/><path d="M21 4l-7 17-4-6-6-4z"/></svg></span><span class="txt"><b>Confirmation de réception</b><small id="res-confirmation"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
-        <li><button class="ligne" data-page="agenda"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span><span class="txt"><b>Agenda du téléphone</b><small id="res-agenda"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
-        <li><button class="ligne" data-page="sauvegarde"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 19h14"/></svg></span><span class="txt"><b>Sauvegarde et PC</b><small id="res-sauvegarde"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li id="menu-partage" hidden><button class="ligne" data-page="partage"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg></span><span class="txt"><b>Partage du planning</b><small id="res-partage"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li id="menu-agenda"><button class="ligne" data-page="agenda"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span><span class="txt"><b>Agenda du téléphone</b><small id="res-agenda"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li id="menu-sauvegarde"><button class="ligne" data-page="sauvegarde"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 19h14"/></svg></span><span class="txt"><b>Sauvegarde et PC</b><small id="res-sauvegarde"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-maj" hidden><button class="ligne" data-page="maj"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></span><span class="txt"><b>Mise à jour</b><small id="res-maj"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
       </ul></div>
       <div class="carte" style="margin-top:14px"><ul class="liste menu-reglages">
-        <li class="ligne-danger"><button class="ligne" data-page="danger"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span><span class="txt"><b>Nouveau planning</b><small id="res-danger"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li class="ligne-danger" id="menu-danger"><button class="ligne" data-page="danger"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span><span class="txt"><b>Nouveau planning</b><small id="res-danger"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
       </ul></div>
       <p class="discret" id="version-appli" style="text-align:center;margin:18px 0 6px"></p>
     </div>
@@ -406,6 +407,38 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         </div>
       </div></div>
     </div>
+    <div class="page-reglage" data-page="partage" hidden>
+    <div class="bloc" id="bloc-partage">
+      <div class="carte"><div class="pad">
+        <p style="margin:0 0 10px" id="partage-intro"></p>
+        <label class="case-a-cocher interrupteur"><input type="checkbox" id="partage-actif"><span id="partage-actif-txt"></span></label>
+      </div></div>
+      <h2>kDrive (ou autre WebDAV)</h2>
+      <div class="carte"><div class="pad">
+        <div class="grille-champs" style="grid-template-columns:1fr">
+          <label class="champ" for="partage-adresse">Numéro du kDrive<input type="text" id="partage-adresse" autocomplete="off" autocapitalize="none" inputmode="text" placeholder="123456"></label>
+          <p class="discret" style="margin:-2px 0 2px">Dans kDrive sur le web, c'est le nombre après « /drive/ » dans l'adresse. Une adresse WebDAV complète (https://…) est aussi acceptée.</p>
+          <label class="champ" for="partage-identifiant">Identifiant (adresse mail du compte Infomaniak)<input type="email" id="partage-identifiant" autocomplete="off" autocapitalize="none"></label>
+          <label class="champ" for="partage-mdp">Mot de passe d'application<input type="password" id="partage-mdp" autocomplete="off"></label>
+          <p class="discret" style="margin:-2px 0 2px">À créer dans le Manager Infomaniak (profil › mots de passe d'application) : il ne sert qu'à ce partage et se supprime à tout moment. Le même compte et le même mot de passe sont à saisir sur les deux téléphones.</p>
+          <label class="champ" for="partage-dossier">Dossier dans le kDrive<input type="text" id="partage-dossier" autocomplete="off" placeholder="Private/Planning partagé"></label>
+          <p class="discret" style="margin:-2px 0 2px">« Private » est « Mes fichiers » dans kDrive. Le même dossier est à indiquer sur les deux téléphones ; il est créé au premier envoi.</p>
+        </div>
+      </div></div>
+      <h2>Code de partage</h2>
+      <div class="carte"><div class="pad">
+        <p class="discret" style="margin:0 0 10px" id="partage-code-aide"></p>
+        <div class="rangee"><input type="text" id="partage-code" autocomplete="off" autocapitalize="characters" spellcheck="false" style="max-width:220px;font-family:ui-monospace,monospace;letter-spacing:.06em">
+          <button class="btn fantome" id="partage-generer" type="button">Nouveau code</button></div>
+      </div></div>
+      <div class="rangee" style="margin-top:14px">
+        <button class="btn accent" id="partage-enregistrer" type="button">Enregistrer</button>
+        <button class="btn" id="partage-maintenant" type="button"></button>
+        <button class="btn fantome" id="partage-oublier" type="button" hidden>Oublier le mot de passe</button>
+      </div>
+      <p class="discret" id="partage-etat" style="margin:10px 4px 0"></p>
+    </div>
+    </div>
     <div class="page-reglage" data-page="agenda" hidden>
     <div class="bloc" id="bloc-agenda">      <div class="carte"><div class="pad">
         <p style="margin:0 0 10px">Un rendez-vous par service (de la prise à la fin de service) dans l'agenda du téléphone ou Google Agenda ; les repos sont mis sur la journée entière.</p>
@@ -450,14 +483,14 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 
 <nav class="onglets" aria-label="Sections">
   <button data-onglet="planning" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Planning</button>
-  <button data-onglet="commandes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 12v6M9 15h6"/></svg>Commandes</button>
+  <button data-onglet="commandes" id="onglet-commandes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 12v6M9 15h6"/></svg>Commandes</button>
   <button data-onglet="reglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
 </nav>
 <div id="couche"></div>
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
 window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"smtp":"smtp.free.fr","port_smtp":465,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"smtp":"smtp.orange.fr","port_smtp":465,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"smtp":"smtp.sfr.fr","port_smtp":465,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"smtp":"smtp.bbox.fr","port_smtp":465,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"smtp":"smtp.laposte.net","port_smtp":465,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"smtp":"smtp.gmail.com","port_smtp":465,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"smtp":"smtp.mail.yahoo.com","port_smtp":465,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"smtp":"smtp.mail.me.com","port_smtp":587,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"smtp":"mail.gmx.net","port_smtp":587,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"smtp":"mail.infomaniak.com","port_smtp":465,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"smtp":"","port_smtp":465,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) et, pour envoyer les confirmations, son serveur SMTP (port 465 en SSL, ou 587 avec STARTTLS) : ils figurent dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]},"_lisezmoi_confirmation":"Message de confirmation de réception envoyé à l'expéditeur d'une commande (bouton « Confirmer la réception »). Valeurs par défaut, modifiables dans les réglages. Champs remplacés : {type} (commande / contrairement), {debut}, {fin}, {edition}, {agent}, {fichier}.","confirmation":{"sujet":"Bien reçu : {type} du {debut} au {fin}","corps":"Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin} (édition du {edition}).\n\nCordialement,\n{agent}"}};
-window.VERSION_APPLI = "2.8.4";
+window.VERSION_APPLI = "2.9.0";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -1452,6 +1485,9 @@ PGVRVSD    ; [date]
     pdflib: "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js",
   }, window.CONF_APPLI || {});
   const ANDROID = !!(window.Android && typeof window.Android.enregistrer === "function");
+  // PlanningCommandes-lecture.apk : affiche le planning partagé par le téléphone principal, sans rien modifier
+  const LECTURE = ANDROID && typeof window.Android.modeLecture === "function" && !!window.Android.modeLecture();
+  const PARTAGE_POSSIBLE = ANDROID && typeof window.Android.partageReglages === "function";
   const MSG_RESEAU = ANDROID ? "" : " Vérifiez la connexion Internet puis réessayez.";
   const $ = s => document.querySelector(s);
   const el = (tag, attrs = {}, ...enfants) => {
@@ -1475,6 +1511,7 @@ PGVRVSD    ; [date]
   const E = {
     pl: M.planningVide(), codesTxt: M.CODES_TXT_DEFAUT, derniereCopie: null, rappelReporte: null,
     majVerifieeLe: null, majReportee: null, apparence: "auto",
+    vusLecture: [], themeChoisi: false, // version lecture : avis validés sur CE téléphone, thème choisi ici
     confirmation: null,                 // {sujet, corps, adresse} : message de confirmation de réception (null = celui de regles.json)
     theme: "Classique", annee: +auj.slice(0, 4), mois: +auj.slice(5, 7), sel: auj,
     vue: window.innerWidth >= 900 ? "a4" : "compacte", zoom: false,
@@ -1524,6 +1561,7 @@ PGVRVSD    ; [date]
           for (const k of mois) await this.ecrireMois(k);
           if (reg) await this.ecrireReglages();
           envoyerWidget();
+          partagerBientot();
           etatStockage();
         } catch (e) {
           toast("Enregistrement impossible : " + (e && e.message || e) + ". Réessayez plus tard.");
@@ -1537,6 +1575,7 @@ PGVRVSD    ; [date]
       return { mois: k, jours, edition };
     },
     async ecrireMois(k) {
+      if (LECTURE) return;                // lecture : le planning vient du partage, il n'est pas gardé en double
       const data = this.donneesMois(k);
       const vide = !Object.keys(data.jours).length;
       if (this.mode === "db") {
@@ -1553,7 +1592,8 @@ PGVRVSD    ; [date]
       return { agent: E.pl.agent, greves: [...E.pl.greves].sort(), importes: E.pl.importes, codesTxt: E.codesTxt,
         modifies: E.pl.modifies || {}, alertes: E.pl.alertes || [], confirmation: E.confirmation,
         theme: E.theme, derniereCopie: E.derniereCopie, rappelReporte: E.rappelReporte,
-        majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee, apparence: E.apparence };
+        majVerifieeLe: E.majVerifieeLe, majReportee: E.majReportee, apparence: E.apparence,
+        vusLecture: E.vusLecture.slice(-200), themeChoisi: E.themeChoisi };
     },
     async ecrireReglages() {
       if (this.mode === "db") await this.db.doc(this.base).set(this.reglages());
@@ -1562,6 +1602,7 @@ PGVRVSD    ; [date]
   };
   function etatStockage() {
     const n = Object.keys(E.pl.jours).length;
+    if (LECTURE) return;
     $("#etat-stockage").textContent = (Stock.mode === "db"
       ? "Enregistré dans votre espace Claude (privé, retrouvé sur tous vos appareils connectés)."
       : ANDROID ? "Enregistré sur ce téléphone, dans l'application. Désinstaller l'application efface le planning : gardez une copie de temps en temps."
@@ -1593,6 +1634,7 @@ PGVRVSD    ; [date]
   // ------------------------------------------------------------------ onglets
   let ongletActif = "planning", pageReglage = null;     // pageReglage : rubrique ouverte dans Réglages (null = menu)
   function montrerOnglet(nom) {
+    if (LECTURE && nom === "commandes") nom = "planning";
     if (nom === "reglages" && ongletActif !== "reglages") pageReglage = null;   // on revient toujours au menu
     ongletActif = nom;
     document.querySelectorAll("[data-vue]").forEach(s => { s.hidden = s.dataset.vue !== nom; });
@@ -1638,7 +1680,9 @@ PGVRVSD    ; [date]
       if (!(a.changements || []).length && !(a.ajouts || []).length)
         bloc.append(el("p", { text: a.ignores ? "Aucun jour changé : un bulletin plus récent était déjà chargé." : "Aucun jour changé par rapport au planning." }));
       bloc.append(el("button", { type: "button", class: "btn alerte-valider", onclick: () => {
-        M.validerAlerte(E.pl, a.cle); Stock.marquer([], true); rendreAlertes(); toast("Avis validé.");
+        M.validerAlerte(E.pl, a.cle);
+        if (LECTURE && !E.vusLecture.includes(a.cle)) E.vusLecture.push(a.cle);   // validé sur ce téléphone seulement
+        Stock.marquer([], true); rendreAlertes(); toast("Avis validé.");
       } }, "Valider"));
       z.append(bloc);
     }
@@ -1784,6 +1828,13 @@ PGVRVSD    ; [date]
   function rendreDetail() {
     const z = $("#detail"); z.replaceChildren();
     const pad = el("div", { class: "pad" }); z.append(pad);
+    if (!Object.keys(E.pl.jours).length && LECTURE) {
+      pad.append(el("div", { class: "etat-vide" },
+        el("h3", { text: "Aucun planning reçu pour l'instant" }),
+        el("p", { text: "Réglez le partage (kDrive, code de partage) : le planning du téléphone principal s'affichera ici et se mettra à jour tout seul." }),
+        el("button", { class: "btn accent", onclick: () => { montrerOnglet("reglages"); ouvrirPageReglage("partage"); } }, "Régler le partage")));
+      return;
+    }
     if (!Object.keys(E.pl.jours).length) {
       pad.append(el("div", { class: "etat-vide" },
         el("h3", { text: "Aucune commande pour l'instant" }),
@@ -1811,7 +1862,7 @@ PGVRVSD    ; [date]
       const puce = el("i"); puce.style.background = i && i.fond ? rgb(i.fond) : "transparent";
       const nom = sv.code ? M.nomAffiche(sv) : "(sans code)";
       bloc.append(el("div", { class: "code" }, puce, el("span", { text: nom + (sv.code && nom !== sv.code ? `  ·  ${sv.code}` : "") })));
-      if (idx >= 0) {
+      if (idx >= 0 && !LECTURE) {
         const b = el("button", { class: "icone-btn", "aria-label": "Supprimer cette ligne", onclick: () => confirmerSuppr(bloc, d, idx) });
         b.innerHTML = ICONE_POUBELLE; bloc.append(b);
       } else bloc.append(el("span", { class: "discret", text: sv.code === "DN" ? "auto" : "" }));
@@ -1825,7 +1876,7 @@ PGVRVSD    ; [date]
       if (src.length) bloc.append(el("div", { class: "src", text: src.join(" — ") }));
       pad.append(bloc);
     });
-    pad.append(el("div", { class: "rangee", style: "margin-top:10px" },
+    if (!LECTURE) pad.append(el("div", { class: "rangee", style: "margin-top:10px" },
       el("button", { class: "btn", onclick: () => basculerGreve(d) }, greve ? "Retirer la grève" : "Jour de grève"),
       el("button", { class: "btn", onclick: () => ajouterNote(d) }, "Ajouter une note")));
   }
@@ -2100,6 +2151,12 @@ PGVRVSD    ; [date]
   let dernierWidget = "";
   function envoyerWidget() {
     if (!ANDROID || typeof window.Android.majWidget !== "function") return;
+    const texte = texteWidget();
+    if (texte === dernierWidget) return;
+    dernierWidget = texte;
+    try { window.Android.majWidget(texte); } catch (e) { /* widget indisponible */ }
+  }
+  function texteWidget() {
     const aff = M.pourAffichage(E.pl.jours), greves = new Set(E.pl.greves), jours = {};
     const hex = c => "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
     const du = M.aujourdhui();                    // date d'envoi : le widget prévient si elle devient ancienne
@@ -2144,10 +2201,7 @@ PGVRVSD    ; [date]
       if (hc) j.hc = hc;
       cal.j[d] = j;
     }
-    const texte = JSON.stringify({ du, jours, cal });
-    if (texte === dernierWidget) return;
-    dernierWidget = texte;
-    try { window.Android.majWidget(texte); } catch (e) { /* widget indisponible */ }
+    return JSON.stringify({ du, jours, cal });
   }
 
   // ------------------------------------------------------------------ rappel de sauvegarde (application Android)
@@ -2155,7 +2209,7 @@ PGVRVSD    ; [date]
     const z = $("#rappel");
     const jours = Object.keys(E.pl.jours).length;
     const age = E.derniereCopie ? Math.floor((Date.parse(auj) - Date.parse(E.derniereCopie)) / 864e5) : null;
-    const montrer = ANDROID && jours > 0 && (age === null || age > 30) && !(E.rappelReporte && E.rappelReporte > auj);
+    const montrer = ANDROID && !LECTURE && jours > 0 && (age === null || age > 30) && !(E.rappelReporte && E.rappelReporte > auj);
     z.hidden = !montrer;
     if (!montrer) return;
     z.replaceChildren(
@@ -2542,12 +2596,155 @@ PGVRVSD    ; [date]
     window.Android.mailRelever();
   });
 
+  // ------------------------------------------------------------------ partage du planning (kDrive / WebDAV)
+  // Téléphone principal : après chaque changement, le planning est chiffré avec le CODE DE PARTAGE et déposé sur le
+  // kDrive (Android.partageEnvoyer, PartagePlanning.java). Version lecture : Android le relit à l'ouverture et toutes
+  // les heures ; la page l'affiche (Android.partageDonnees) sans rien pouvoir modifier.
+  let partageLus = null, dernierPartage = "", minuteriePartage = null, partageEnCours = false;
+  function lirePartage() {
+    if (!PARTAGE_POSSIBLE) return null;
+    try { partageLus = JSON.parse(window.Android.partageReglages()); } catch (e) { partageLus = null; }
+    return partageLus;
+  }
+  function paquetPartage() {
+    return { version: 1, planning: M.versDict(E.pl), codesTxt: E.codesTxt, theme: E.theme, widget: texteWidget() };
+  }
+  // envoi groupé quelques secondes après le dernier changement ; rien n'est envoyé si rien n'a changé
+  function partagerBientot(delai = 4000) {
+    if (!PARTAGE_POSSIBLE || LECTURE) return;
+    const r = partageLus || lirePartage();
+    if (!r || !r.actif) return;
+    clearTimeout(minuteriePartage);
+    minuteriePartage = setTimeout(() => partagerMaintenant(false), delai);
+  }
+  function partagerMaintenant(force) {
+    if (!PARTAGE_POSSIBLE || LECTURE || partageEnCours) return false;
+    const p = paquetPartage(), texte = JSON.stringify(p);
+    if (!force && texte === dernierPartage) return false;
+    partageEnCours = true; dernierPartage = texte;
+    window.Android.partageEnvoyer(JSON.stringify({ ...p, envoye: M.maintenant() }));
+    return true;
+  }
+  window.__partageEnvoye = r => {
+    partageEnCours = false;
+    if (!r.ok) dernierPartage = "";                     // nouvel essai au prochain changement ou à l'ouverture
+    if (partageLus) partageLus.etat = r.texte || "";
+    const z = $("#partage-etat"); if (z) { z.textContent = r.texte || ""; z.className = r.ok ? "discret" : "ko"; }
+    if (ongletActif === "reglages" && !pageReglage) rendreMenuReglages();
+    if (manuelPartage) { manuelPartage = false; toast(r.texte || ""); }
+  };
+  let manuelPartage = false;
+
+  // version lecture : planning reçu → affiché (les avis « validés » le sont sur ce téléphone, et seulement les récents)
+  function appliquerPartage() {
+    let p = null;
+    try { const t = window.Android.partageDonnees(); p = t ? JSON.parse(t) : null; } catch (e) { p = null; }
+    if (!p || !p.planning || typeof p.planning.jours !== "object") return false;
+    const d = p.planning, pl = M.planningVide();
+    pl.agent = d.agent || ""; pl.greves = [...(d.greves || [])]; pl.edition = { ...(d.edition || {}) };
+    pl.modifies = JSON.parse(JSON.stringify(d.modifies || {}));
+    for (const [j, l] of Object.entries(d.jours)) pl.jours[j] = l.map(x => ({ ...x }));
+    const vus = new Set(E.vusLecture), seuil = new Date(Date.now() - 14 * 864e5);
+    const pp = n => String(n).padStart(2, "0");
+    const lim = `${seuil.getFullYear()}-${pp(seuil.getMonth() + 1)}-${pp(seuil.getDate())}T${pp(seuil.getHours())}:${pp(seuil.getMinutes())}`;
+    pl.alertes = (d.alertes || []).map(a => ({ ...a, vu: vus.has(a.cle) || (a.recu || "") < lim }));
+    E.pl = pl;
+    if (p.codesTxt) { E.codesTxt = p.codesTxt; M.reglerCodes(p.codesTxt); }
+    if (!E.themeChoisi && p.theme && R.THEMES[p.theme]) E.theme = p.theme;
+    E.partageEnvoye = p.envoye || "";
+    return true;
+  }
+  window.__partageRecu = async r => {
+    await pret;
+    if (partageLus) partageLus.etat = r.texte || "";
+    if (r.nouveau && appliquerPartage()) { rendre(); envoyerWidget(); toast("Planning mis à jour."); }
+    const z = $("#partage-etat"); if (z) { z.textContent = r.texte || ""; z.className = r.ok ? "discret" : "ko"; }
+    if (ongletActif === "reglages" && !pageReglage) rendreMenuReglages();
+    if (manuelPartage) { manuelPartage = false; if (!r.nouveau) toast(r.texte || ""); }
+  };
+
+  function rendrePartage() {
+    const bloc = $("#bloc-partage");
+    if (!PARTAGE_POSSIBLE) { bloc.hidden = true; return; }
+    const r = lirePartage() || {};
+    $("#partage-intro").textContent = LECTURE
+      ? "Cette version affiche le planning du téléphone principal, déposé chiffré sur son kDrive. Saisissez les mêmes réglages et le même code de partage que sur ce téléphone-là."
+      : "Pour qu'un proche voie votre planning à jour sur son téléphone, avec l'application « Planning (lecture) » (PlanningCommandes-lecture.apk) : après chaque changement, le planning est chiffré et déposé sur votre kDrive.";
+    $("#partage-actif-txt").textContent = LECTURE ? "Recevoir le planning partagé (à l'ouverture et toutes les heures)" : "Partager le planning après chaque changement";
+    $("#partage-actif").checked = !!r.actif;
+    $("#partage-adresse").value = r.adresse || "";
+    $("#partage-identifiant").value = r.identifiant || "";
+    $("#partage-mdp").value = "";
+    $("#partage-mdp").placeholder = r.motDePasse ? "•••••• enregistré (vide = inchangé)" : "";
+    $("#partage-dossier").value = r.dossier || "Private/Planning partagé";
+    $("#partage-code").value = r.code || "";
+    $("#partage-generer").hidden = LECTURE;
+    $("#partage-code-aide").textContent = LECTURE
+      ? "Le code affiché dans les réglages de partage du téléphone principal. Sans lui, le fichier du kDrive est illisible."
+      : "Chiffre le planning : sans ce code, le fichier déposé sur le kDrive est illisible. Recopiez-le sur le téléphone qui affiche le planning. Changer de code oblige à le recopier là-bas.";
+    $("#partage-maintenant").textContent = LECTURE ? "Recevoir maintenant" : "Envoyer maintenant";
+    $("#partage-oublier").hidden = !r.motDePasse;
+    const z = $("#partage-etat");
+    z.textContent = r.etat || (r.actif ? (LECTURE ? "Pas encore reçu." : "Pas encore envoyé.") : "");
+    z.className = /échec/.test(r.etat || "") ? "ko" : "discret";
+  }
+  function enregistrerPartage(oublier) {
+    const adresse = $("#partage-adresse").value.trim(), identifiant = $("#partage-identifiant").value.trim();
+    const mdp = $("#partage-mdp").value, code = $("#partage-code").value.trim().toUpperCase();
+    const actif = $("#partage-actif").checked && !oublier;
+    if (actif) {
+      if (!/^\d{3,12}$/.test(adresse) && !/^https:\/\//i.test(adresse)) { toast("Indiquez le numéro du kDrive (le nombre après /drive/ dans son adresse)."); return false; }
+      if (!identifiant) { toast("Indiquez l'identifiant : l'adresse mail du compte Infomaniak."); return false; }
+      if (!mdp && !(partageLus && partageLus.motDePasse)) { toast("Indiquez le mot de passe d'application du kDrive."); return false; }
+      if (code.replace(/[^A-Z0-9]/g, "").length < 8) { toast("Le code de partage doit avoir au moins 8 lettres ou chiffres."); return false; }
+    }
+    const ancien = partageLus || {};
+    const nouveau = (ancien.code || "") !== code || (ancien.adresse || "") !== adresse || (ancien.dossier || "") !== $("#partage-dossier").value.trim();
+    const err = window.Android.partageEnregistrer(JSON.stringify({ actif, adresse, identifiant, motDePasse: mdp,
+      dossier: $("#partage-dossier").value.trim(), code, oublier: !!oublier, nouveau }));
+    if (err) { toast(err); return false; }
+    rendrePartage();
+    return true;
+  }
+  if (PARTAGE_POSSIBLE) {
+    $("#partage-generer").addEventListener("click", () => {
+      if ($("#partage-code").value.trim() && !confirm_code()) return;
+      $("#partage-code").value = window.Android.partageNouveauCode();
+      toast("Nouveau code : touchez Enregistrer, puis recopiez-le sur l'autre téléphone.");
+    });
+    $("#partage-enregistrer").addEventListener("click", () => {
+      if (!enregistrerPartage(false)) return;
+      const r = partageLus || {};
+      toast(r.actif ? (LECTURE ? "Réglages enregistrés. Réception…" : "Réglages enregistrés. Envoi…") : "Partage désactivé.");
+      if (r.actif) { manuelPartage = true; if (LECTURE) window.Android.partageRecevoir(); else if (!partagerMaintenant(true)) manuelPartage = false; }
+    });
+    $("#partage-maintenant").addEventListener("click", () => {
+      if (!enregistrerPartage(false)) return;
+      const r = partageLus || {};
+      if (!r.actif) { toast("Cochez d'abord la case du partage."); return; }
+      $("#partage-etat").textContent = LECTURE ? "Réception…" : "Envoi…"; $("#partage-etat").className = "discret";
+      manuelPartage = true;
+      if (LECTURE) window.Android.partageRecevoir(); else if (!partagerMaintenant(true)) { manuelPartage = false; toast("Envoi déjà en cours."); }
+    });
+    $("#partage-oublier").addEventListener("click", () => { if (enregistrerPartage(true)) toast("Mot de passe oublié, partage désactivé."); });
+  }
+  // un code déjà recopié sur l'autre téléphone : le changer coupe la lecture tant qu'il n'y est pas recopié
+  let avertiCode = false;
+  function confirm_code() {
+    if (LECTURE || avertiCode) return true;
+    avertiCode = true;
+    toast("Un nouveau code devra être recopié sur l'autre téléphone. Touchez encore « Nouveau code » pour confirmer.", 6000);
+    return false;
+  }
+
   // ------------------------------------------------------------------ réglages
   // Réglages : un menu (une ligne par rubrique, avec un résumé) puis une page par rubrique (pageReglage)
   const TITRES_REGLAGES = { apparence: "Apparence", codes: "Codes et couleurs", mail: "Commandes par mail", confirmation: "Confirmation de réception",
-    agenda: "Agenda du téléphone", sauvegarde: "Sauvegarde et PC", maj: "Mise à jour", danger: "Nouveau planning" };
+    agenda: "Agenda du téléphone", partage: "Partage du planning", sauvegarde: "Sauvegarde et PC", maj: "Mise à jour", danger: "Nouveau planning" };
   function ouvrirPageReglage(nom) {
     if ((nom === "mail" || nom === "confirmation") && !MAIL_POSSIBLE) nom = null;
+    if (nom === "partage" && !PARTAGE_POSSIBLE) nom = null;
+    if (LECTURE && ["codes", "mail", "confirmation", "sauvegarde", "danger"].includes(nom)) nom = null;
     pageReglage = nom || null;
     $("#menu-reglages").hidden = !!pageReglage;
     document.querySelectorAll(".page-reglage").forEach(p => { p.hidden = p.dataset.page !== pageReglage; });
@@ -2573,11 +2770,17 @@ PGVRVSD    ; [date]
     $("#menu-maj").hidden = !majPossible();
     $("#res-maj").textContent = majPossible() ? (nouvelle() ? "Nouvelle version disponible" : `Version ${VERSION}`) : "";
     $("#res-danger").textContent = "Effacer tous les jours, notes et grèves";
+    $("#menu-partage").hidden = !PARTAGE_POSSIBLE;
+    const rp = PARTAGE_POSSIBLE ? (partageLus || lirePartage() || {}) : {};
+    $("#res-partage").textContent = LECTURE ? (rp.actif ? "Reçu du kDrive · " + (rp.etat || "en attente") : "À régler pour recevoir le planning")
+      : (rp.actif ? "Envoyé sur le kDrive après chaque changement" : "Désactivé (pour la version lecture)");
+    for (const id of ["codes", "sauvegarde", "danger"]) $("#menu-" + id).hidden = LECTURE;
+    if (LECTURE) { $("#menu-mail").hidden = $("#menu-confirmation").hidden = true; }
   }
   function rendreReglages() {
-    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail(); rendreConfirmation();
+    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail(); rendreConfirmation(); rendrePartage();
     ouvrirPageReglage(pageReglage);
-    $("#version-appli").textContent = `Planning Commandes ${VERSION}` + (MAIL_POSSIBLE ? " · version mail" : ANDROID ? " · version manuelle" : "");
+    $("#version-appli").textContent = `Planning Commandes ${VERSION}` + (LECTURE ? " · version lecture" : MAIL_POSSIBLE ? " · version mail" : ANDROID ? " · version manuelle" : "");
     const web = !ANDROID && !!window.claude;
     $("#ics-futur").disabled = $("#ics-tout").disabled = web;
     $("#ics-note").textContent = web ? "L'export vers l'agenda est disponible dans l'application Android et sur le PC (menu Fichier)."
@@ -2611,7 +2814,7 @@ PGVRVSD    ; [date]
     for (const nom of Object.keys(R.THEMES)) {
       const c = el("canvas", { width: 480, height: 339, "aria-hidden": "true" });
       R.dessiner(c.getContext("2d"), 480, 339, E.annee, E.mois, E.pl.jours, { agent: E.pl.agent, greves: E.pl.greves, modifies: E.pl.modifies, theme: nom });
-      z.append(el("button", { "aria-pressed": nom === E.theme, onclick: () => { E.theme = nom; Stock.marquer([], true); rendreThemes(); toast(`Thème : ${nom}.`); } }, c, nom));
+      z.append(el("button", { "aria-pressed": nom === E.theme, onclick: () => { E.theme = nom; E.themeChoisi = true; Stock.marquer([], true); rendreThemes(); toast(`Thème : ${nom}.`); } }, c, nom));
     }
   }
   function listeCodes() { const r = M.lireCodes(E.codesTxt); return r.ordre.map(k => r.codes[k]); }
@@ -3003,6 +3206,7 @@ PGVRVSD    ; [date]
         E.derniereCopie = reg.derniereCopie || null; E.rappelReporte = reg.rappelReporte || null;
         E.majVerifieeLe = reg.majVerifieeLe || null; E.majReportee = reg.majReportee || null;
         E.apparence = reg.apparence === "gos" ? "gos" : "auto"; appliquerApparence();
+        E.vusLecture = Array.isArray(reg.vusLecture) ? reg.vusLecture : []; E.themeChoisi = !!reg.themeChoisi;
       }
       for (const m of moisDocs) {
         Object.assign(E.pl.jours, m.jours || {});
@@ -3015,12 +3219,15 @@ PGVRVSD    ; [date]
       E.pl.alertes = JSON.parse(JSON.stringify(E.pl.alertes || []));
       E.pl.greves = [...E.pl.greves];
       M.reglerCodes(E.codesTxt);
+      if (LECTURE) appliquerPartage();
     } catch (e) {
       toast("Le planning enregistré n'a pas pu être lu : " + (e && e.message || e));
     }
+    if (LECTURE) $("#onglet-commandes").hidden = true;
     rendre();
     etatStockage();
     envoyerWidget();
+    partagerBientot();
   }
   // Application Android : bouton Retour, PDF ouvert depuis une autre appli (mail, fichiers…)
   window.__retourArriere = () => {
@@ -3049,7 +3256,7 @@ PGVRVSD    ; [date]
     setTimeout(() => { const z = $("#detail"); if (z) z.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 80);
   };
   // retour dans l'application (elle a pu rester ouverte plusieurs jours) : le widget reçoit des données fraîches
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { envoyerWidget(); importerCommandesMail(); } });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { envoyerWidget(); importerCommandesMail(); partagerBientot(); } });
   const pret = demarrer();
   pret.then(() => importerCommandesMail());           // bulletins arrivés par mail pendant que l'application était fermée
   pret.then(() => { if (majPossible() && E.majVerifieeLe !== M.aujourdhui()) verifierMaj(false); });
