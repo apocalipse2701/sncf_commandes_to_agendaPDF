@@ -101,13 +101,13 @@ jobs:
           TAG="v${VERSION}-${{ github.run_number }}"
           # description : l'entrée de cette version dans CHANGELOG.md, puis le détail de la fabrication
           awk -v v="$VERSION" 'index($0, "## " v " ") == 1 {f = 1; next} /^## / {f = 0} f' CHANGELOG.md > notes.md || true
-          printf '\n---\nFabrication %s : %s\n\nAndroid : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk. Windows : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. La dernière version est toujours dans les releases « apk » et « exe ».\n' \
+          printf '\n---\nFabrication %s : %s\n\nAndroid : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk ; PlanningCommandes-lecture.apk pour un proche (planning partagé). Windows : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. La dernière version est toujours dans les releases « apk » et « exe ».\n' \
             "${{ github.run_number }}" "${MESSAGE%%$'\n'*}" >> notes.md
           gh release create "$TAG" --target "${{ github.sha }}" --latest=false \
             --title "Version ${VERSION} (fabrication ${{ github.run_number }})" \
             --notes-file notes.md 2>/dev/null || true
           for essai in 1 2 3 4 5; do
-            gh release upload "$TAG" PlanningCommandes.apk PlanningCommandes-mail.apk --clobber && break
+            gh release upload "$TAG" PlanningCommandes.apk PlanningCommandes-mail.apk PlanningCommandes-lecture.apk --clobber && break
             sleep 10
           done
 
@@ -198,7 +198,7 @@ jobs:
           TAG="v${VERSION}-${{ github.run_number }}"
           # description : l'entrée de cette version dans CHANGELOG.md, puis le détail de la fabrication
           awk -v v="$VERSION" 'index($0, "## " v " ") == 1 {f = 1; next} /^## / {f = 0} f' CHANGELOG.md > notes.md || true
-          printf '\n---\nFabrication %s : %s\n\nAndroid : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk. Windows : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. La dernière version est toujours dans les releases « apk » et « exe ».\n' \
+          printf '\n---\nFabrication %s : %s\n\nAndroid : PlanningCommandes.apk (manuelle) ou PlanningCommandes-mail.apk ; PlanningCommandes-lecture.apk pour un proche (planning partagé). Windows : PlanningPDF.exe (manuelle) ou PlanningPDF-mail.exe. La dernière version est toujours dans les releases « apk » et « exe ».\n' \
             "${{ github.run_number }}" "${MESSAGE%%$'\n'*}" >> notes.md
           gh release create "$TAG" --target "${{ github.sha }}" --latest=false \
             --title "Version ${VERSION} (fabrication ${{ github.run_number }})" \

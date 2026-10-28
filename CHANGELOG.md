@@ -7,6 +7,12 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.2 — 28 octobre 2026
+
+**Publication : l'application « lecture » aussi dans les Releases du dépôt du code**
+- `PlanningCommandes-lecture.apk` n'était publié que dans le dépôt des mises à jour (planning-commandes-maj). Il est maintenant aussi joint à chaque « Version X.Y.Z (fabrication N) » de la page Releases du dépôt du code, avec les deux autres apk.
+- Aucun changement dans les applications ni dans le programme PC.
+
 ## 2.9.1 — 27 octobre 2026
 
 **Partage du planning : mode d'emploi dans l'application (Android)**
