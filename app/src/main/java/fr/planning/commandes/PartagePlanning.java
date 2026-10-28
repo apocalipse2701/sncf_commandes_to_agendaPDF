@@ -294,11 +294,18 @@ public class PartagePlanning extends JobService {
         return h;
     }
 
+    /** Réponse d'une requête WebDAV écrite à la main. */
+    static final class Reponse {
+        final int code;
+        final String corps;
+        Reponse(int code, String corps) { this.code = code; this.corps = corps; }
+    }
+
     /**
-     * MKCOL (création de dossier) : HttpURLConnection ne connaît pas cette méthode WebDAV, d'où une requête HTTP/1.1
-     * écrite à la main sur une connexion TLS (nom du serveur vérifié comme pour le reste). Renvoie le code HTTP.
+     * MKCOL / PROPFIND : HttpURLConnection ne connaît pas ces méthodes WebDAV, d'où une requête HTTP/1.1
+     * écrite à la main sur une connexion TLS (nom du serveur vérifié comme pour le reste).
      */
-    static int mkcol(String url, String identifiant, String mdp) throws IOException {
+    static Reponse requete(String methode, String url, String identifiant, String mdp, String corps, String entetes) throws IOException {
         URL u = new URL(url);
         if (!"https".equals(u.getProtocol())) throw new IOException("adresse refusée (https obligatoire)");
         String hote = u.getHost();
@@ -318,26 +325,129 @@ public class PartagePlanning extends JobService {
                     : "Dalvik".equals(System.getProperty("java.vm.name")) ? javax.net.ssl.HttpsURLConnection.getDefaultHostnameVerifier() : null;
             if (v != null && !v.verify(hote, s.getSession())) throw new IOException("certificat du serveur WebDAV non reconnu");
             String chemin = u.getPath().isEmpty() ? "/" : u.getPath();
-            String requete = "MKCOL " + chemin + " HTTP/1.1\r\n"
+            byte[] c = (corps == null ? "" : corps).getBytes(StandardCharsets.UTF_8);
+            String req = methode + " " + chemin + " HTTP/1.1\r\n"
                     + "Host: " + hote + (u.getPort() > 0 ? ":" + port : "") + "\r\n"
                     + "User-Agent: PlanningCommandes\r\n"
                     + "Authorization: " + auth(identifiant, mdp) + "\r\n"
-                    + "Content-Length: 0\r\n"
+                    + (entetes == null ? "" : entetes)
+                    + "Content-Length: " + c.length + "\r\n"
                     + "Connection: close\r\n\r\n";
             OutputStream out = s.getOutputStream();
-            out.write(requete.getBytes(StandardCharsets.UTF_8));
+            out.write(req.getBytes(StandardCharsets.UTF_8));
+            out.write(c);
             out.flush();
-            java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(s.getInputStream(), StandardCharsets.ISO_8859_1));
-            String l = in.readLine();
+            InputStream in = new java.io.BufferedInputStream(s.getInputStream());
+            String l = ligne(in);
             if (l == null || !l.startsWith("HTTP/")) throw new IOException("réponse illisible du serveur WebDAV");
-            String[] m = l.split(" ");
+            int code;
             try {
-                return Integer.parseInt(m[1]);
+                code = Integer.parseInt(l.split(" ")[1]);
             } catch (RuntimeException e) {
                 throw new IOException("réponse illisible du serveur WebDAV");
             }
+            boolean morceaux = false;
+            int longueur = -1;
+            String h;
+            while ((h = ligne(in)) != null && !h.isEmpty()) {
+                String b = h.toLowerCase(Locale.ROOT);
+                if (b.startsWith("transfer-encoding:") && b.contains("chunked")) morceaux = true;
+                if (b.startsWith("content-length:")) {
+                    try { longueur = Integer.parseInt(b.substring(15).trim()); } catch (NumberFormatException e) { longueur = -1; }
+                }
+            }
+            if (methode.equals("MKCOL")) return new Reponse(code, "");
+            ByteArrayOutputStream r = new ByteArrayOutputStream();
+            if (morceaux) {
+                String t;
+                while ((t = ligne(in)) != null) {
+                    int n;
+                    try { n = Integer.parseInt(t.split(";")[0].trim(), 16); } catch (NumberFormatException e) { break; }
+                    if (n == 0) break;
+                    byte[] bloc = new byte[n];
+                    int lu = 0;
+                    while (lu < n) { int k = in.read(bloc, lu, n - lu); if (k < 0) break; lu += k; }
+                    r.write(bloc, 0, lu);
+                    ligne(in);
+                    if (r.size() > 2 * 1024 * 1024) break;
+                }
+            } else {
+                byte[] bloc = new byte[8192];
+                int k;
+                while ((longueur < 0 || r.size() < longueur) && (k = in.read(bloc)) > 0) {
+                    r.write(bloc, 0, k);
+                    if (r.size() > 2 * 1024 * 1024) break;
+                }
+            }
+            return new Reponse(code, new String(r.toByteArray(), StandardCharsets.UTF_8));
         } finally {
             try { brut.close(); } catch (IOException e) { /* rien */ }
+        }
+    }
+
+    private static String ligne(InputStream in) throws IOException {
+        StringBuilder b = new StringBuilder();
+        int c;
+        while ((c = in.read()) >= 0) {
+            if (c == '\n') return b.toString();
+            if (c != '\r') b.append((char) c);
+            if (b.length() > 16384) break;
+        }
+        return c < 0 && b.length() == 0 ? null : b.toString();
+    }
+
+    static int mkcol(String url, String identifiant, String mdp) throws IOException {
+        return requete("MKCOL", url, identifiant, mdp, null, null).code;
+    }
+
+    /**
+     * Dossiers à la racine du kDrive (PROPFIND, profondeur 1), pour un message utile quand le dépôt est refusé.
+     * null si la racine elle-même est refusée (offre sans WebDAV, compte sans accès…).
+     */
+    static java.util.List<String> dossiersRacine(String racine, String identifiant, String mdp) throws IOException {
+        Reponse r = requete("PROPFIND", racine, identifiant, mdp,
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:resourcetype/></d:prop></d:propfind>",
+                "Depth: 1\r\nContent-Type: application/xml; charset=utf-8\r\n");
+        if (r.code == 401) throw new IOException(message(401, ""));
+        if (r.code != 207) return null;
+        String base = new URL(racine).getPath();
+        java.util.List<String> noms = new java.util.ArrayList<>();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("<(?:[A-Za-z0-9]+:)?href>([^<]*)</(?:[A-Za-z0-9]+:)?href>").matcher(r.corps);
+        while (m.find()) {
+            String href = m.group(1).trim();
+            try {
+                href = java.net.URLDecoder.decode(href.replace("+", "%2B"), "UTF-8");
+            } catch (RuntimeException e) {
+                // gardé tel quel
+            }
+            if (href.startsWith("http")) {
+                try { href = new URL(href).getPath(); } catch (IOException e) { continue; }
+            }
+            if (href.startsWith(base)) href = href.substring(base.length());
+            href = href.replaceAll("^/+|/+$", "");
+            if (!href.isEmpty() && !href.contains("/") && !noms.contains(href)) noms.add(href);
+        }
+        return noms;
+    }
+
+    /** Message quand le dépôt est refusé : dit ce qu'il y a vraiment à la racine du kDrive. */
+    static String diagnostic(String racine, String dossier, String identifiant, String mdp, int code) {
+        try {
+            java.util.List<String> noms = dossiersRacine(racine, identifiant, mdp);
+            if (noms == null) return "le kDrive refuse l'accès WebDAV (réponse " + code + ") : vérifiez que votre offre kDrive inclut le WebDAV"
+                    + " (pas kSuite Free/Standard, my kSuite, my kSuite+) et que l'identifiant est bien l'adresse mail du compte";
+            String premier = dossier.replace("\\", "/").split("/")[0].trim();
+            if (noms.isEmpty()) return "dépôt refusé (réponse " + code + ") et aucun dossier lisible à la racine du kDrive";
+            StringBuilder lb = new StringBuilder();          // (String.join : Android 8 et plus seulement)
+            for (String n : noms) lb.append(lb.length() > 0 ? ", " : "").append(n);
+            String liste = lb.toString();
+            if (!premier.isEmpty() && !noms.contains(premier))
+                return "le dossier « " + premier + " » n'existe pas à la racine du kDrive. Dossiers trouvés : " + liste
+                        + ". Dans « Dossier », indiquez par exemple « " + noms.get(0) + "/Planning partagé » (le même sur les deux téléphones)";
+            return "dépôt refusé dans « " + dossier + " » (réponse " + code + "). Dossiers à la racine du kDrive : " + liste
+                    + ". Essayez un autre dossier, ou créez « " + dossier + " » vous-même dans kDrive";
+        } catch (IOException e) {
+            return message(code, "dépôt du planning") + " ; " + raison(e);
         }
     }
 
@@ -352,18 +462,20 @@ public class PartagePlanning extends JobService {
     static void deposer(String racine, String dossier, String identifiant, String mdp, byte[] donnees) throws IOException {
         String base = racine + segments(dossier);
         int code = put(base + FICHIER, identifiant, mdp, donnees);
-        if (code == 404 || code == 409) {                        // dossier absent : on le crée, niveau par niveau
+        if (code == 401) throw new IOException(message(401, ""));
+        // dossier absent : 404/409 selon les serveurs, 403 pour kDrive. On le crée, niveau par niveau, puis on réessaie.
+        if (code == 403 || code == 404 || code == 409) {
             String chemin = racine;
             for (String s : segments(dossier).split("/")) {
                 if (s.isEmpty()) continue;
                 chemin += s + "/";
                 int c = mkcol(chemin, identifiant, mdp);
-                if (c == 403 || c == 409) throw new IOException("impossible de créer le dossier « " + dossier + " » sur le kDrive : créez-le dans kDrive"
-                        + " (par exemple dans Mes fichiers, qui s'appelle « Private » en WebDAV) ou corrigez le chemin");
-                if (c != 201 && c != 405 && c != 200 && c != 301) throw new IOException(message(c, "création du dossier"));
+                if (c == 401) throw new IOException(message(401, ""));
+                if (c != 201 && c != 405 && c != 200 && c != 301) throw new IOException(diagnostic(racine, dossier, identifiant, mdp, c));
             }
             code = put(base + FICHIER, identifiant, mdp, donnees);
         }
+        if (code == 403 || code == 404 || code == 409) throw new IOException(diagnostic(racine, dossier, identifiant, mdp, code));
         if (code != 200 && code != 201 && code != 204) throw new IOException(message(code, "dépôt du planning"));
     }
 
@@ -388,6 +500,7 @@ public class PartagePlanning extends JobService {
         try {
             if (c == 304) return null;
             if (c == 404) throw new IOException("aucun planning partagé trouvé (il n'a pas encore été envoyé ?)");
+            if (c == 403) throw new IOException(diagnostic(racine, dossier, identifiant, mdp, c));
             if (c != 200) throw new IOException(message(c, "lecture du planning"));
             etag[0] = h.getHeaderField("ETag");
             try (InputStream in = h.getInputStream()) {

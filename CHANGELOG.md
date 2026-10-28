@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.3 — 28 octobre 2026
+
+**Partage du planning : dépôt refusé par le kDrive (correction, Android)**
+- À l'enregistrement, le partage échouait avec « accès refusé par le kDrive pour dépôt du planning ». Quand le dossier n'existe pas encore, kDrive répond « refusé » au lieu de « introuvable » : l'application ne créait donc pas le dossier.
+- Elle le crée maintenant dans ce cas aussi (« Private », puis « Planning partagé »), puis dépose le planning.
+- Si le kDrive refuse encore, le message dit pourquoi :
+  - le dossier de départ n'existe pas : la liste des dossiers présents à la racine du kDrive est affichée, avec le chemin à indiquer ;
+  - tout accès est refusé : l'offre kDrive n'inclut sans doute pas le WebDAV, ou l'identifiant n'est pas l'adresse mail du compte.
+- Même aide sur le téléphone en lecture.
+- Programme PC : aucun changement.
+
 ## 2.9.2 — 28 octobre 2026
 
 **Publication : l'application « lecture » aussi dans les Releases du dépôt du code**
