@@ -7,6 +7,16 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.5 — 28 octobre 2026
+
+**Partage du planning : NAS joint par son adresse IP (Android)**
+- Avec l'adresse IP du NAS (ou son certificat d'origine), l'envoi échouait : « certificat du serveur non reconnu ». Let's Encrypt ne délivre pas de certificat pour une adresse IP.
+- L'application propose maintenant de **faire confiance au certificat du NAS** : elle affiche son empreinte SHA-256 ; une fois accepté, seul CE certificat est accepté pour ce serveur. Un autre certificat à la même adresse est refusé, et la question est reposée.
+- Rien n'est envoyé (ni identifiant, ni mot de passe, ni planning) tant que le certificat n'est pas accepté.
+- Réglages › Partage du planning : l'empreinte acceptée est affichée, pour comparer avec l'autre téléphone, avec un bouton « Ne plus faire confiance ». Changer l'adresse du serveur oublie le certificat accepté.
+- Même fonctionnement sur le téléphone en lecture.
+- Programme PC : aucun changement.
+
 ## 2.9.4 — 28 octobre 2026
 
 **Partage du planning par un NAS Synology (Android)**

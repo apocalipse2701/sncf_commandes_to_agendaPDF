@@ -375,6 +375,17 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** Faire confiance au certificat du serveur (empreinte proposée après un échec) ; renvoie "" ou un message. */
+        @JavascriptInterface
+        public String partageFaireConfiance(String empreinte) {
+            try {
+                PartagePlanning.faireConfiance(MainActivity.this, empreinte);
+                return "";
+            } catch (Exception e) {
+                return "Impossible : " + e.getMessage();
+            }
+        }
+
         /** Code de partage proposé (12 caractères). */
         @JavascriptInterface
         public String partageNouveauCode() {

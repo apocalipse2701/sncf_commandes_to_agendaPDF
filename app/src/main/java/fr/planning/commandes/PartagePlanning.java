@@ -123,6 +123,7 @@ public class PartagePlanning extends JobService {
             o.put("code", lireSecret(p, "code"));
             o.put("etat", p.getString("etat", ""));
             o.put("recu", p.getString("recu", ""));
+            o.put("certificat", p.getString("certificat", ""));
         } catch (org.json.JSONException e) {
             // impossible
         }
@@ -141,6 +142,7 @@ public class PartagePlanning extends JobService {
             if (normaliser(code).length() < 8) throw new IOException("le code de partage doit avoir au moins 8 lettres ou chiffres");
         }
         ed.putBoolean("actif", o.optBoolean("actif", false));
+        if (!adresse.equals(prefs(c).getString("adresse", ""))) ed.remove("certificat");   // autre serveur : certificat à accepter de nouveau
         ed.putString("adresse", adresse);
         String service = o.optString("service", "synology");
         ed.putString("service", service.matches("synology|kdrive|autre") ? service : "synology");
@@ -164,6 +166,17 @@ public class PartagePlanning extends JobService {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    /** L'utilisateur fait confiance au certificat présenté par le serveur (empreinte SHA-256 en hexadécimal). */
+    static void faireConfiance(Context c, String empreinte) throws IOException {
+        String e = empreinte == null ? "" : empreinte.trim().toLowerCase(Locale.ROOT).replace(":", "");
+        if (e.isEmpty()) {                                         // « Ne plus faire confiance »
+            prefs(c).edit().remove("certificat").apply();
+            return;
+        }
+        if (!e.matches("[0-9a-f]{64}")) throw new IOException("empreinte de certificat incorrecte");
+        prefs(c).edit().putString("certificat", e).apply();
     }
 
     /** Code de partage proposé : 12 caractères faciles à recopier (sans 0/O, 1/l/I). */
@@ -285,9 +298,111 @@ public class PartagePlanning extends JobService {
         return b.toString();
     }
 
-    /** Essais seulement : connexions TLS imposées (certificat de test). null = normal. */
-    static javax.net.ssl.SSLSocketFactory tlsEssai = null;
-    static javax.net.ssl.HostnameVerifier verifEssai = null;
+    // ------------------------------------------------------------------ certificat du serveur
+    // Normal : certificat reconnu par Android (Let's Encrypt…) et au nom de l'adresse. Sinon (NAS joint par son
+    // adresse IP, certificat d'origine du Synology), l'utilisateur peut « faire confiance » à CE certificat :
+    // son empreinte SHA-256 est gardée (prefs « certificat ») et seul ce certificat-là est ensuite accepté.
+    // Rien n'est envoyé (ni identifiant ni planning) à un serveur dont le certificat n'est pas accepté.
+
+    /** Essais seulement : autorités de confiance imposées (null = celles du téléphone). */
+    static java.security.KeyStore confianceEssai = null;
+    /** Empreinte (hex) du certificat accepté par l'utilisateur, "" si aucun. Réglée sous VERROU avant chaque échange. */
+    static volatile String epingle = "";
+    /** Empreinte du dernier certificat présenté par le serveur (pour la proposer quand il est refusé). */
+    static volatile String vue = "";
+    /** Le nom du serveur ne correspond pas à son certificat (adresse IP…) : l'échange a été refusé avant tout envoi. */
+    static volatile boolean nomRefuse = false;
+
+    static String empreinte(java.security.cert.Certificate c) {
+        try {
+            byte[] h = java.security.MessageDigest.getInstance("SHA-256").digest(c.getEncoded());
+            StringBuilder b = new StringBuilder();
+            for (byte x : h) b.append(String.format(Locale.ROOT, "%02x", x));
+            return b.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static boolean epingleOk(javax.net.ssl.SSLSession s) {
+        try {
+            java.security.cert.Certificate[] cc = s.getPeerCertificates();
+            return cc.length > 0 && !epingle.isEmpty() && epingle.equals(empreinte(cc[0]));
+        } catch (javax.net.ssl.SSLPeerUnverifiedException e) {
+            return false;
+        }
+    }
+
+    private static boolean surAndroid() {
+        return "Dalvik".equals(System.getProperty("java.vm.name"));
+    }
+
+    /** Certificat accepté par l'utilisateur, ou vérification normale du nom (Android ; sur ordinateur, déjà faite avant). */
+    static final javax.net.ssl.HostnameVerifier VERIFICATEUR = (hote, session) -> {
+        if (epingleOk(session)) return true;
+        boolean bon = surAndroid() && javax.net.ssl.HttpsURLConnection.getDefaultHostnameVerifier().verify(hote, session);
+        if (!bon) {
+            nomRefuse = true;
+            try {
+                java.security.cert.Certificate[] cc = session.getPeerCertificates();
+                if (cc.length > 0) vue = empreinte(cc[0]);
+            } catch (javax.net.ssl.SSLPeerUnverifiedException e) {
+                // pas de certificat
+            }
+        }
+        return bon;
+    };
+
+    /** Vérification normale des certificats, ou certificat accepté par l'utilisateur (empreinte identique). */
+    static final class Confiance implements javax.net.ssl.X509TrustManager {
+        private final javax.net.ssl.X509TrustManager normal;
+
+        Confiance() throws java.security.GeneralSecurityException {
+            javax.net.ssl.TrustManagerFactory f = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+            f.init(confianceEssai);
+            javax.net.ssl.X509TrustManager t = null;
+            for (javax.net.ssl.TrustManager m : f.getTrustManagers()) if (m instanceof javax.net.ssl.X509TrustManager) t = (javax.net.ssl.X509TrustManager) m;
+            if (t == null) throw new java.security.GeneralSecurityException("aucun gestionnaire de certificats");
+            normal = t;
+        }
+
+        @Override
+        public void checkClientTrusted(java.security.cert.X509Certificate[] c, String type) throws java.security.cert.CertificateException {
+            normal.checkClientTrusted(c, type);
+        }
+
+        @Override
+        public void checkServerTrusted(java.security.cert.X509Certificate[] c, String type) throws java.security.cert.CertificateException {
+            if (c == null || c.length == 0) throw new java.security.cert.CertificateException("aucun certificat");
+            vue = empreinte(c[0]);
+            if (!epingle.isEmpty() && epingle.equals(vue)) return;          // le certificat accepté par l'utilisateur
+            normal.checkServerTrusted(c, type);
+        }
+
+        @Override
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return normal.getAcceptedIssuers();
+        }
+    }
+
+    static javax.net.ssl.SSLSocketFactory fabrique() throws IOException {
+        try {
+            javax.net.ssl.SSLContext ctx = javax.net.ssl.SSLContext.getInstance("TLS");
+            ctx.init(null, new javax.net.ssl.TrustManager[]{new Confiance()}, null);
+            return ctx.getSocketFactory();
+        } catch (java.security.GeneralSecurityException e) {
+            throw new IOException("connexion sécurisée impossible (" + e.getMessage() + ")");
+        }
+    }
+
+    /** Empreinte proposée à l'utilisateur quand l'échange a échoué à cause du certificat, sinon "". */
+    static String certificatARefuse(Throwable e) {
+        if (nomRefuse) return vue.isEmpty() || vue.equals(epingle) ? "" : vue;
+        for (Throwable t = e; t != null; t = t.getCause())
+            if (t instanceof javax.net.ssl.SSLException || t instanceof java.security.cert.CertificateException)
+                return vue.isEmpty() || vue.equals(epingle) ? "" : vue;
+        return "";
+    }
 
     private static String auth(String identifiant, String mdp) {
         return "Basic " + android.util.Base64.encodeToString(
@@ -299,8 +414,8 @@ public class PartagePlanning extends JobService {
         if (!"https".equals(u.getProtocol())) throw new IOException("adresse refusée (https obligatoire)");
         HttpURLConnection h = (HttpURLConnection) u.openConnection();
         if (h instanceof javax.net.ssl.HttpsURLConnection) {
-            if (tlsEssai != null) ((javax.net.ssl.HttpsURLConnection) h).setSSLSocketFactory(tlsEssai);
-            if (verifEssai != null) ((javax.net.ssl.HttpsURLConnection) h).setHostnameVerifier(verifEssai);
+            ((javax.net.ssl.HttpsURLConnection) h).setSSLSocketFactory(fabrique());
+            ((javax.net.ssl.HttpsURLConnection) h).setHostnameVerifier(VERIFICATEUR);
         }
         h.setConnectTimeout(DELAI_MS);
         h.setReadTimeout(DELAI_MS);
@@ -328,20 +443,21 @@ public class PartagePlanning extends JobService {
         if (!"https".equals(u.getProtocol())) throw new IOException("adresse refusée (https obligatoire)");
         String hote = u.getHost();
         int port = u.getPort() > 0 ? u.getPort() : 443;
-        javax.net.ssl.SSLSocketFactory f = tlsEssai != null ? tlsEssai : (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
+        javax.net.ssl.SSLSocketFactory f = fabrique();
         java.net.Socket brut = new java.net.Socket();
         brut.connect(new java.net.InetSocketAddress(hote, port), DELAI_MS);
         try (javax.net.ssl.SSLSocket s = (javax.net.ssl.SSLSocket) f.createSocket(brut, hote, port, true)) {
             s.setSoTimeout(DELAI_MS);
-            // nom du serveur vérifié pendant la poignée de main (comme HttpsURLConnection)…
-            javax.net.ssl.SSLParameters prm = s.getSSLParameters();
-            prm.setEndpointIdentificationAlgorithm("HTTPS");
-            s.setSSLParameters(prm);
+            // nom du serveur vérifié pendant la poignée de main (comme HttpsURLConnection), sauf certificat accepté par l'utilisateur…
+            if (epingle.isEmpty()) {
+                javax.net.ssl.SSLParameters prm = s.getSSLParameters();
+                prm.setEndpointIdentificationAlgorithm("HTTPS");
+                s.setSSLParameters(prm);
+            }
             s.startHandshake();
-            // … et de nouveau avec le vérificateur d'Android (sur un ordinateur, celui par défaut refuse tout : déjà fait ci-dessus)
-            javax.net.ssl.HostnameVerifier v = verifEssai != null ? verifEssai
-                    : "Dalvik".equals(System.getProperty("java.vm.name")) ? javax.net.ssl.HttpsURLConnection.getDefaultHostnameVerifier() : null;
-            if (v != null && !v.verify(hote, s.getSession())) throw new IOException("certificat du serveur WebDAV non reconnu");
+            // … et après : certificat accepté, ou vérificateur d'Android (sur un ordinateur : déjà fait ci-dessus)
+            if (!epingleOk(s.getSession()) && (!epingle.isEmpty() || surAndroid()) && !VERIFICATEUR.verify(hote, s.getSession()))
+                throw new javax.net.ssl.SSLPeerUnverifiedException("certificat du serveur WebDAV non reconnu");
             String chemin = u.getPath().isEmpty() ? "/" : u.getPath();
             byte[] c = (corps == null ? "" : corps).getBytes(StandardCharsets.UTF_8);
             String req = methode + " " + chemin + " HTTP/1.1\r\n"
@@ -539,10 +655,13 @@ public class PartagePlanning extends JobService {
         JSONObject r = new JSONObject();
         String heure = new SimpleDateFormat("dd/MM HH:mm", Locale.FRANCE).format(new Date());
         boolean ok = false;
-        String texte;
+        String texte, certificat = "";
         synchronized (VERROU) {
             try {
                 SharedPreferences p = prefs(c);
+                epingle = p.getString("certificat", "");
+                vue = "";
+                nomRefuse = false;
                 if (!p.getBoolean("actif", false)) throw new IOException("partage désactivé");
                 String mdp = lireSecret(p, "mdp"), code = lireSecret(p, "code");
                 if (mdp.isEmpty() || code.isEmpty()) throw new IOException("mot de passe ou code de partage à ressaisir");
@@ -552,12 +671,13 @@ public class PartagePlanning extends JobService {
                 ok = true;
                 texte = "Planning partagé envoyé le " + heure + ".";
             } catch (Exception e) {
+                certificat = certificatARefuse(e);
                 texte = "Partage le " + heure + " : échec (" + raison(e) + ").";
             }
             prefs(c).edit().putString("etat", texte).apply();
         }
         try {
-            r.put("ok", ok).put("texte", texte);
+            r.put("ok", ok).put("texte", texte).put("certificat", certificat);
         } catch (org.json.JSONException e) {
             // impossible
         }
@@ -568,8 +688,9 @@ public class PartagePlanning extends JobService {
         if (e instanceof java.net.UnknownHostException) return "pas d'Internet ou adresse du serveur introuvable";
         if (e instanceof java.net.SocketTimeoutException || e instanceof java.net.ConnectException)
             return "le serveur ne répond pas (NAS éteint, port 5006 non redirigé sur la box, ou WebDAV HTTPS désactivé)";
-        if (e instanceof javax.net.ssl.SSLException) return "certificat du serveur non reconnu : sur le Synology, installez un certificat"
-                + " Let's Encrypt pour son adresse (Panneau de configuration › Sécurité › Certificat)";
+        if (!certificatARefuse(e).isEmpty() || e instanceof javax.net.ssl.SSLException)
+            return "certificat du serveur non reconnu (adresse IP, ou certificat d'origine du NAS) : touchez « Faire confiance à ce"
+                    + " certificat » dans Réglages › Partage du planning, ou installez un certificat Let's Encrypt sur le NAS";
         return e.getMessage() == null || e.getMessage().isEmpty() ? e.getClass().getSimpleName() : e.getMessage();
     }
 
@@ -597,10 +718,13 @@ public class PartagePlanning extends JobService {
     static JSONObject recevoir(Context c, boolean fond) {
         JSONObject r = new JSONObject();
         boolean ok = false, nouveau = false;
-        String texte;
+        String texte, certificat = "";
         String heure = new SimpleDateFormat("dd/MM HH:mm", Locale.FRANCE).format(new Date());
         synchronized (VERROU) {
             SharedPreferences p = prefs(c);
+            epingle = p.getString("certificat", "");
+            vue = "";
+            nomRefuse = false;
             try {
                 if (!p.getBoolean("actif", false)) throw new IOException("réception désactivée");
                 String mdp = lireSecret(p, "mdp"), code = lireSecret(p, "code");
@@ -632,12 +756,13 @@ public class PartagePlanning extends JobService {
                         + (envoye.length() >= 16 ? " (envoyé le " + envoye.substring(8, 10) + "/" + envoye.substring(5, 7)
                         + " à " + envoye.substring(11, 16) + ")." : ".");
             } catch (Exception e) {
+                certificat = certificatARefuse(e);
                 texte = "Réception le " + heure + " : échec (" + raison(e) + ").";
             }
             p.edit().putString("etat", texte).apply();
         }
         try {
-            r.put("ok", ok).put("texte", texte).put("nouveau", nouveau);
+            r.put("ok", ok).put("texte", texte).put("nouveau", nouveau).put("certificat", certificat);
         } catch (org.json.JSONException e) {
             // impossible
         }
