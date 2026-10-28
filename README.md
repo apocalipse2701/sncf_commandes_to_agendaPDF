@@ -16,7 +16,7 @@ Il existe en deux versions qui lisent les bulletins exactement de la même faço
 | En plus | widgets pour l'écran d'accueil, « Partager » un bulletin depuis un mail | dossier `commande` lu automatiquement, sauvegardes automatiques |
 | Données | dans le téléphone | sur le PC |
 
-Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les commandes peuvent être relevées dans votre boîte mail, en lecture seule ; le partage avec un proche, si vous l'activez, dépose le planning chiffré sur votre propre kDrive). Un PDF créé par une version se rouvre dans l'autre.
+Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les commandes peuvent être relevées dans votre boîte mail, en lecture seule ; le partage avec un proche, si vous l'activez, dépose le planning chiffré sur votre propre NAS ou kDrive). Un PDF créé par une version se rouvre dans l'autre.
 
 > Les captures ci-dessous montrent un **planning fictif** (« Agent Exemple »).
 
@@ -77,7 +77,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les
 - Récapitulatif du mois : heures de service, nuits, dimanches et fériés travaillés, repos.
 
 **Garder, partager, imprimer**
-- **Partager le planning avec un proche** (Android) : après chaque changement, le planning est chiffré (code de partage) et déposé sur votre kDrive Infomaniak ; l'application `PlanningCommandes-lecture.apk` l'affiche à jour sur son téléphone, avec widgets et avis « Contrairement ».
+- **Partager le planning avec un proche** (Android) : après chaque changement, le planning est chiffré (code de partage) et déposé sur votre NAS Synology (WebDAV) ou votre kDrive Infomaniak ; l'application `PlanningCommandes-lecture.apk` l'affiche à jour sur son téléphone, avec widgets et avis « Contrairement ».
 - **Confirmer la réception** d'une commande : message réglable à l'expéditeur, envoyé directement par l'application (version « mail », SMTP de la boîte) ou préparé dans l'application mail.
 - Bulletin **« Contrairement »** : avis jaune écrit en rouge jusqu'à **Valider** (jours changés, avant → après) et numéro des jours modifiés en **violet** (calendrier, PDF, images, widget « Calendrier »).
 - Bouton **Exporter** : **PDF** du planning (A4 paysage, un mois par page) à enregistrer ou **imprimer**, ou **JPEG** (une image par mois, ZIP pour plusieurs mois).
@@ -103,7 +103,7 @@ Pas de compte, pas d'abonnement, **pas de données envoyées sur Internet** (les
 |---|---|---|
 | **Manuelle** : bulletins ajoutés à la main (Android : aussi « Partager » depuis le mail ; PC : dossier `commande`) | `PlanningCommandes.apk` | `PlanningPDF.exe` |
 | **Mail** : la même, et en plus les commandes sont récupérées toutes seules dans la boîte mail | `PlanningCommandes-mail.apk` | `PlanningPDF-mail.exe` |
-| **Lecture** : pour un proche, affiche votre planning partagé (kDrive), sans rien modifier | `PlanningCommandes-lecture.apk` | — |
+| **Lecture** : pour un proche, affiche votre planning partagé (NAS Synology ou kDrive), sans rien modifier | `PlanningCommandes-lecture.apk` | — |
 
 Même planning et mêmes réglages : on passe de l'une à l'autre en installant l'autre fichier par-dessus. Chaque version se met ensuite à jour avec la même version.
 

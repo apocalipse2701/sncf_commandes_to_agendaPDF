@@ -45,13 +45,14 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Partage du planning avec un proche (conjoint…), par un dossier WebDAV — Infomaniak kDrive par défaut :
+ * Partage du planning avec un proche (conjoint…), par un dossier WebDAV — NAS Synology (paquet « WebDAV Server »,
+ * https, port 5006 par défaut), Infomaniak kDrive (offres avec WebDAV) ou tout autre serveur WebDAV en https :
  *   - l'application principale (version manuelle ou « mail ») dépose, après chaque changement, le planning
  *     CHIFFRÉ dans <dossier>/planning-partage.bin (PUT) ;
  *   - l'application « lecture » (PlanningCommandes-lecture.apk) le relit à l'ouverture et toutes les heures
  *     (tâche Android), met à jour ses widgets et prévient d'un « Contrairement ».
  * Chiffrement : AES-256-GCM, clé tirée du CODE DE PARTAGE (PBKDF2, 150 000 tours, sel aléatoire) :
- * sans le code, le fichier est illisible, même pour qui a accès au kDrive.
+ * sans le code, le fichier est illisible, même pour qui a accès au serveur.
  * Contenu (avant chiffrement, gzip) : {"version":1, "envoye":"…", "planning":{…}, "codesTxt":"…", "theme":"…", "widget":"…"}.
  * Réglages dans les préférences « partage » ; mot de passe et code chiffrés sur le téléphone (CoffreMail).
  */
@@ -59,7 +60,7 @@ public class PartagePlanning extends JobService {
 
     static final String PREFS = "partage";
     static final String FICHIER = "planning-partage.bin";
-    static final String DOSSIER_DEFAUT = "Private/Planning partagé";   // « Private » = « Mes fichiers » du kDrive
+    static final String DOSSIER_DEFAUT = "Planning";   // Synology : dossier partagé « Planning » (kDrive : « Private/Planning partagé »)
     static final int ID_TACHE = 52, ID_NOTIF = 53;
     static final String CANAL = "partage";
     private static final byte[] MAGIQUE = {'P', 'C', 'P', '1'};
@@ -114,6 +115,7 @@ public class PartagePlanning extends JobService {
         JSONObject o = new JSONObject();
         try {
             o.put("actif", p.getBoolean("actif", false));
+            o.put("service", p.getString("service", ""));          // vide : réglages d'avant 2.9.4 (la page devine)
             o.put("adresse", p.getString("adresse", ""));
             o.put("identifiant", p.getString("identifiant", ""));
             o.put("dossier", p.getString("dossier", DOSSIER_DEFAUT));
@@ -134,12 +136,14 @@ public class PartagePlanning extends JobService {
         if (!adresse.isEmpty()) racine(adresse);                       // vérifie le format
         String code = o.optString("code", "").trim();
         if (o.optBoolean("actif", false)) {
-            if (adresse.isEmpty()) throw new IOException("indiquez le numéro du kDrive (ou l'adresse WebDAV)");
+            if (adresse.isEmpty()) throw new IOException("indiquez l'adresse du serveur (NAS Synology, numéro du kDrive ou adresse WebDAV)");
             if (o.optString("identifiant", "").trim().isEmpty()) throw new IOException("indiquez l'identifiant (adresse mail du compte)");
             if (normaliser(code).length() < 8) throw new IOException("le code de partage doit avoir au moins 8 lettres ou chiffres");
         }
         ed.putBoolean("actif", o.optBoolean("actif", false));
         ed.putString("adresse", adresse);
+        String service = o.optString("service", "synology");
+        ed.putString("service", service.matches("synology|kdrive|autre") ? service : "synology");
         ed.putString("identifiant", o.optString("identifiant", "").trim());
         String dossier = o.optString("dossier", "").trim();
         ed.putString("dossier", dossier.isEmpty() ? DOSSIER_DEFAUT : dossier);
@@ -247,13 +251,27 @@ public class PartagePlanning extends JobService {
         return b.toByteArray();
     }
 
-    // ------------------------------------------------------------------ WebDAV (kDrive)
+    // ------------------------------------------------------------------ WebDAV (NAS Synology, kDrive…)
 
-    /** « 123456 » (numéro du kDrive) → https://123456.connect.kdrive.infomaniak.com/ ; ou adresse WebDAV complète (https). */
+    /** Port WebDAV en https d'un NAS Synology (paquet « WebDAV Server »), pris quand l'adresse n'en indique pas. */
+    static final int PORT_SYNOLOGY = 5006;
+
+    /**
+     * Adresse du serveur WebDAV :
+     *   « 123456 » (numéro du kDrive) → https://123456.connect.kdrive.infomaniak.com/ ;
+     *   « monnas.synology.me » ou « monnas.synology.me:5006 » (NAS Synology) → https://monnas.synology.me:5006/ ;
+     *   adresse complète en https:// telle quelle. http:// refusé (mot de passe et planning ne circulent qu'en https).
+     */
     static String racine(String adresse) throws IOException {
         String a = adresse.trim();
         if (a.matches("\\d{3,12}")) return "https://" + a + ".connect.kdrive.infomaniak.com/";
-        if (!a.toLowerCase(Locale.ROOT).startsWith("https://")) throw new IOException("adresse WebDAV incorrecte : numéro du kDrive ou adresse en https://");
+        if (a.toLowerCase(Locale.ROOT).startsWith("http://"))
+            throw new IOException("adresse en http:// refusée : utilisez https:// (sur le Synology : WebDAV Server › HTTPS, port 5006)");
+        if (a.matches("(?i)[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\\d{1,5})?/?")) {      // nom (ou IP) du NAS, sans https://
+            a = a.replaceAll("/$", "");
+            return "https://" + a + (a.contains(":") ? "" : ":" + PORT_SYNOLOGY) + "/";
+        }
+        if (!a.toLowerCase(Locale.ROOT).startsWith("https://")) throw new IOException("adresse incorrecte : nom du NAS (ex. monnas.synology.me), numéro du kDrive ou adresse en https://");
         return a.endsWith("/") ? a : a + "/";
     }
 
@@ -401,7 +419,7 @@ public class PartagePlanning extends JobService {
     }
 
     /**
-     * Dossiers à la racine du kDrive (PROPFIND, profondeur 1), pour un message utile quand le dépôt est refusé.
+     * Dossiers à la racine du serveur (PROPFIND, profondeur 1), pour un message utile quand le dépôt est refusé.
      * null si la racine elle-même est refusée (offre sans WebDAV, compte sans accès…).
      */
     static java.util.List<String> dossiersRacine(String racine, String identifiant, String mdp) throws IOException {
@@ -430,40 +448,43 @@ public class PartagePlanning extends JobService {
         return noms;
     }
 
-    /** Message quand le dépôt est refusé : dit ce qu'il y a vraiment à la racine du kDrive. */
+    /** Message quand le dépôt est refusé : dit ce qu'il y a vraiment à la racine du serveur. */
     static String diagnostic(String racine, String dossier, String identifiant, String mdp, int code) {
         try {
             java.util.List<String> noms = dossiersRacine(racine, identifiant, mdp);
-            if (noms == null) return "le kDrive refuse l'accès WebDAV (réponse " + code + ") : vérifiez que votre offre kDrive inclut le WebDAV"
-                    + " (pas kSuite Free/Standard, my kSuite, my kSuite+) et que l'identifiant est bien l'adresse mail du compte";
+            if (noms == null) return "le serveur refuse l'accès WebDAV (réponse " + code + "). Synology : paquet WebDAV Server installé, et"
+                    + " l'utilisateur autorisé à utiliser WebDAV (Panneau de configuration › Privilèges d'application). kDrive : offre avec WebDAV"
+                    + " (pas kSuite Free/Standard, my kSuite, my kSuite+), identifiant = adresse mail du compte";
             String premier = dossier.replace("\\", "/").split("/")[0].trim();
-            if (noms.isEmpty()) return "dépôt refusé (réponse " + code + ") et aucun dossier lisible à la racine du kDrive";
+            if (noms.isEmpty()) return "dépôt refusé (réponse " + code + ") et aucun dossier visible pour cet utilisateur sur le serveur :"
+                    + " sur le Synology, donnez-lui l'accès en lecture/écriture au dossier partagé (Panneau de configuration › Utilisateur › Permissions)";
             StringBuilder lb = new StringBuilder();          // (String.join : Android 8 et plus seulement)
             for (String n : noms) lb.append(lb.length() > 0 ? ", " : "").append(n);
             String liste = lb.toString();
             if (!premier.isEmpty() && !noms.contains(premier))
-                return "le dossier « " + premier + " » n'existe pas à la racine du kDrive. Dossiers trouvés : " + liste
-                        + ". Dans « Dossier », indiquez par exemple « " + noms.get(0) + "/Planning partagé » (le même sur les deux téléphones)";
-            return "dépôt refusé dans « " + dossier + " » (réponse " + code + "). Dossiers à la racine du kDrive : " + liste
-                    + ". Essayez un autre dossier, ou créez « " + dossier + " » vous-même dans kDrive";
+                return "le dossier « " + premier + " » n'existe pas sur le serveur, ou cet utilisateur n'y a pas accès. Dossiers trouvés : " + liste
+                        + ". Dans « Dossier », indiquez l'un d'eux, par exemple « " + noms.get(0) + " » (le même sur les deux téléphones)."
+                        + " Synology : un dossier partagé se crée dans Panneau de configuration › Dossier partagé, pas depuis l'application";
+            return "dépôt refusé dans « " + dossier + " » (réponse " + code + ") : cet utilisateur n'a sans doute que la lecture."
+                    + " Dossiers visibles : " + liste + ". Synology : Panneau de configuration › Utilisateur › Permissions → Lecture/Écriture";
         } catch (IOException e) {
             return message(code, "dépôt du planning") + " ; " + raison(e);
         }
     }
 
     private static String message(int code, String quoi) {
-        if (code == 401) return "identifiant ou mot de passe refusé par le kDrive (utilisez un mot de passe d'application)";
-        if (code == 403) return "accès refusé par le kDrive pour " + quoi + " (dossier en lecture seule ?)";
-        if (code == 404) return "dossier introuvable sur le kDrive";
-        if (code == 507) return "kDrive plein";
-        return "réponse " + code + " du kDrive (" + quoi + ")";
+        if (code == 401) return "identifiant ou mot de passe refusé par le serveur (Synology : utilisateur du NAS ; kDrive : mot de passe d'application)";
+        if (code == 403) return "accès refusé par le serveur pour " + quoi + " (dossier en lecture seule ?)";
+        if (code == 404) return "dossier introuvable sur le serveur";
+        if (code == 507) return "serveur plein";
+        return "réponse " + code + " du serveur (" + quoi + ")";
     }
 
     static void deposer(String racine, String dossier, String identifiant, String mdp, byte[] donnees) throws IOException {
         String base = racine + segments(dossier);
         int code = put(base + FICHIER, identifiant, mdp, donnees);
         if (code == 401) throw new IOException(message(401, ""));
-        // dossier absent : 404/409 selon les serveurs, 403 pour kDrive. On le crée, niveau par niveau, puis on réessaie.
+        // dossier absent : 404/409 selon les serveurs, 403 pour kDrive et Synology. On le crée, niveau par niveau, puis on réessaie.
         if (code == 403 || code == 404 || code == 409) {
             String chemin = racine;
             for (String s : segments(dossier).split("/")) {
@@ -544,8 +565,11 @@ public class PartagePlanning extends JobService {
     }
 
     static String raison(Exception e) {
-        if (e instanceof java.net.UnknownHostException) return "pas d'Internet ou adresse du kDrive introuvable";
-        if (e instanceof java.net.SocketTimeoutException) return "le kDrive ne répond pas";
+        if (e instanceof java.net.UnknownHostException) return "pas d'Internet ou adresse du serveur introuvable";
+        if (e instanceof java.net.SocketTimeoutException || e instanceof java.net.ConnectException)
+            return "le serveur ne répond pas (NAS éteint, port 5006 non redirigé sur la box, ou WebDAV HTTPS désactivé)";
+        if (e instanceof javax.net.ssl.SSLException) return "certificat du serveur non reconnu : sur le Synology, installez un certificat"
+                + " Let's Encrypt pour son adresse (Panneau de configuration › Sécurité › Certificat)";
         return e.getMessage() == null || e.getMessage().isEmpty() ? e.getClass().getSimpleName() : e.getMessage();
     }
 

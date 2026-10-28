@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.4 — 28 octobre 2026
+
+**Partage du planning par un NAS Synology (Android)**
+- Le partage avec la version lecture peut passer par votre **NAS Synology** : son accès WebDAV (paquet gratuit « WebDAV Server ») sert à la place du kDrive, dont l'offre gratuite n'a pas de WebDAV.
+- Réglages › Partage du planning : choix du serveur **NAS Synology** (proposé d'abord), **kDrive** ou **Autre WebDAV**. Les champs, l'aide et le dossier proposé s'adaptent :
+  - NAS : adresse DDNS (ex. `monnas.synology.me`, port 5006 en HTTPS pris par défaut), utilisateur du NAS, mot de passe, dossier partagé `Planning`.
+- « Comment faire ? » pour le NAS : installer WebDAV Server (HTTPS), créer le dossier partagé et un utilisateur réservé, DDNS et port 5006 sur la box, certificat Let's Encrypt.
+- Messages d'erreur adaptés : NAS injoignable (port non redirigé, NAS éteint), certificat non reconnu, droits de l'utilisateur, WebDAV non autorisé, dossiers partagés visibles.
+- Les adresses en `http://` sont refusées : le mot de passe et le planning ne circulent qu'en HTTPS.
+- Programme PC : aucun changement.
+
 ## 2.9.3 — 28 octobre 2026
 
 **Partage du planning : dépôt refusé par le kDrive (correction, Android)**
