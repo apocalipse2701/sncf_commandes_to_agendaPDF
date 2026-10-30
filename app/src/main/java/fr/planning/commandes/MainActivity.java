@@ -479,6 +479,78 @@ public class MainActivity extends Activity {
             }).start();
         }
 
+        // ---- formulaire PDF à remplir (ex. déclaration individuelle d'intention) : modèle gardé sur le téléphone ----
+
+        private java.io.File fichierFormulaire() {
+            return new java.io.File(getFilesDir(), "formulaire-dii.pdf");
+        }
+
+        /** Modèle vierge choisi par l'utilisateur (base64), ou "" : il n'est jamais publié avec l'application. */
+        @JavascriptInterface
+        public String formulaireLire() {
+            java.io.File f = fichierFormulaire();
+            if (!f.isFile()) return "";
+            try {
+                return Base64.encodeToString(BulletinsRanges.lire(f), Base64.NO_WRAP);
+            } catch (IOException e) {
+                return "";
+            }
+        }
+
+        /** Garde le modèle vierge ("" = l'oublier) ; renvoie "" ou un message. */
+        @JavascriptInterface
+        public String formulaireEnregistrer(String b64) {
+            java.io.File f = fichierFormulaire();
+            if (b64 == null || b64.isEmpty()) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+                return "";
+            }
+            try (OutputStream out = new java.io.FileOutputStream(f)) {
+                out.write(Base64.decode(b64, Base64.DEFAULT));
+                return "";
+            } catch (Exception e) {
+                return "Formulaire non enregistré : " + e.getMessage();
+            }
+        }
+
+        /** Sans envoi direct : l'application mail s'ouvre avec le message et le PDF rempli en pièce jointe. Renvoie "" ou un message. */
+        @JavascriptInterface
+        public String formulairePartager(String a, String sujet, String corps, String nom, String b64) {
+            try {
+                String n = (nom == null || nom.trim().isEmpty() ? "document.pdf" : nom.trim()).replaceAll("[\\\\/:*?\"<>|]", "_");
+                java.io.File d = new java.io.File(getCacheDir(), BulletinsFournisseur.DOSSIER_ENVOI);
+                //noinspection ResultOfMethodCallIgnored
+                d.mkdirs();
+                java.io.File[] vieux = d.listFiles();
+                if (vieux != null) for (java.io.File v : vieux) //noinspection ResultOfMethodCallIgnored
+                    v.delete();                                      // un seul document en attente
+                try (OutputStream out = new java.io.FileOutputStream(new java.io.File(d, n))) {
+                    out.write(Base64.decode(b64, Base64.DEFAULT));
+                }
+                final Uri u = BulletinsFournisseur.adresse(MainActivity.this, BulletinsFournisseur.DOSSIER_ENVOI + "/" + n);
+                final Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("application/pdf");
+                String dest = a == null ? "" : a.trim();
+                if (!dest.isEmpty()) i.putExtra(Intent.EXTRA_EMAIL, new String[]{dest});
+                i.putExtra(Intent.EXTRA_SUBJECT, sujet == null ? "" : sujet);
+                i.putExtra(Intent.EXTRA_TEXT, corps == null ? "" : corps);
+                i.putExtra(Intent.EXTRA_STREAM, u);
+                i.setClipData(android.content.ClipData.newRawUri(n, u));
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                runOnUiThread(() -> {
+                    try {
+                        startActivity(Intent.createChooser(i, "Envoyer le formulaire"));
+                    } catch (Exception e) {
+                        appelerPage("__confirmation", "{\"ok\":false,\"texte\":\"Aucune application pour envoyer le formulaire.\"}");
+                    }
+                });
+                return "";
+            } catch (Exception e) {
+                return "Envoi impossible : " + e.getMessage();
+            }
+        }
+
         /** Sans envoi direct : l'application mail du téléphone s'ouvre avec le message prêt (l'utilisateur envoie). */
         @JavascriptInterface
         public String ouvrirMail(String a, String sujet, String corps) {

@@ -57,6 +57,12 @@ final class EnvoiMail {
      */
     void envoyer(String serveur, int port, String adresse, String motDePasse, String a, String sujet, String corps,
                  String enReponseA) throws IOException {
+        envoyer(serveur, port, adresse, motDePasse, a, sujet, corps, enReponseA, null, null);
+    }
+
+    /** Avec une pièce jointe PDF (nomPiece, piece) : par exemple un formulaire rempli. */
+    void envoyer(String serveur, int port, String adresse, String motDePasse, String a, String sujet, String corps,
+                 String enReponseA, String nomPiece, byte[] piece) throws IOException {
         if (serveur == null || serveur.trim().isEmpty()) throw new IOException("serveur d'envoi (SMTP) non indiqué");
         if (!adresseValide(a)) throw new IOException("adresse du destinataire incorrecte");
         connecter(serveur.trim(), port);
@@ -82,7 +88,7 @@ final class EnvoiMail {
             if (code != 250 && code != 251) throw new IOException("destinataire refusé par le serveur (" + code + ")");
             envoyerLigne("DATA");
             attendre(354);
-            out.write(message(adresse, a.trim(), sujet, corps, enReponseA).getBytes(StandardCharsets.UTF_8));
+            out.write(message(adresse, a.trim(), sujet, corps, enReponseA, nomPiece, piece).getBytes(StandardCharsets.UTF_8));
             envoyerLigne(".");
             attendre(250);
             try {
@@ -102,6 +108,10 @@ final class EnvoiMail {
     // ------------------------------------------------------------------ message
 
     static String message(String de, String a, String sujet, String corps, String enReponseA) {
+        return message(de, a, sujet, corps, enReponseA, null, null);
+    }
+
+    static String message(String de, String a, String sujet, String corps, String enReponseA, String nomPiece, byte[] piece) {
         StringBuilder m = new StringBuilder();
         String domaine = de.contains("@") ? de.substring(de.indexOf('@') + 1) : "planning.local";
         m.append("From: <").append(de).append(">\r\n");
@@ -115,13 +125,36 @@ final class EnvoiMail {
             m.append("References: ").append(ref).append("\r\n");
         }
         m.append("MIME-Version: 1.0\r\n");
-        m.append("Content-Type: text/plain; charset=UTF-8\r\n");
-        m.append("Content-Transfer-Encoding: base64\r\n");
-        m.append("\r\n");
-        String b64 = b64(
+        String texte = b64(
                 (corps == null ? "" : corps).replace("\r\n", "\n").replace("\n", "\r\n").getBytes(StandardCharsets.UTF_8));
-        for (int i = 0; i < b64.length(); i += 76) m.append(b64, i, Math.min(b64.length(), i + 76)).append("\r\n");
+        if (piece == null) {
+            m.append("Content-Type: text/plain; charset=UTF-8\r\n");
+            m.append("Content-Transfer-Encoding: base64\r\n");
+            m.append("\r\n");
+            lignes76(m, texte);
+            return m.toString();
+        }
+        // texte + pièce jointe PDF (multipart/mixed)
+        String limite = "=_planning_" + UUID.randomUUID().toString().replace("-", "");
+        String nom = (nomPiece == null || nomPiece.trim().isEmpty() ? "document.pdf" : nomPiece.trim()).replace("\"", "'");
+        m.append("Content-Type: multipart/mixed; boundary=\"").append(limite).append("\"\r\n");
+        m.append("\r\n");
+        m.append("--").append(limite).append("\r\n");
+        m.append("Content-Type: text/plain; charset=UTF-8\r\n");
+        m.append("Content-Transfer-Encoding: base64\r\n\r\n");
+        lignes76(m, texte);
+        m.append("--").append(limite).append("\r\n");
+        String enc = encoderEntete(nom).replace("\r\n ", " ");
+        m.append("Content-Type: application/pdf; name=\"").append(enc).append("\"\r\n");
+        m.append("Content-Disposition: attachment; filename=\"").append(enc).append("\"\r\n");
+        m.append("Content-Transfer-Encoding: base64\r\n\r\n");
+        lignes76(m, b64(piece));
+        m.append("--").append(limite).append("--\r\n");
         return m.toString();
+    }
+
+    private static void lignes76(StringBuilder m, String b64) {
+        for (int i = 0; i < b64.length(); i += 76) m.append(b64, i, Math.min(b64.length(), i + 76)).append("\r\n");
     }
 
     /** Sujet en ASCII tel quel, sinon « =?UTF-8?B?…?= » (morceaux de 45 octets au plus). */

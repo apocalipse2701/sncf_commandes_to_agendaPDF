@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.11.0 — 30 octobre 2026
+
+**Déclaration de grève (formulaire DII) : remplir et envoyer (PC et Android)**
+- Planning : bouton **Déclaration de grève (DII)** dans le détail du jour (téléphone), et clic droit sur un jour › **Déclaration de grève (DII)…** ou Fichier › Déclaration de grève (DII)… (PC).
+- Le « Cadre réservé à l'agent » du formulaire se remplit : préavis, **partie 1** (intention de participer à la grève : date, heure, lieu, date) et/ou **partie 2** (suite à la DII n°…, renoncer ou reprendre le travail, date, heure).
+- Pré-remplis : nom et prénom d'après le planning, date du jour choisi, heure de prise de service de ce jour, date du jour. CP, entité, lieu, destinataire et message sont gardés pour la fois suivante.
+- **Signature** : dessinée au doigt sur le téléphone (gardée si on le souhaite) ; image choisie sur le PC. Elle est posée dans le cadre « Signature » de chaque partie remplie.
+- **Envoi** au destinataire indiqué, avec le formulaire rempli en pièce jointe : directement par l'application (version « mail », boîte réglée), sinon par l'application mail (téléphone : PDF déjà joint ; PC : fichier à joindre, dossier ouvert). **Enregistrer le PDF** aussi possible.
+- Option : marquer ce jour comme jour de grève dans le planning.
+- Le formulaire vierge n'est **pas** fourni avec l'application : on le choisit une fois (PDF reçu de l'établissement), il reste sur l'appareil.
+
 ## 2.10.0 — 30 octobre 2026
 
 **Sauvegarde des bulletins sur un NAS ou un kDrive (PC et Android)**

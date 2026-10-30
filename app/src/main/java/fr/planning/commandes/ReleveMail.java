@@ -312,15 +312,18 @@ public class ReleveMail extends JobService {
             String smtp = p.getString("smtp", "");
             if (smtp.isEmpty()) throw new IOException("serveur d'envoi (SMTP) non réglé (Réglages › Commandes par mail)");
             String a = o.optString("a", "").trim();
+            String pieceB64 = o.optString("pieceB64", "");
+            byte[] piece = pieceB64.isEmpty() ? null : android.util.Base64.decode(pieceB64, android.util.Base64.DEFAULT);
             new EnvoiMail().envoyer(smtp, p.getInt("port_smtp", 465), adresse, mdp, a,
-                    o.optString("sujet", ""), o.optString("corps", ""), o.optString("enReponseA", ""));
+                    o.optString("sujet", ""), o.optString("corps", ""), o.optString("enReponseA", ""),
+                    piece == null ? null : o.optString("pieceNom", "document.pdf"), piece);
             ok = true;
-            texte = "Confirmation envoyée à " + a + ".";
+            texte = (piece == null ? "Confirmation envoyée à " : "Envoyé à ") + a + ".";
         } catch (Exception e) {
             String m = e.getMessage();
             if (e instanceof java.net.UnknownHostException) m = "pas d'Internet ou serveur introuvable";
             else if (e instanceof java.net.SocketTimeoutException) m = "le serveur ne répond pas";
-            texte = "Confirmation non envoyée : " + (m == null || m.isEmpty() ? e.getClass().getSimpleName() : m) + ".";
+            texte = (o.optString("pieceB64", "").isEmpty() ? "Confirmation non envoyée : " : "Non envoyé : ") + (m == null || m.isEmpty() ? e.getClass().getSimpleName() : m) + ".";
         }
         try {
             res.put("ok", ok);

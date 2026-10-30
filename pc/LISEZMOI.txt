@@ -137,6 +137,10 @@ DOSSIER « commande »
   • Fichier › « Exporter les bulletins en ZIP… » : tout le dossier
     « commande » (avec ses dossiers année / mois) dans une archive ZIP, pour
     le sauvegarder ou l'envoyer. Le téléphone fait le même ZIP.
+  • Fichier › « Déclaration de grève (DII)… » (ou clic droit sur un jour) :
+    remplit le cadre agent du formulaire DII (parties 1 et 2), ajoute
+    votre signature (image) et l'envoie au destinataire choisi. Le
+    formulaire vierge est choisi une fois et reste sur ce PC.
   • Fichier › « Sauvegarder les bulletins (NAS, kDrive…)… » : copie le dossier
     « commande » vers un NAS (partage réseau \\NAS\dossier ou lecteur réseau),
     un dossier kDrive synchronisé ou une clé USB ; seuls les nouveaux bulletins

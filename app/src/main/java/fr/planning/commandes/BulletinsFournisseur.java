@@ -19,6 +19,9 @@ import java.io.FileNotFoundException;
 public class BulletinsFournisseur extends ContentProvider {
 
     /** « <applicationId>.bulletins » : chaque variante (manuelle/mail, lecture) a le sien. */
+    /** Sous-dossier du cache pour les documents à joindre à un message (ex. formulaire rempli). */
+    static final String DOSSIER_ENVOI = "_envoi";
+
     static String autorite(android.content.Context c) {
         return c.getPackageName() + ".bulletins";
     }
@@ -32,7 +35,14 @@ public class BulletinsFournisseur extends ContentProvider {
     private File fichier(Uri u) throws FileNotFoundException {
         StringBuilder rel = new StringBuilder();
         for (String morceau : u.getPathSegments()) rel.append(rel.length() > 0 ? "/" : "").append(morceau);
-        File f = getContext() == null ? null : BulletinsRanges.fichier(getContext(), rel.toString());
+        String r = rel.toString();
+        if (r.startsWith(DOSSIER_ENVOI + "/") && getContext() != null) {       // document préparé pour un envoi (formulaire rempli)
+            String nom = r.substring(DOSSIER_ENVOI.length() + 1);
+            File e = new File(new File(getContext().getCacheDir(), DOSSIER_ENVOI), nom);
+            if (nom.isEmpty() || nom.contains("/") || nom.startsWith(".") || !e.isFile()) throw new FileNotFoundException(r);
+            return e;
+        }
+        File f = getContext() == null ? null : BulletinsRanges.fichier(getContext(), r);
         if (f == null) throw new FileNotFoundException(rel.toString());
         return f;
     }

@@ -1422,7 +1422,7 @@ def remplir_modele(modele, c):
     return t.replace(" (édition du )", "").replace(" du  au ", " ")
 
 
-def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, en_reponse_a="", contexte=None):
+def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, en_reponse_a="", contexte=None, piece=None):
     """Envoie la confirmation (SMTP authentifié, toujours chiffré : port 465 = SSL, sinon STARTTLS obligatoire).
     Lève OSError avec un message clair."""
     import smtplib
@@ -1440,6 +1440,8 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
     if re.match(r"^<[^<>\s]+>$", (en_reponse_a or "").strip()):
         m["In-Reply-To"] = m["References"] = en_reponse_a.strip()
     m.set_content(corps or "", charset="utf-8")
+    if piece:                                   # (nom, octets) : PDF joint (ex. formulaire DII rempli)
+        m.add_attachment(piece[1], maintype="application", subtype="pdf", filename=piece[0])
     ctx = contexte or ssl_.create_default_context()
     try:
         if int(port) == 465:
@@ -1474,6 +1476,96 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
             smtp.quit()
         except Exception:
             pass
+
+
+# ---- formulaire DII (déclaration individuelle d'intention) : le PDF vierge est choisi par l'utilisateur et gardé dans
+# son dossier de données (jamais publié avec le programme). Mêmes champs que l'application Android.
+DII_CHAMPS = {
+    "etab": "Text1", "pDu": "Text2", "pDuH": "Text3", "pDuM": "Text4", "pAu": "Text5", "pAuH": "Text6", "pAuM": "Text7",
+    "nom1": "NOM DE LAGENT", "prenom1": "PRENOM", "cp1": "CP", "entite": "ETABLISSEMENT ENTITE",
+    "gDu": "Text8", "gH": "Text9", "gM": "Text10", "lieu1": "Text11", "date1": "Text13,5", "sign1": "Signature11_es_:signer:signature",
+    "nom2": "NOM DE LAGENT_2", "prenom2": "PRENOM_2", "cp2": "CP_2", "num": "Text12", "choix": "Group281",
+    "rDu": "Text16", "rH": "Text17", "rM": "Text18", "lieu2": "Text19", "date2": "Text21", "sign2": "Signature22_es_:signer:signature",
+}
+DII_RENONCER, DII_REPRENDRE = "/Choix3", "/Choix7"
+
+
+def chemin_modele_dii():
+    return os.path.join(dossier_donnees(), "formulaire-dii.pdf")
+
+
+def garder_modele_dii(chemin):
+    """Vérifie que le PDF est bien le formulaire DII (champs attendus) et le garde dans le dossier de données."""
+    import shutil
+    from pypdf import PdfReader
+    champs = PdfReader(chemin).get_fields() or {}
+    manquants = [DII_CHAMPS[k] for k in ("nom1", "gDu", "nom2", "choix") if DII_CHAMPS[k] not in champs]
+    if manquants:
+        raise OSError("ce PDF n'est pas le formulaire DII attendu (champs à remplir introuvables)")
+    shutil.copyfile(chemin, chemin_modele_dii())
+
+
+def remplir_dii(v, signature=None, modele=None):
+    """Remplit le « Cadre réservé à l'agent » (parties 1 et/ou 2) ; v : dict (dates dt.date, heures « HH:MM »).
+    signature : image (PNG/JPEG) posée dans le cadre « Signature » de chaque partie remplie. Renvoie les octets du PDF."""
+    import io
+    from pypdf import PdfReader, PdfWriter, Transformation
+    r = PdfReader(modele or chemin_modele_dii())
+    w = PdfWriter(clone_from=r)
+    court = lambda d: d.strftime("%d/%m/%y") if d else ""
+    val = {}
+
+    def hm(h, ch, cm):
+        a, _, b = (h or "").partition(":")
+        val[DII_CHAMPS[ch]], val[DII_CHAMPS[cm]] = a, b
+    val[DII_CHAMPS["etab"]] = v.get("etab", "")
+    val[DII_CHAMPS["pDu"]] = court(v.get("pDu"))
+    hm(v.get("pDuH"), "pDuH", "pDuM")
+    val[DII_CHAMPS["pAu"]] = court(v.get("pAu"))
+    hm(v.get("pAuH"), "pAuH", "pAuM")
+    if v.get("p1"):
+        val.update({DII_CHAMPS["nom1"]: v.get("nom", ""), DII_CHAMPS["prenom1"]: v.get("prenom", ""), DII_CHAMPS["cp1"]: v.get("cp", ""),
+                    DII_CHAMPS["entite"]: v.get("entite", ""), DII_CHAMPS["gDu"]: court(v.get("gDu")), DII_CHAMPS["lieu1"]: v.get("lieu", ""),
+                    DII_CHAMPS["date1"]: v["date"].strftime("%d/%m/%Y") if v.get("date") else ""})
+        hm(v.get("gH"), "gH", "gM")
+    if v.get("p2"):
+        val.update({DII_CHAMPS["nom2"]: v.get("nom", ""), DII_CHAMPS["prenom2"]: v.get("prenom", ""), DII_CHAMPS["cp2"]: v.get("cp", ""),
+                    DII_CHAMPS["num"]: v.get("num", ""), DII_CHAMPS["lieu2"]: v.get("lieu", ""), DII_CHAMPS["date2"]: court(v.get("date")),
+                    DII_CHAMPS["choix"]: DII_REPRENDRE if v.get("choix") == "reprendre" else DII_RENONCER})
+        if v.get("choix") == "reprendre":
+            val[DII_CHAMPS["rDu"]] = court(v.get("rDu"))
+            hm(v.get("rH"), "rH", "rM")
+    page = w.pages[0]
+    w.update_page_form_field_values(page, val, auto_regenerate=False)   # apparence écrite pour chaque champ texte
+    af = w._root_object.get("/AcroForm")
+    if af is not None:                         # pas de régénération par le lecteur : les cases gardent leur dessin d'origine
+        from pypdf.generic import BooleanObject, NameObject
+        af.get_object()[NameObject("/NeedAppearances")] = BooleanObject(False)
+    if signature:
+        from PIL import Image
+        img = Image.open(signature).convert("RGBA")
+        fond = Image.new("RGB", img.size, (255, 255, 255))
+        fond.paste(img, mask=img.split()[3])
+        tampon = io.BytesIO()
+        fond.save(tampon, "PDF", resolution=72)
+        calque = PdfReader(io.BytesIO(tampon.getvalue())).pages[0]
+        lw, lh = float(calque.mediabox.width), float(calque.mediabox.height)
+        for cle, oui in (("sign1", v.get("p1")), ("sign2", v.get("p2"))):
+            if not oui:
+                continue
+            rect = None
+            for a in page.get("/Annots", []):
+                a = a.get_object()
+                if a.get("/T") == DII_CHAMPS[cle]:
+                    rect = [float(x) for x in a["/Rect"]]
+            if not rect:
+                continue
+            x0, y0, x1, y1 = rect
+            k = min((x1 - x0 - 4) / lw, (y1 - y0 - 2) / lh)
+            page.merge_transformed_page(calque, Transformation().scale(k, k).translate(x0 + 2, y0 + (y1 - y0 - lh * k) / 2))
+    out = io.BytesIO()
+    w.write(out)
+    return out.getvalue()
 
 
 def mailto(a, sujet, corps):
@@ -3121,6 +3213,7 @@ def lancer_interface():
                 m.add_command(label="Ajouter un jour de grève", command=lambda: self.basculer_greve(date))
             m.add_command(label="Ajouter une note…", command=lambda: self._ajouter_a(date))
             m.add_command(label="Détail du jour…", command=lambda: self.detail_jour(date))
+            m.add_command(label="Déclaration de grève (DII)…", command=lambda: self.fenetre_dii(date))
             try:
                 m.tk_popup(e.x_root, e.y_root)
             finally:
@@ -3404,6 +3497,226 @@ def lancer_interface():
             ttk.Button(b, text="Annuler", command=fen.destroy).pack(side="right")
             fen.bind("<Escape>", lambda e: fen.destroy())
 
+        def fenetre_dii(self, jour=None):
+            """Formulaire DII : remplit le « Cadre réservé à l'agent » (parties 1 et 2) et l'envoie au destinataire choisi."""
+            import threading
+            if not os.path.exists(chemin_modele_dii()):
+                if not messagebox.askokcancel("Déclaration de grève (DII)", (
+                        "Choisissez d'abord le formulaire DII vierge (PDF à remplir, tel que reçu de votre établissement).\n\n"
+                        "Il est gardé dans le dossier de données du programme et sert ensuite à chaque déclaration."), parent=self):
+                    return
+                ch = filedialog.askopenfilename(parent=self, title="Formulaire DII vierge", filetypes=[("PDF", "*.pdf")])
+                if not ch:
+                    return
+                try:
+                    garder_modele_dii(ch)
+                except Exception as ex:
+                    messagebox.showerror("Déclaration de grève (DII)", f"Formulaire refusé : {ex}", parent=self)
+                    return
+            jour = jour or dt.date.today()
+            S = dict(lire_prefs().get("dii") or {})
+            agent = (self.pl.agent or "").split()
+            ps = ""
+            for sv in self.pl.jours.get(jour, []):
+                m = re.search(r"\bPS\s+(\d{1,2}):(\d{2})", sv.get("horaires", "")) or re.search(r"(\d{1,2}):(\d{2})", sv.get("horaires", ""))
+                if m:
+                    ps = f"{int(m.group(1)):02d}:{m.group(2)}"
+                    break
+            fen = tk.Toplevel(self)
+            fen.title("Déclaration de grève (DII)")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            vs = {}
+
+            def ligne(r, lib, cle, val, largeur=30, col=0):
+                ttk.Label(c, text=lib).grid(row=r, column=col, sticky="w", pady=2, padx=(0 if col == 0 else 12, 4))
+                vs[cle] = tk.StringVar(value=val)
+                ttk.Entry(c, textvariable=vs[cle], width=largeur).grid(row=r, column=col + 1, sticky="w", pady=2)
+            fd = lambda d: d.strftime("%d/%m/%Y") if d else ""
+            sd = lambda x: fd(dt.date.fromisoformat(x)) if x else ""
+            ttk.Label(c, text="Agent", font=("", 10, "bold")).grid(row=0, column=0, sticky="w")
+            ligne(1, "Nom :", "nom", S.get("nom") or (agent[0] if agent else ""))
+            ligne(1, "Prénom :", "prenom", S.get("prenom") or (" ".join(agent[1:]).capitalize() if len(agent) > 1 else ""), col=2)
+            ligne(2, "CP :", "cp", S.get("cp", ""))
+            ligne(2, "Établissement / entité :", "entite", S.get("entite", ""), col=2)
+            ttk.Label(c, text="Préavis", font=("", 10, "bold")).grid(row=3, column=0, sticky="w", pady=(8, 0))
+            ligne(4, "Mouvement social, établissement :", "etab", S.get("etab", ""), 30)
+            ligne(5, "Du (jj/mm/aaaa) :", "pDu", sd(S.get("pDu")), 12)
+            ligne(5, "à (hh:mm) :", "pDuH", S.get("pDuH", ""), 8, col=2)
+            ligne(6, "Au (jj/mm/aaaa) :", "pAu", sd(S.get("pAu")), 12)
+            ligne(6, "à (hh:mm) :", "pAuH", S.get("pAuH", ""), 8, col=2)
+            v_p1, v_p2 = tk.BooleanVar(value=True), tk.BooleanVar(value=False)
+            ttk.Checkbutton(c, text="Partie 1 : intention de participer à la grève", variable=v_p1).grid(row=7, column=0, columnspan=4, sticky="w", pady=(8, 0))
+            ligne(8, "Grève à compter du :", "gDu", fd(jour), 12)
+            ligne(8, "à (hh:mm) :", "gH", ps, 8, col=2)
+            ttk.Checkbutton(c, text="Partie 2 : renoncer ou reprendre le travail", variable=v_p2).grid(row=9, column=0, columnspan=4, sticky="w", pady=(8, 0))
+            ligne(10, "Suite à la DII n° :", "num", S.get("num", ""), 8)
+            v_choix = tk.StringVar(value="renoncer")
+            fr = ttk.Frame(c)
+            fr.grid(row=11, column=0, columnspan=4, sticky="w")
+            ttk.Radiobutton(fr, text="Renoncer à participer à la grève", value="renoncer", variable=v_choix).pack(side="left")
+            ttk.Radiobutton(fr, text="Reprendre le travail", value="reprendre", variable=v_choix).pack(side="left", padx=12)
+            ligne(12, "Reprise à compter du :", "rDu", fd(jour), 12)
+            ligne(12, "à (hh:mm) :", "rH", ps, 8, col=2)
+            ligne(13, "Fait à :", "lieu", S.get("lieu", ""))
+            ligne(13, "le :", "date", fd(dt.date.today()), 12, col=2)
+            ttk.Label(c, text="Signature (image) :").grid(row=14, column=0, sticky="w", pady=(8, 2))
+            v_sig = tk.StringVar(value=S.get("signature", "") if os.path.exists(S.get("signature", "") or "") else "")
+            fs = ttk.Frame(c)
+            fs.grid(row=14, column=1, columnspan=3, sticky="w", pady=(8, 2))
+            l_sig = ttk.Label(fs, text=os.path.basename(v_sig.get()) or "aucune (signer à la main)", foreground="#555")
+            l_sig.pack(side="left")
+
+            def choisir_sig():
+                f = filedialog.askopenfilename(parent=fen, title="Image de la signature", filetypes=[("Image", "*.png *.jpg *.jpeg")])
+                if f:
+                    v_sig.set(f)
+                    l_sig.config(text=os.path.basename(f))
+
+            def sans_sig():
+                v_sig.set("")
+                l_sig.config(text="aucune (signer à la main)")
+            ttk.Button(fs, text="Choisir…", command=choisir_sig).pack(side="left", padx=6)
+            ttk.Button(fs, text="Aucune", command=sans_sig).pack(side="left")
+            ttk.Label(c, text="Envoi", font=("", 10, "bold")).grid(row=15, column=0, sticky="w", pady=(8, 0))
+            ligne(16, "À :", "a", S.get("a", ""), 34)
+            vs["objet"] = tk.StringVar()
+            ttk.Label(c, text="Objet :").grid(row=17, column=0, sticky="w")
+            ttk.Entry(c, textvariable=vs["objet"], width=70).grid(row=17, column=1, columnspan=3, sticky="we", pady=2)
+            ttk.Label(c, text="Message :").grid(row=18, column=0, sticky="nw")
+            txt = tk.Text(c, width=70, height=5, wrap="word", font=(self.police_ui, 10))
+            txt.grid(row=18, column=1, columnspan=3, sticky="we", pady=2)
+            nom_complet = lambda: f"{vs['nom'].get().strip().upper()} {vs['prenom'].get().strip()}".strip()
+            vs["objet"].set(f"Déclaration individuelle d'intention – {nom_complet()} – grève du {fd(jour)}")
+            txt.insert("1.0", S.get("corps") or f"Bonjour,\n\nVeuillez trouver ci-joint ma déclaration individuelle d'intention.\n\nCordialement,\n{vs['prenom'].get()} {vs['nom'].get()}")
+            v_greve = tk.BooleanVar(value=jour not in self.pl.greves)
+            ttk.Checkbutton(c, text=f"Marquer le {fd(jour)} comme jour de grève dans le planning", variable=v_greve).grid(
+                row=19, column=0, columnspan=4, sticky="w", pady=(6, 0))
+            etat = ttk.Label(c, foreground="#555", wraplength=620, justify="left")
+            etat.grid(row=21, column=0, columnspan=4, sticky="w", pady=(6, 0))
+
+            def date_de(cle):
+                t = vs[cle].get().strip()
+                if not t:
+                    return None
+                try:
+                    return dt.datetime.strptime(t, "%d/%m/%Y").date()
+                except ValueError:
+                    try:
+                        return dt.datetime.strptime(t, "%d/%m/%y").date()
+                    except ValueError:
+                        raise ValueError(f"date incorrecte : {t} (jj/mm/aaaa)")
+
+            def heure_de(cle):
+                t = vs[cle].get().strip().replace("h", ":")
+                if t and not re.match(r"^\d{1,2}:\d{2}$", t):
+                    raise ValueError(f"heure incorrecte : {t} (hh:mm)")
+                return t
+
+            def preparer():
+                v = {"nom": vs["nom"].get().strip().upper(), "prenom": vs["prenom"].get().strip(), "cp": vs["cp"].get().strip(),
+                     "entite": vs["entite"].get().strip(), "etab": vs["etab"].get().strip(), "pDu": date_de("pDu"), "pDuH": heure_de("pDuH"),
+                     "pAu": date_de("pAu"), "pAuH": heure_de("pAuH"), "p1": v_p1.get(), "gDu": date_de("gDu"), "gH": heure_de("gH"),
+                     "p2": v_p2.get(), "num": vs["num"].get().strip(), "choix": v_choix.get(), "rDu": date_de("rDu"), "rH": heure_de("rH"),
+                     "lieu": vs["lieu"].get().strip(), "date": date_de("date")}
+                if not v["p1"] and not v["p2"]:
+                    raise ValueError("cochez la partie 1, la partie 2, ou les deux")
+                if not v["nom"]:
+                    raise ValueError("indiquez le nom")
+                if v["p1"] and not v["gDu"]:
+                    raise ValueError("indiquez la date de participation à la grève")
+                octets = remplir_dii(v, v_sig.get() or None)
+                nom = re.sub(r'[\\/:*?"<>|]', "_", f"DII {v['nom']} {v['prenom']} {(v['gDu'] if v['p1'] and v['gDu'] else v['date'] or dt.date.today()).isoformat()}.pdf")
+                ecrire_pref("dii", {"nom": v["nom"], "prenom": v["prenom"], "cp": v["cp"], "entite": v["entite"], "etab": v["etab"],
+                                    "pDu": v["pDu"].isoformat() if v["pDu"] else "", "pDuH": v["pDuH"],
+                                    "pAu": v["pAu"].isoformat() if v["pAu"] else "", "pAuH": v["pAuH"], "lieu": v["lieu"],
+                                    "num": v["num"], "a": vs["a"].get().strip(), "corps": txt.get("1.0", "end-1c"), "signature": v_sig.get()})
+                if v_greve.get() and v["p1"] and v["gDu"] and v["gDu"] not in self.pl.greves:
+                    self.basculer_greve(v["gDu"])
+                return octets, nom
+
+            def enregistrer_pdf():
+                try:
+                    octets, nom = preparer()
+                except Exception as ex:
+                    etat.config(text=f"Impossible : {ex}.", foreground="#b00020")
+                    return None
+                ch = filedialog.asksaveasfilename(parent=fen, title="Enregistrer le formulaire rempli", initialfile=nom,
+                                                  defaultextension=".pdf", filetypes=[("PDF", "*.pdf")])
+                if not ch:
+                    return None
+                with open(ch, "wb") as f:
+                    f.write(octets)
+                etat.config(text=f"PDF enregistré : {ch}", foreground="#1b7a3a")
+                return ch
+
+            def envoyer():
+                a = vs["a"].get().strip()
+                if not R_ADRESSE.match(a):
+                    etat.config(text="Indiquez l'adresse mail du destinataire.", foreground="#b00020")
+                    return
+                try:
+                    octets, nom = preparer()
+                except Exception as ex:
+                    etat.config(text=f"Impossible : {ex}.", foreground="#b00020")
+                    return
+                sujet, corps = vs["objet"].get(), txt.get("1.0", "end-1c")
+                if not self._envoi_direct():
+                    d = os.path.join(dossier_donnees(), "DII")
+                    os.makedirs(d, exist_ok=True)
+                    ch = os.path.join(d, nom)
+                    with open(ch, "wb") as f:
+                        f.write(octets)
+                    import webbrowser
+                    webbrowser.open(mailto(a, sujet, corps))
+                    self.ouvrir_fichier(d)
+                    etat.config(foreground="#555", text=f"Votre messagerie s'ouvre : joignez-y le fichier « {nom} » (dossier ouvert à côté).")
+                    return
+                b_env.state(["disabled"])
+                etat.config(text=f"Envoi à {a}…", foreground="#555")
+                p = lire_prefs()
+
+                def travail():
+                    try:
+                        envoyer_confirmation(p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465), p.get("mail_adresse"),
+                                             deproteger(p.get("mail_mdp", "")), a, sujet, corps, piece=(nom, octets))
+                        err = None
+                    except OSError as ex:
+                        err = str(ex)
+                    except Exception as ex:
+                        err = f"{type(ex).__name__} : {ex}"
+
+                    def fini():
+                        try:
+                            b_env.state(["!disabled"])
+                            if err:
+                                etat.config(text=f"Formulaire non envoyé : {err}.", foreground="#b00020")
+                            else:
+                                self.statut.config(text=f"Formulaire DII envoyé à {a}.")
+                                fen.destroy()
+                        except tk.TclError:
+                            pass
+                    self.after(0, fini)
+                threading.Thread(target=travail, daemon=True).start()
+
+            def changer_modele():
+                ch = filedialog.askopenfilename(parent=fen, title="Formulaire DII vierge", filetypes=[("PDF", "*.pdf")])
+                if ch:
+                    try:
+                        garder_modele_dii(ch)
+                        etat.config(text="Nouveau formulaire vierge enregistré.", foreground="#1b7a3a")
+                    except Exception as ex:
+                        etat.config(text=f"Formulaire refusé : {ex}", foreground="#b00020")
+            b = ttk.Frame(c, padding=(0, 10, 0, 0))
+            b.grid(row=20, column=0, columnspan=4, sticky="we")
+            b_env = ttk.Button(b, text="Envoyer" if self._envoi_direct() else "Ouvrir dans la messagerie", command=envoyer)
+            b_env.pack(side="left")
+            ttk.Button(b, text="Enregistrer le PDF…", command=enregistrer_pdf).pack(side="left", padx=6)
+            ttk.Button(b, text="Changer de formulaire…", command=changer_modele).pack(side="left")
+            ttk.Button(b, text="Fermer", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+
         def exporter_agenda(self):
             """Fichier .ics pour Outlook, Google Agenda ou l'agenda du téléphone."""
             fen = tk.Toplevel(self)
@@ -3647,6 +3960,7 @@ def lancer_interface():
             fichier.add_command(label="Dossier commande", accelerator=f"{ctrl}+D", command=self.dossier_commande)
             fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
             fichier.add_command(label="Sauvegarder les bulletins (NAS, kDrive…)…", command=self.fenetre_sauvegarde_bulletins)
+            fichier.add_command(label="Déclaration de grève (DII)…", command=lambda: self.fenetre_dii(None))
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
                 # confirmation de réception : seulement pour les commandes reçues par mail
