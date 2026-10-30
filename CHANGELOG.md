@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.7 — 30 octobre 2026
+
+**Confirmation de réception : un message par expéditeur (PC et Android)**
+- Trois messages préenregistrés, un pour chacun des trois expéditeurs des commandes : réglage dans Réglages › Confirmation de réception (téléphone : boutons Message 1, 2, 3) et Fichier › Messages de confirmation… (PC : liste en haut de la fenêtre).
+- « Confirmer la réception » prend tout seul le message de l'expéditeur du mail reçu. La liste **Modèle** permet d'en prendre un autre, et le texte reste modifiable avant l'envoi.
+- Le message déjà réglé devient le message 1 ; tant qu'ils ne sont pas réglés, les messages 2 et 3 le reprennent.
+- Concerne les versions « mail ».
+
 ## 2.9.6 — 30 octobre 2026
 
 **Commandes par mail : un troisième expéditeur (PC et Android)**

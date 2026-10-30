@@ -33,7 +33,7 @@ LANCEMENT SANS EXE
 
 MENUS
   Fichier   : Ajouter une commande (Ctrl+O), Dossier commande (Ctrl+D), Commandes par mail,
-              Confirmer la réception d'une commande, Message de confirmation,
+              Confirmer la réception d'une commande, Messages de confirmation,
               Exporter (Ctrl+E), Exporter vers l'agenda (.ics),
               Envoyer vers le téléphone / Reprendre une copie du téléphone,
               Mettre à jour le PDF (Ctrl+S), Imprimer (Ctrl+P), Sauvegardes,
@@ -163,9 +163,9 @@ COMMANDES PAR MAIL (Fichier › Commandes par mail…) — PlanningPDF-mail.exe 
     contient « bulletin de commande » ou « contrairement ».
   • Lecture seule : aucun message n'est effacé, déplacé ni marqué lu.
   • CONFIRMER LA RÉCEPTION : à l'arrivée d'une commande par mail, une
-    fenêtre propose « Confirmer… » : le message (Fichier › Message de
-    confirmation…, avec {type} {debut} {fin} {edition} {agent} remplacés)
-    est envoyé par le programme à l'expéditeur, en réponse à son mail
+    fenêtre propose « Confirmer… » : le message de cet expéditeur (un par
+    expéditeur, Fichier › Messages de confirmation…, avec {type} {debut}
+    {fin} {edition} {agent} remplacés) est envoyé par le programme à l'expéditeur, en réponse à son mail
     (serveur d'envoi SMTP rempli d'après le fournisseur ; port 465 SSL ou
     587 STARTTLS). Fichier › Confirmer la réception d'une commande… liste
     les dernières commandes reçues par mail (rien pour un bulletin ajouté

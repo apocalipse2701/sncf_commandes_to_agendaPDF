@@ -3520,7 +3520,7 @@ def lancer_interface():
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
                 # confirmation de réception : seulement pour les commandes reçues par mail
                 fichier.add_command(label="Confirmer la réception d'une commande…", command=self.fenetre_confirmations)
-                fichier.add_command(label="Message de confirmation…", command=self.fenetre_message_confirmation)
+                fichier.add_command(label="Messages de confirmation…", command=self.fenetre_message_confirmation)
             fichier.add_separator()
             fichier.add_command(label="Exporter…", accelerator=f"{ctrl}+E", command=self.exporter)
             fichier.add_command(label="Exporter en images JPEG…", command=self.exporter_images)
@@ -4264,9 +4264,26 @@ def lancer_interface():
                 fini(etat, bool(erreur))
 
         # ---- confirmation de réception -------------------------------------------
-        def _conf_reglee(self):
+        def _conf_reglee(self, i=0):
+            """Message de confirmation n° i+1 (un par expéditeur des commandes). Sans réglage : le message 1, puis celui d'origine."""
             pr = lire_prefs()
-            return {"sujet": pr.get("conf_sujet") or CONF_DEFAUT["sujet"], "corps": pr.get("conf_corps") or CONF_DEFAUT["corps"]}
+            base = {"sujet": pr.get("conf_sujet") or CONF_DEFAUT["sujet"], "corps": pr.get("conf_corps") or CONF_DEFAUT["corps"]}
+            l = pr.get("conf_messages") or []
+            if l and isinstance(l[0], dict):
+                base = {"sujet": l[0].get("sujet") or base["sujet"], "corps": l[0].get("corps") or base["corps"]}
+            m = l[i] if 0 <= i < len(l) and isinstance(l[i], dict) else {}
+            return {"sujet": m.get("sujet") or base["sujet"], "corps": m.get("corps") or base["corps"]}
+
+        def _index_expediteur(self, adresse):
+            """Rang (0, 1, 2) de l'expéditeur dans les réglages du mail ; 0 s'il n'y est pas."""
+            a = (adresse or "").strip().lower()
+            l = [e.strip().lower() for e in (lire_prefs().get("mail_expediteurs") or [])]
+            return l.index(a) if a and a in l[:NB_EXPEDITEURS] else 0
+
+        def _noms_messages(self):
+            """« Message 1 — adresse de l'expéditeur 1 », …"""
+            exp = list(lire_prefs().get("mail_expediteurs") or []) + [""] * NB_EXPEDITEURS
+            return [f"Message {i + 1} — " + (exp[i] or f"expéditeur {i + 1}") for i in range(NB_EXPEDITEURS)]
 
         def _envoi_direct(self):
             """Envoi par le programme : version « mail », adresse, mot de passe et serveur d'envoi enregistrés."""
@@ -4274,35 +4291,54 @@ def lancer_interface():
             return bool(MAIL_DISPONIBLE and pr.get("mail_adresse") and pr.get("mail_mdp") and pr.get("mail_smtp"))
 
         def fenetre_message_confirmation(self):
-            """Réglage du message envoyé à l'expéditeur pour confirmer la réception d'une commande."""
-            conf = self._conf_reglee()
+            """Réglage des messages envoyés aux expéditeurs pour confirmer la réception d'une commande : un par expéditeur."""
+            msgs = [dict(self._conf_reglee(i)) for i in range(NB_EXPEDITEURS)]
+            noms = self._noms_messages()
             fen = tk.Toplevel(self)
-            fen.title("Message de confirmation")
+            fen.title("Messages de confirmation")
             fen.transient(self)
             c = ttk.Frame(fen, padding=14)
             c.pack(fill="both", expand=True)
             ttk.Label(c, text="Confirmation de réception", font=("", 12, "bold")).pack(anchor="w")
             ttk.Label(c, foreground="#555", wraplength=480, justify="left", text=(
-                "Envoyé à l'expéditeur d'une commande reçue par mail, par « Confirmer la réception ». "
+                "Un message par expéditeur des commandes : celui de l'expéditeur du mail reçu est choisi tout seul par "
+                "« Confirmer la réception » (et reste modifiable avant l'envoi). "
                 + ("Le programme l'envoie lui-même depuis votre boîte." if self._envoi_direct() else
                    "Votre messagerie s'ouvre avec le message prêt." if not MAIL_DISPONIBLE else
                    "Pour qu'il parte directement, réglez la boîte et son serveur d'envoi (Fichier › Commandes par mail) ; "
                    "en attendant, votre messagerie s'ouvre avec le message prêt.")
                 + "\nRemplacés à l'envoi : {type}, {debut}, {fin}, {edition}, {agent}.")).pack(anchor="w", pady=(2, 8))
+            v_num = tk.StringVar(value=noms[0])
+            cb_num = ttk.Combobox(c, textvariable=v_num, values=noms, state="readonly", width=60)
+            cb_num.pack(anchor="w", pady=(0, 8))
             ttk.Label(c, text="Objet :").pack(anchor="w")
-            v_sujet = tk.StringVar(value=conf["sujet"])
+            v_sujet = tk.StringVar(value=msgs[0]["sujet"])
             ttk.Entry(c, textvariable=v_sujet, width=70).pack(anchor="w", fill="x")
             ttk.Label(c, text="Message :").pack(anchor="w", pady=(8, 0))
             txt = tk.Text(c, width=70, height=9, wrap="word", font=(self.police_ui, 10))
-            txt.insert("1.0", conf["corps"])
+            txt.insert("1.0", msgs[0]["corps"])
             txt.pack(anchor="w", fill="both", expand=True)
             ttk.Label(c, foreground="#555", text="Seulement pour les commandes reçues par mail : la confirmation part à leur expéditeur.").pack(
                 anchor="w", pady=(8, 0))
+            courant = [0]
+
+            def garder():                       # message affiché → brouillon (rien n'est écrit avant « Enregistrer »)
+                msgs[courant[0]] = {"sujet": v_sujet.get(), "corps": txt.get("1.0", "end-1c")}
+
+            def changer(_e=None):
+                garder()
+                courant[0] = noms.index(v_num.get()) if v_num.get() in noms else 0
+                v_sujet.set(msgs[courant[0]]["sujet"])
+                txt.delete("1.0", "end")
+                txt.insert("1.0", msgs[courant[0]]["corps"])
+            cb_num.bind("<<ComboboxSelected>>", changer)
 
             def enregistrer():
-                ecrire_pref("conf_sujet", v_sujet.get())
-                ecrire_pref("conf_corps", txt.get("1.0", "end-1c"))
-                self.statut.config(text="Message de confirmation enregistré.")
+                garder()
+                ecrire_pref("conf_messages", msgs)
+                ecrire_pref("conf_sujet", msgs[0]["sujet"])          # versions précédentes : le message 1
+                ecrire_pref("conf_corps", msgs[0]["corps"])
+                self.statut.config(text="Messages de confirmation enregistrés.")
                 fen.destroy()
 
             def origine():
@@ -4351,7 +4387,7 @@ def lancer_interface():
                                "Commandes reçues par mail" if empreintes else "Confirmer la réception d'une commande"),
                       font=("", 12, "bold")).pack(anchor="w")
             ttk.Label(c, foreground="#555", wraplength=520, justify="left", text=(
-                "« Confirmer… » prépare le message à l'expéditeur (Fichier › Message de confirmation…) : "
+                "« Confirmer… » prépare le message à l'expéditeur (Fichier › Messages de confirmation…) : "
                 "vous pouvez le relire avant l'envoi.")).pack(anchor="w", pady=(2, 8))
             liste = ttk.Frame(c)
             liste.pack(fill="both", expand=True)
@@ -4385,8 +4421,9 @@ def lancer_interface():
                 info = lire_bulletin(chemin)
             except Exception:
                 info = {"debut": None, "fin": None, "edition": None, "agent": ""}
-            conf = self._conf_reglee()
             recu = self.pl.recus_mail.get(emp, {})
+            num = self._index_expediteur(recu.get("expediteur", ""))      # message de cet expéditeur
+            conf = self._conf_reglee(num)
             c_info = {"contrairement": est_contrairement(os.path.basename(chemin)), "debut": info.get("debut"), "fin": info.get("fin"),
                       "edition": info.get("edition"), "agent": info.get("agent") or self.pl.agent, "fichier": os.path.basename(chemin)}
             pr = lire_prefs()
@@ -4416,6 +4453,19 @@ def lancer_interface():
             txt = tk.Text(c, width=60, height=9, wrap="word", font=(self.police_ui, 10))
             txt.insert("1.0", remplir_modele(conf["corps"], c_info))
             txt.grid(row=3, column=1, sticky="nsew", pady=(4, 0))
+            # message choisi d'après l'expéditeur ; un autre des trois peut le remplacer
+            noms = self._noms_messages()
+            ttk.Label(c, text="Modèle :").grid(row=4, column=0, sticky="w", pady=(6, 0))
+            v_mod = tk.StringVar(value=noms[num])
+            cb_mod = ttk.Combobox(c, textvariable=v_mod, values=noms, state="readonly", width=50)
+            cb_mod.grid(row=4, column=1, sticky="w", pady=(6, 0))
+
+            def autre_modele(_e=None):
+                m = self._conf_reglee(noms.index(v_mod.get()) if v_mod.get() in noms else 0)
+                v_s.set(remplir_modele(m["sujet"], c_info))
+                txt.delete("1.0", "end")
+                txt.insert("1.0", remplir_modele(m["corps"], c_info))
+            cb_mod.bind("<<ComboboxSelected>>", autre_modele)
             etat = ttk.Label(c, foreground="#555", wraplength=520)
             etat.grid(row=5, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
