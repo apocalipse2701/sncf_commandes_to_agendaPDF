@@ -1090,6 +1090,9 @@ def nom_pdf_accepte(nom):
     return any(mot in n for mot in MAIL_NOMS_PDF)
 
 
+NB_EXPEDITEURS = 3          # expéditeurs des commandes surveillés (mail), au plus
+
+
 def expediteur_accepte(de, expediteurs):
     """L'adresse de l'en-tête From est exactement l'un des expéditeurs choisis."""
     from email.utils import parseaddr
@@ -4499,8 +4502,8 @@ def lancer_interface():
             v_actif = tk.BooleanVar(value=bool(pr.get("mail_actif")))
             v_adr = tk.StringVar(value=pr.get("mail_adresse", ""))
             v_mdp = tk.StringVar(value="")
-            exp = (pr.get("mail_expediteurs") or []) + ["", ""]
-            v_e1, v_e2 = tk.StringVar(value=exp[0]), tk.StringVar(value=exp[1])
+            exp = (pr.get("mail_expediteurs") or []) + ["", "", ""]
+            v_e1, v_e2, v_e3 = (tk.StringVar(value=exp[0]), tk.StringVar(value=exp[1]), tk.StringVar(value=exp[2]))
             v_srv = tk.StringVar(value=pr.get("mail_serveur") or MAIL_SERVEUR)
             v_port = tk.StringVar(value=str(pr.get("mail_port") or MAIL_PORT))
             f_init = fournisseur_pour_serveur(v_srv.get()) or {}
@@ -4545,8 +4548,9 @@ def lancer_interface():
             cb_four.bind("<<ComboboxSelected>>", choisir_fournisseur)
             lignes = ((5, "Adresse mail complète :", v_adr, None), (6, "Mot de passe de la boîte :", v_mdp, "•"),
                       (7, "Expéditeur des commandes 1 :", v_e1, None), (8, "Expéditeur des commandes 2 :", v_e2, None),
-                      (10, "Serveur IMAP (SSL) :", v_srv, None), (11, "Port :", v_port, None),
-                      (15, "Serveur d'envoi (SMTP) :", v_smtp, None), (16, "Port d'envoi (465 SSL, 587 STARTTLS) :", v_psmtp, None))
+                      (9, "Expéditeur des commandes 3 :", v_e3, None),
+                      (11, "Serveur IMAP (SSL) :", v_srv, None), (12, "Port :", v_port, None),
+                      (16, "Serveur d'envoi (SMTP) :", v_smtp, None), (17, "Port d'envoi (465 SSL, 587 STARTTLS) :", v_psmtp, None))
             champs = {}
             for ligne, lib, var, cache in lignes:
                 ttk.Label(c, text=lib).grid(row=ligne, column=0, sticky="w", pady=2)
@@ -4554,16 +4558,16 @@ def lancer_interface():
                 champs[ligne].grid(row=ligne, column=1, sticky="w", pady=2)
             v_adr.trace_add("write", lambda *_a: adresse_changee())    # frappe, collage…
             ligne_trouver = ttk.Frame(c)
-            ligne_trouver.grid(row=9, column=1, sticky="w", pady=(2, 6))
+            ligne_trouver.grid(row=10, column=1, sticky="w", pady=(2, 6))
             b_trouver = ttk.Button(ligne_trouver, text="Trouver les expéditeurs dans la boîte…")
             b_trouver.pack(side="left")
             montrer_aide()
             note = ttk.Label(c, foreground="#666", text=(
                 "Mot de passe enregistré : laissez vide pour le garder." if pr.get("mail_mdp") else
                 "Adresse complète et mot de passe de la boîte (voir l'aide ci-dessus)."))
-            note.grid(row=12, column=0, columnspan=2, sticky="w", pady=(4, 0))
+            note.grid(row=13, column=0, columnspan=2, sticky="w", pady=(4, 0))
             etat = ttk.Label(c, foreground="#555", wraplength=430, text=pr.get("mail_etat", ""))
-            etat.grid(row=14, column=0, columnspan=2, sticky="w", pady=(8, 0))
+            etat.grid(row=15, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
             def trouver_expediteurs():
                 """Cherche dans la boîte (lecture seule) qui envoie les bulletins, puis propose de choisir."""
@@ -4628,8 +4632,8 @@ def lancer_interface():
                 f.pack(fill="both", expand=True)
                 ttk.Label(f, wraplength=420, justify="left", text=(
                     "Ces adresses ont envoyé des bulletins de commande (12 derniers mois). "
-                    "Cochez les deux qui envoient vos commandes :")).pack(anchor="w", pady=(0, 8))
-                actuels = {e.strip().lower() for e in (v_e1.get(), v_e2.get()) if e.strip()}
+                    "Cochez celles qui envoient vos commandes (trois au plus) :")).pack(anchor="w", pady=(0, 8))
+                actuels = {e.strip().lower() for e in (v_e1.get(), v_e2.get(), v_e3.get()) if e.strip()}
                 cases = []
                 for i, t in enumerate(res[:12]):
                     v = tk.BooleanVar(value=(t["adresse"] in actuels) if actuels else i < 2)
@@ -4641,14 +4645,15 @@ def lancer_interface():
 
                 def utiliser():
                     pris = [a for v, a in cases if v.get()]
-                    if len(pris) > 2:
-                        messagebox.showwarning("Expéditeurs", "Cochez deux adresses au plus.", parent=ch)
+                    if len(pris) > NB_EXPEDITEURS:
+                        messagebox.showwarning("Expéditeurs", "Cochez trois adresses au plus.", parent=ch)
                         return
                     if not pris:
                         messagebox.showwarning("Expéditeurs", "Cochez au moins une adresse.", parent=ch)
                         return
                     v_e1.set(pris[0])
                     v_e2.set(pris[1] if len(pris) > 1 else "")
+                    v_e3.set(pris[2] if len(pris) > 2 else "")
                     etat.config(text="Expéditeurs remplis : cliquez sur « Enregistrer ».", foreground="#555")
                     ch.destroy()
                 bb = ttk.Frame(f, padding=(0, 10, 0, 0))
@@ -4661,7 +4666,7 @@ def lancer_interface():
 
             def enregistrer(verifier=True):
                 adr, mdp = v_adr.get().strip(), v_mdp.get()
-                exps = [e.strip() for e in (v_e1.get(), v_e2.get()) if e.strip()]
+                exps = [e.strip() for e in (v_e1.get(), v_e2.get(), v_e3.get()) if e.strip()]
                 if verifier and v_actif.get():
                     if mail_non_pris_en_charge(adr):
                         messagebox.showwarning("Commandes par mail", mail_non_pris_en_charge(adr), parent=fen)
@@ -4731,7 +4736,7 @@ def lancer_interface():
                 note.config(text="Mot de passe oublié, relevé arrêté.")
 
             b = ttk.Frame(c, padding=(0, 12, 0, 0))
-            b.grid(row=17, column=0, columnspan=2, sticky="we")
+            b.grid(row=18, column=0, columnspan=2, sticky="we")
             ttk.Button(b, text="Enregistrer", command=lambda: enregistrer() and fen.destroy()).pack(side="left")
             b_rel = ttk.Button(b, text="Relever maintenant", command=relever)
             b_rel.pack(side="left", padx=6)

@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.6 — 30 octobre 2026
+
+**Commandes par mail : un troisième expéditeur (PC et Android)**
+- Réglages › Commandes par mail (téléphone) et Fichier › Commandes par mail… (PC) : champ **Expéditeur 3**, en plus des deux premiers. Les bulletins de ces trois adresses sont relevés.
+- « Trouver les expéditeurs dans la boîte » : on peut maintenant en choisir **trois au plus** (téléphone : toucher les adresses ; PC : les cocher).
+- Téléphone : bouton Contacts aussi pour l'expéditeur 3.
+- Concerne les versions « mail » (`PlanningCommandes-mail.apk`, `PlanningPDF-mail.exe`) ; les réglages déjà enregistrés sont gardés.
+
 ## 2.9.5 — 28 octobre 2026
 
 **Partage du planning : NAS joint par son adresse IP (Android)**

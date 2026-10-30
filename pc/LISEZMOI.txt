@@ -152,7 +152,7 @@ COMMANDES PAR MAIL (Fichier › Commandes par mail…) — PlanningPDF-mail.exe 
     iCloud : un « mot de passe d'application »). Outlook/Hotmail et Proton
     Mail ne peuvent pas être relevés.
   • Indiquez l'adresse mail complète, le mot de passe de la boîte et les
-    adresses des expéditeurs des commandes (2 au plus), cochez « Relever
+    adresses des expéditeurs des commandes (3 au plus), cochez « Relever
     automatiquement », puis « Enregistrer » (ou « Relever maintenant »).
   • « Trouver les expéditeurs dans la boîte… » : le programme regarde les
     messages des 12 derniers mois qui portent un bulletin de commande et

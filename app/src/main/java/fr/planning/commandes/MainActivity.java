@@ -47,7 +47,7 @@ public class MainActivity extends Activity {
     private static final int REQ_FICHIERS = 1;
     private static final int REQ_ENREGISTRER = 2;
     private static final int REQ_CONTACT = 4;
-    private int contactPour = 1;              // champ « Expéditeur 1 » ou « 2 » à remplir avec le contact choisi
+    private int contactPour = 1;              // champ « Expéditeur 1 », « 2 » ou « 3 » à remplir avec le contact choisi
     private static final String ADRESSE = "https://appassets.androidplatform.net/assets/index.html";
 
     private WebView web;
