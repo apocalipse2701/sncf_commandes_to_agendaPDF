@@ -4345,6 +4345,66 @@ def lancer_interface():
                 v_sujet.set(CONF_DEFAUT["sujet"])
                 txt.delete("1.0", "end")
                 txt.insert("1.0", CONF_DEFAUT["corps"])
+            # essai : le message affiché, rempli avec une commande d'exemple, envoyé (par défaut) à sa propre adresse
+            ess = ttk.LabelFrame(c, text="Essai", padding=8)
+            ess.pack(fill="x", pady=(10, 0))
+            ttk.Label(ess, text="Envoyer l'essai à :").grid(row=0, column=0, sticky="w")
+            v_essai = tk.StringVar(value=lire_prefs().get("mail_adresse", ""))
+            ttk.Entry(ess, textvariable=v_essai, width=40).grid(row=0, column=1, sticky="w", padx=6)
+            b_essai = ttk.Button(ess, text="Envoyer un essai")
+            b_essai.grid(row=0, column=2, sticky="w")
+            etat_essai = ttk.Label(ess, foreground="#555", wraplength=480, justify="left",
+                                   text="Envoie le message affiché, rempli avec une commande d'exemple et marqué « [Essai] ».")
+            etat_essai.grid(row=1, column=0, columnspan=3, sticky="w", pady=(6, 0))
+
+            def essai():
+                import threading
+                a = v_essai.get().strip()
+                if not R_ADRESSE.match(a):
+                    etat_essai.config(text="Indiquez l'adresse qui recevra l'essai.", foreground="#b00020")
+                    return
+                auj = dt.date.today()
+                c_info = {"contrairement": False, "debut": auj + dt.timedelta(days=3), "fin": auj + dt.timedelta(days=9),
+                          "edition": dt.datetime.now(), "agent": self.pl.agent, "fichier": "Bulletin de commande (essai).pdf"}
+                sujet = "[Essai] " + remplir_modele(v_sujet.get(), c_info)
+                corps = remplir_modele(txt.get("1.0", "end-1c"), c_info)
+                p = lire_prefs()
+                if not self._envoi_direct():
+                    manque = [n for n, k in (("l'adresse de la boîte", "mail_adresse"), ("son mot de passe", "mail_mdp"),
+                                             ("le serveur d'envoi (SMTP)", "mail_smtp")) if not p.get(k)]
+                    etat_essai.config(foreground="#b00020", text=(
+                        ("Envoi direct impossible : il manque " + ", ".join(manque) + " (Fichier › Commandes par mail). "
+                         if manque and MAIL_DISPONIBLE else "") + "La messagerie s'ouvre avec l'essai."))
+                    import webbrowser
+                    webbrowser.open(mailto(a, sujet, corps))
+                    return
+                b_essai.state(["disabled"])
+                srv, port = p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465)
+                etat_essai.config(text=f"Envoi de l'essai à {a}…", foreground="#555")
+
+                def travail():
+                    try:
+                        envoyer_confirmation(srv, port, p.get("mail_adresse"), deproteger(p.get("mail_mdp", "")), a, sujet, corps)
+                        err = None
+                    except OSError as ex:
+                        err = str(ex)
+                    except Exception as ex:
+                        err = f"{type(ex).__name__} : {ex}"
+
+                    def fini():
+                        try:
+                            b_essai.state(["!disabled"])
+                            if err:
+                                etat_essai.config(text=f"Essai non envoyé : {err}. Serveur d'envoi : {srv}, port {port}.", foreground="#b00020")
+                            else:
+                                etat_essai.config(text=f"Essai envoyé à {a} depuis {p.get('mail_adresse')} ({srv}, port {port}). "
+                                                       "Vérifiez sa réception.", foreground="#1b7a3a")
+                        except tk.TclError:
+                            pass
+                    self.after(0, fini)
+                threading.Thread(target=travail, daemon=True).start()
+            b_essai.config(command=essai)
+
             b = ttk.Frame(c, padding=(0, 10, 0, 0))
             b.pack(fill="x")
             ttk.Button(b, text="Enregistrer", command=enregistrer).pack(side="left")
@@ -4467,7 +4527,7 @@ def lancer_interface():
                 txt.insert("1.0", remplir_modele(m["corps"], c_info))
             cb_mod.bind("<<ComboboxSelected>>", autre_modele)
             etat = ttk.Label(c, foreground="#555", wraplength=520)
-            etat.grid(row=5, column=0, columnspan=2, sticky="w", pady=(6, 0))
+            etat.grid(row=6, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
             def marquer(a, via):
                 self.pl.confirmations[emp] = {"le": dt.datetime.now().isoformat(timespec="minutes"), "a": a, "via": via}
@@ -4525,7 +4585,7 @@ def lancer_interface():
                         pass
                 threading.Thread(target=travail, daemon=True).start()
             b = ttk.Frame(c, padding=(0, 10, 0, 0))
-            b.grid(row=4, column=0, columnspan=2, sticky="we")
+            b.grid(row=5, column=0, columnspan=2, sticky="we")
             b_env = ttk.Button(b, text="Envoyer" if direct else "Ouvrir dans la messagerie", command=envoyer)
             b_env.pack(side="left")
             ttk.Button(b, text="Annuler", command=fen.destroy).pack(side="right")

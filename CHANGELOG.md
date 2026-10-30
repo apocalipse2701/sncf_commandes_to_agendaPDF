@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.9.8 — 30 octobre 2026
+
+**Confirmation de réception : bouton d'essai (PC et Android)**
+- Réglages › Confirmation de réception (téléphone) et Fichier › Messages de confirmation… (PC) : **Envoyer un essai**. Le message affiché part, rempli avec une commande d'exemple et marqué « [Essai] », par défaut à votre propre adresse.
+- Le résultat s'affiche en clair : envoyé (avec le serveur d'envoi et le port utilisés), ou la raison de l'échec (mot de passe refusé, serveur injoignable…).
+- Si l'envoi direct n'est pas possible, l'essai dit ce qui manque (adresse, mot de passe, serveur d'envoi SMTP) et ouvre l'application mail avec le message.
+- PC : correction de la fenêtre « Confirmer la réception » de la 2.9.7, où la liste Modèle et les boutons se superposaient.
+
 ## 2.9.7 — 30 octobre 2026
 
 **Confirmation de réception : un message par expéditeur (PC et Android)**
