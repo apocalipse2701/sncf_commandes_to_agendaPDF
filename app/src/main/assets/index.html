@@ -294,6 +294,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         <div class="rangee">
           <button class="btn accent" id="bulletins-ouvrir" type="button">Ouvrir le dossier</button>
           <button class="btn" id="bulletins-zip" type="button">Exporter en ZIP</button>
+          <button class="btn" id="bulletins-nas" type="button" hidden>Sauvegarder sur le NAS</button>
         </div>
         <p class="discret" id="bulletins-erreur" style="margin:10px 0 0" hidden></p>
       </div>
@@ -315,6 +316,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         <li id="menu-confirmation" hidden><button class="ligne" data-page="confirmation"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4L10 15"/><path d="M21 4l-7 17-4-6-6-4z"/></svg></span><span class="txt"><b>Confirmation de réception</b><small id="res-confirmation"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-partage" hidden><button class="ligne" data-page="partage"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg></span><span class="txt"><b>Partage du planning</b><small id="res-partage"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-agenda"><button class="ligne" data-page="agenda"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span><span class="txt"><b>Agenda du téléphone</b><small id="res-agenda"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
+        <li id="menu-nas" hidden><button class="ligne" data-page="nas"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></span><span class="txt"><b>Sauvegarde des bulletins</b><small id="res-nas"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-sauvegarde"><button class="ligne" data-page="sauvegarde"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 19h14"/></svg></span><span class="txt"><b>Sauvegarde et PC</b><small id="res-sauvegarde"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
         <li id="menu-maj" hidden><button class="ligne" data-page="maj"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></span><span class="txt"><b>Mise à jour</b><small id="res-maj"></small></span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>
       </ul></div>
@@ -479,6 +481,44 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
         <p class="discret" id="ics-note" style="margin:10px 0 0">Ouvrez ensuite le fichier « Planning.ics » enregistré : l'agenda propose d'ajouter les rendez-vous.</p>
       </div></div></div>
     </div>
+    <div class="page-reglage" data-page="nas" hidden>
+    <div class="bloc" id="bloc-nas">
+      <div class="carte"><div class="pad">
+        <p style="margin:0 0 10px">Copie tous les bulletins rangés (Documents/Planning Commandes, avec leurs dossiers année et mois) sur votre NAS Synology ou QNAP, votre kDrive ou un autre serveur WebDAV. Seuls les nouveaux bulletins partent à chaque fois.</p>
+        <label class="case-a-cocher interrupteur"><input type="checkbox" id="nas-actif">Sauvegarder automatiquement chaque nouveau bulletin</label>
+        <button class="btn fantome" id="nas-depuis-partage" type="button" style="margin-top:10px" hidden>Reprendre le serveur du partage du planning</button>
+      </div></div>
+      <h2>Serveur</h2>
+      <div class="carte"><div class="pad">
+        <div class="seg" id="nas-services" role="group" aria-label="Serveur" style="margin:0 0 12px;flex-wrap:wrap">
+          <button type="button" data-service="synology">Synology</button>
+          <button type="button" data-service="qnap">QNAP</button>
+          <button type="button" data-service="kdrive">kDrive</button>
+          <button type="button" data-service="autre">Autre</button>
+        </div>
+        <div class="grille-champs" style="grid-template-columns:1fr">
+          <label class="champ" for="nas-adresse"><span id="nas-l-adresse"></span><input type="text" id="nas-adresse" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+          <p class="discret" style="margin:-2px 0 2px" id="nas-a-adresse"></p>
+          <label class="champ" for="nas-identifiant"><span id="nas-l-identifiant"></span><input type="text" id="nas-identifiant" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+          <label class="champ" for="nas-mdp"><span id="nas-l-mdp"></span><input type="password" id="nas-mdp" autocomplete="off"></label>
+          <label class="champ" for="nas-dossier"><span id="nas-l-dossier"></span><input type="text" id="nas-dossier" autocomplete="off" spellcheck="false"></label>
+          <p class="discret" style="margin:-2px 0 2px" id="nas-a-dossier"></p>
+        </div>
+      </div></div>
+      <div class="rangee" style="margin-top:14px">
+        <button class="btn accent" id="nas-enregistrer" type="button">Enregistrer</button>
+        <button class="btn" id="nas-maintenant" type="button">Sauvegarder maintenant</button>
+        <button class="btn fantome" id="nas-tout" type="button">Tout renvoyer</button>
+        <button class="btn fantome" id="nas-oublier" type="button" hidden>Oublier le mot de passe</button>
+      </div>
+      <p class="discret" id="nas-etat" style="margin:10px 4px 0"></p>
+      <div id="nas-cert" class="carte" style="margin-top:12px" hidden><div class="pad">
+        <p style="margin:0 0 6px"><b>Certificat du serveur accepté</b></p>
+        <code id="nas-cert-empreinte" style="display:block;word-break:break-all;font-size:12px;margin:0 0 8px"></code>
+        <button class="btn fantome" id="nas-cert-oublier" type="button">Ne plus faire confiance</button>
+      </div></div>
+    </div>
+    </div>
     <div class="page-reglage" data-page="sauvegarde" hidden>
     <div class="bloc">      <div class="carte"><div class="pad">
         <p style="margin:0 0 10px">Le planning est enregistré automatiquement. Une copie sert de sauvegarde et d'échange avec le PC : sur le PC, menu Fichier › « Reprendre une copie du téléphone ». Dans l'autre sens, reprenez ici le fichier « Envoyer vers le téléphone » du PC, ou un PDF créé par le programme.</p>
@@ -520,7 +560,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
 window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"smtp":"smtp.free.fr","port_smtp":465,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"smtp":"smtp.orange.fr","port_smtp":465,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"smtp":"smtp.sfr.fr","port_smtp":465,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"smtp":"smtp.bbox.fr","port_smtp":465,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"smtp":"smtp.laposte.net","port_smtp":465,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"smtp":"smtp.gmail.com","port_smtp":465,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"smtp":"smtp.mail.yahoo.com","port_smtp":465,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"smtp":"smtp.mail.me.com","port_smtp":587,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"smtp":"mail.gmx.net","port_smtp":587,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"smtp":"mail.infomaniak.com","port_smtp":465,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"smtp":"","port_smtp":465,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) et, pour envoyer les confirmations, son serveur SMTP (port 465 en SSL, ou 587 avec STARTTLS) : ils figurent dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]},"_lisezmoi_confirmation":"Message de confirmation de réception envoyé à l'expéditeur d'une commande (bouton « Confirmer la réception »). Valeurs par défaut, modifiables dans les réglages. Champs remplacés : {type} (commande / contrairement), {debut}, {fin}, {edition}, {agent}, {fichier}.","confirmation":{"sujet":"Bien reçu : {type} du {debut} au {fin}","corps":"Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin} (édition du {edition}).\n\nCordialement,\n{agent}"}};
-window.VERSION_APPLI = "2.9.8";
+window.VERSION_APPLI = "2.10.0";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -2082,6 +2122,7 @@ PGVRVSD    ; [date]
       const r = JSON.parse(window.Android.rangerBulletin(JSON.stringify(rangement(nomFichier, info)), base64Bulletin(buf)) || "{}");
       if (r.erreur) toast("Bulletin lu, mais pas rangé : " + r.erreur);
       else if (r.visible) toast("Bulletin rangé dans l'application, mais pas dans Documents : " + r.visible);
+      if (!r.erreur && r.chemin) sauvegarderBientot();          // sauvegarde automatique sur le NAS / kDrive
     } catch (e) { /* le planning est à jour même si la copie échoue */ }
   }
   function rendreBulletins() {
@@ -2095,6 +2136,8 @@ PGVRVSD    ; [date]
       : `Aucun bulletin rangé pour l'instant. Chaque bulletin ajouté (à la main ou par mail) sera renommé et rangé par année et par mois dans ${chemin} : le dossier est créé au premier. Les bulletins ajoutés avant la version 2.3.0 n'ont pas été gardés : ajoutez-les à nouveau pour les y ranger (le planning n'est pas modifié en double).`;
     $("#bulletins-ouvrir").disabled = !n;
     $("#bulletins-zip").disabled = !n;
+    $("#bulletins-nas").hidden = !NAS_POSSIBLE;
+    $("#bulletins-nas").disabled = !n;
     const err = $("#bulletins-erreur");
     err.hidden = !(n && (i.erreur || i.dossier === false));
     if (!err.hidden) err.textContent = `Copie dans ${chemin} impossible` + (i.erreur ? ` (${i.erreur})` : "") + " : les bulletins restent dans la liste ci-dessous et dans le ZIP.";
@@ -2747,18 +2790,19 @@ PGVRVSD    ; [date]
   }
   // certificat non reconnu (NAS joint par son IP, certificat d'origine du Synology) : l'utilisateur peut lui faire confiance
   const formaterEmpreinte = h => (h || "").toUpperCase().match(/.{2}/g).join(":");
-  function proposerCertificat(h) {
+  function proposerCertificat(h, accepter) {
     if (!h || !/^[0-9a-f]{64}$/.test(h) || $(".voile")) return;
     const oui = el("button", { class: "btn accent", type: "button" }, "Faire confiance à ce certificat");
     const non = el("button", { class: "btn fantome", type: "button" }, "Annuler");
     const fermer = feuille("Certificat du serveur", el("div", {},
-      el("p", { style: "margin:0 0 10px", text: "Le serveur présente un certificat que le téléphone ne reconnaît pas. C'est normal avec une adresse IP ou avec le certificat d'origine du NAS Synology." }),
+      el("p", { style: "margin:0 0 10px", text: "Le serveur présente un certificat que le téléphone ne reconnaît pas. C'est normal avec une adresse IP ou avec le certificat d'origine d'un NAS (Synology, QNAP)." }),
       el("p", { class: "discret", style: "margin:0 0 4px", text: "Empreinte SHA-256 du certificat :" }),
       el("code", { style: "display:block;word-break:break-all;font-size:13px;margin:0 0 10px", text: formaterEmpreinte(h) }),
       el("p", { class: "discret", style: "margin:0 0 12px", text: "En lui faisant confiance, l'application n'acceptera que ce certificat-là pour ce serveur (s'il change, elle le redemandera). Sur l'autre téléphone, la même empreinte doit s'afficher." }),
       el("div", { class: "rangee" }, oui, non)));
     non.addEventListener("click", () => fermer());
     oui.addEventListener("click", () => {
+      if (accepter) { fermer(); accepter(h); return; }           // autre usage (sauvegarde des bulletins)
       const err = window.Android.partageFaireConfiance(h);
       if (err) { toast(err); return; }
       fermer(); lirePartage(); if (ongletActif === "reglages" && pageReglage === "partage") rendrePartage();
@@ -2990,13 +3034,128 @@ PGVRVSD    ; [date]
     return false;
   }
 
+  // ------------------------------------------------------------------ sauvegarde des bulletins sur un serveur (Android)
+  // Les bulletins rangés (Documents/Planning Commandes/AAAA/MM - Mois/…) sont copiés sur un NAS Synology ou QNAP,
+  // un kDrive ou un autre WebDAV (SauvegardeBulletins.java) : seuls les nouveaux, à la demande ou après chaque ajout.
+  const NAS_POSSIBLE = ANDROID && !LECTURE && typeof window.Android.sauvegardeReglages === "function";
+  const NAS_SERVICES = {
+    synology: { lAdresse: "Adresse du NAS", ph: "monnas.synology.me", aAdresse: "Adresse DDNS ou IP, port 5006 (WebDAV Server en HTTPS) pris par défaut ; « adresse:port » pour un autre port.",
+      lId: "Utilisateur du NAS", lMdp: "Mot de passe de cet utilisateur", lDossier: "Dossier sur le NAS", dossier: "Planning/Bulletins",
+      aDossier: "Commence par un dossier partagé existant (ex. « Planning ») où l'utilisateur a Lecture/Écriture ; les sous-dossiers sont créés." },
+    qnap: { lAdresse: "Adresse du NAS, avec le port", ph: "monnas.myqnapcloud.com:8081", aAdresse: "Sur le QNAP : Panneau de configuration › Applications › Serveur Web › onglet WebDAV › Activer WebDAV. Port : celui du serveur web en HTTPS (indiqué dans ce même écran).",
+      lId: "Utilisateur du NAS", lMdp: "Mot de passe de cet utilisateur", lDossier: "Dossier sur le NAS", dossier: "Planning/Bulletins",
+      aDossier: "Commence par un dossier partagé existant, autorisé en WebDAV pour cet utilisateur ; les sous-dossiers sont créés." },
+    kdrive: { lAdresse: "Numéro du kDrive", ph: "123456", aAdresse: "Le nombre après « /drive/ » dans l'adresse de kDrive (offre avec WebDAV seulement).",
+      lId: "Identifiant (adresse mail du compte Infomaniak)", lMdp: "Mot de passe d'application", lDossier: "Dossier dans le kDrive", dossier: "Private/Planning Commandes",
+      aDossier: "« Private » est « Mes fichiers » ; les dossiers sont créés." },
+    autre: { lAdresse: "Adresse WebDAV (https://…)", ph: "https://exemple.fr/webdav/", aAdresse: "Adresse complète en https (Nextcloud : https://…/remote.php/dav/files/<utilisateur>/).",
+      lId: "Identifiant", lMdp: "Mot de passe", lDossier: "Dossier", dossier: "Planning Commandes", aDossier: "Créé s'il n'existe pas (si le serveur l'accepte)." },
+  };
+  let nasService = "synology", nasLus = null, nasEnCours = false, nasMinuterie = null;
+  function lireNas() { try { nasLus = JSON.parse(window.Android.sauvegardeReglages()); } catch (e) { nasLus = null; } return nasLus; }
+  function choisirServiceNas(nom, depuisReglages) {
+    const avant = NAS_SERVICES[nasService];
+    nasService = NAS_SERVICES[nom] ? nom : "synology";
+    const S = NAS_SERVICES[nasService];
+    document.querySelectorAll("#nas-services [data-service]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.service === nasService)));
+    $("#nas-l-adresse").textContent = S.lAdresse; $("#nas-adresse").placeholder = S.ph; $("#nas-a-adresse").textContent = S.aAdresse;
+    $("#nas-l-identifiant").textContent = S.lId; $("#nas-l-mdp").textContent = S.lMdp;
+    $("#nas-l-dossier").textContent = S.lDossier; $("#nas-dossier").placeholder = S.dossier; $("#nas-a-dossier").textContent = S.aDossier;
+    const d = $("#nas-dossier");
+    if (!depuisReglages && (!d.value.trim() || d.value.trim() === avant.dossier)) d.value = S.dossier;
+  }
+  function rendreNas() {
+    const bloc = $("#bloc-nas");
+    if (!NAS_POSSIBLE) { bloc.hidden = true; return; }
+    const r = lireNas() || {};
+    const service = r.service || (/^\d{3,12}$/.test(r.adresse || "") ? "kdrive" : "synology");
+    $("#nas-actif").checked = !!r.actif;
+    $("#nas-adresse").value = r.adresse || ""; $("#nas-identifiant").value = r.identifiant || "";
+    $("#nas-mdp").value = ""; $("#nas-mdp").placeholder = r.motDePasse ? "•••••• enregistré (vide = inchangé)" : "";
+    $("#nas-dossier").value = r.dossier || NAS_SERVICES[service].dossier;
+    choisirServiceNas(service, true);
+    const p = PARTAGE_POSSIBLE ? (partageLus || lirePartage() || {}) : {};
+    $("#nas-depuis-partage").hidden = !p.adresse;
+    $("#nas-oublier").hidden = !r.motDePasse;
+    $("#nas-cert").hidden = !r.certificat;
+    $("#nas-cert-empreinte").textContent = r.certificat ? formaterEmpreinte(r.certificat) : "";
+    const z = $("#nas-etat");
+    z.textContent = r.etat || `${r.total || 0} bulletin(s) rangé(s), ${r.envoyes || 0} déjà sauvegardé(s).`;
+    z.className = /échec/.test(r.etat || "") ? "ko" : "discret";
+  }
+  function enregistrerNas(oublier) {
+    const adresse = $("#nas-adresse").value.trim(), identifiant = $("#nas-identifiant").value.trim(), mdp = $("#nas-mdp").value;
+    const actif = $("#nas-actif").checked && !oublier, S = NAS_SERVICES[nasService];
+    if (!oublier) {
+      if (!adresse) { toast(`Indiquez : ${S.lAdresse.toLowerCase()}.`); return false; }
+      if (/^http:\/\//i.test(adresse)) { toast("Adresse en http:// refusée : utilisez https:// (ou l'adresse seule)."); return false; }
+      if (nasService === "qnap" && !/:\d{1,5}\/?$/.test(adresse) && !/^https:\/\//i.test(adresse)) { toast("Pour un QNAP, indiquez le port : adresse:port (port HTTPS du serveur web)."); return false; }
+      if (nasService === "kdrive" && !/^\d{3,12}$/.test(adresse) && !/^https:\/\//i.test(adresse)) { toast("Indiquez le numéro du kDrive."); return false; }
+      if (nasService === "autre" && !/^https:\/\//i.test(adresse)) { toast("Indiquez l'adresse WebDAV complète, en https://."); return false; }
+      if (!identifiant) { toast(`Indiquez : ${S.lId.toLowerCase()}.`); return false; }
+      if (!mdp && !(nasLus && nasLus.motDePasse)) { toast(`Indiquez : ${S.lMdp.toLowerCase()}.`); return false; }
+    }
+    const err = window.Android.sauvegardeEnregistrer(JSON.stringify({ actif, service: nasService, adresse, identifiant, motDePasse: mdp,
+      dossier: $("#nas-dossier").value.trim(), oublier: !!oublier }));
+    if (err) { toast(err); return false; }
+    rendreNas();
+    return true;
+  }
+  function sauvegarderNas(tout, manuel) {
+    if (!NAS_POSSIBLE || nasEnCours) return;
+    nasEnCours = true; nasManuel = !!manuel;
+    if (manuel) { $("#nas-etat").className = "discret"; $("#nas-etat").textContent = tout ? "Envoi de tous les bulletins…" : "Envoi des nouveaux bulletins…"; }
+    window.Android.sauvegardeEnvoyer(!!tout);
+  }
+  let nasManuel = false;
+  // après un ajout : envoi automatique groupé (quelques secondes après le dernier bulletin)
+  function sauvegarderBientot() {
+    if (!NAS_POSSIBLE) return;
+    const r = nasLus || lireNas();
+    if (!r || !r.actif) return;
+    clearTimeout(nasMinuterie);
+    nasMinuterie = setTimeout(() => sauvegarderNas(false, false), 5000);
+  }
+  window.__sauvegardeFaite = r => {
+    nasEnCours = false;
+    if (nasLus) nasLus.etat = r.texte || "";
+    const z = $("#nas-etat"); if (z) { z.textContent = r.texte || ""; z.className = r.ok ? "discret" : "ko"; }
+    if (r.certificat && (nasManuel || pageReglage === "nas")) setTimeout(() => proposerCertificat(r.certificat, h => {
+      const e = window.Android.sauvegardeFaireConfiance(h);
+      if (e) { toast(e); return; }
+      rendreNas(); toast("Certificat accepté. Nouvel essai…"); sauvegarderNas(false, true);
+    }), 50);
+    else if (nasManuel) toast(r.texte || "");
+    nasManuel = false;
+    if (ongletActif === "reglages" && !pageReglage) rendreMenuReglages();
+  };
+  if (NAS_POSSIBLE) {
+    $("#bulletins-nas").addEventListener("click", () => {
+      const r = lireNas() || {};
+      if (!r.adresse || !r.motDePasse) { montrerOnglet("reglages"); ouvrirPageReglage("nas"); toast("Réglez d'abord le serveur de sauvegarde."); return; }
+      sauvegarderNas(false, true); toast("Sauvegarde des nouveaux bulletins…");
+    });
+    document.querySelectorAll("#nas-services [data-service]").forEach(b => b.addEventListener("click", () => choisirServiceNas(b.dataset.service, false)));
+    $("#nas-enregistrer").addEventListener("click", () => { if (enregistrerNas(false)) toast($("#nas-actif").checked ? "Réglages enregistrés : sauvegarde automatique activée." : "Réglages enregistrés."); });
+    $("#nas-maintenant").addEventListener("click", () => { if (enregistrerNas(false)) sauvegarderNas(false, true); });
+    $("#nas-tout").addEventListener("click", () => { if (enregistrerNas(false)) sauvegarderNas(true, true); });
+    $("#nas-oublier").addEventListener("click", () => { if (enregistrerNas(true)) toast("Mot de passe oublié, sauvegarde automatique arrêtée."); });
+    $("#nas-cert-oublier").addEventListener("click", () => { window.Android.sauvegardeFaireConfiance(""); rendreNas(); toast("Certificat oublié."); });
+    $("#nas-depuis-partage").addEventListener("click", () => {
+      const e = window.Android.sauvegardeEnregistrer(JSON.stringify({ depuisPartage: true }));
+      if (e) { toast(e); return; }
+      rendreNas(); toast("Serveur du partage repris (dossier « …/Bulletins ») : vérifiez puis Enregistrer.");
+    });
+  }
+
   // ------------------------------------------------------------------ réglages
   // Réglages : un menu (une ligne par rubrique, avec un résumé) puis une page par rubrique (pageReglage)
   const TITRES_REGLAGES = { apparence: "Apparence", codes: "Codes et couleurs", mail: "Commandes par mail", confirmation: "Confirmation de réception",
-    agenda: "Agenda du téléphone", partage: "Partage du planning", sauvegarde: "Sauvegarde et PC", maj: "Mise à jour", danger: "Nouveau planning" };
+    agenda: "Agenda du téléphone", partage: "Partage du planning", nas: "Sauvegarde des bulletins", sauvegarde: "Sauvegarde et PC", maj: "Mise à jour", danger: "Nouveau planning" };
   function ouvrirPageReglage(nom) {
     if ((nom === "mail" || nom === "confirmation") && !MAIL_POSSIBLE) nom = null;
     if (nom === "partage" && !PARTAGE_POSSIBLE) nom = null;
+    if (nom === "nas" && !NAS_POSSIBLE) nom = null;
     if (LECTURE && ["codes", "mail", "confirmation", "sauvegarde", "danger"].includes(nom)) nom = null;
     pageReglage = nom || null;
     $("#menu-reglages").hidden = !!pageReglage;
@@ -3025,6 +3184,12 @@ PGVRVSD    ; [date]
     $("#res-maj").textContent = majPossible() ? (nouvelle() ? "Nouvelle version disponible" : `Version ${VERSION}`) : "";
     $("#res-danger").textContent = "Effacer tous les jours, notes et grèves";
     $("#menu-partage").hidden = !PARTAGE_POSSIBLE;
+    $("#menu-nas").hidden = !NAS_POSSIBLE;
+    if (NAS_POSSIBLE) {
+      const rn = nasLus || lireNas() || {};
+      $("#res-nas").textContent = rn.adresse ? (rn.actif ? "Automatique · " : "À la demande · ") + `${rn.envoyes || 0}/${rn.total || 0} bulletins sauvegardés`
+        : "Copier les bulletins sur un NAS ou un kDrive";
+    }
     const rp = PARTAGE_POSSIBLE ? (partageLus || lirePartage() || {}) : {};
     const nomSv = rp.service === "kdrive" ? "le kDrive" : rp.service === "autre" ? "le serveur WebDAV" : "le NAS";
     $("#res-partage").textContent = LECTURE ? (rp.actif ? "Reçu par " + nomSv + " · " + (rp.etat || "en attente") : "À régler pour recevoir le planning")
@@ -3033,7 +3198,7 @@ PGVRVSD    ; [date]
     if (LECTURE) { $("#menu-mail").hidden = $("#menu-confirmation").hidden = true; }
   }
   function rendreReglages() {
-    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail(); rendreConfirmation(); rendrePartage();
+    rendreApparence(); rendreThemes(); rendreCodes(); etatStockage(); rendreMaj(); rendreMail(); rendreConfirmation(); rendrePartage(); rendreNas();
     ouvrirPageReglage(pageReglage);
     $("#version-appli").textContent = `Planning Commandes ${VERSION}` + (LECTURE ? " · version lecture" : MAIL_POSSIBLE ? " · version mail" : ANDROID ? " · version manuelle" : "");
     const web = !ANDROID && !!window.claude;

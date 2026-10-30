@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.10.0 — 30 octobre 2026
+
+**Sauvegarde des bulletins sur un NAS ou un kDrive (PC et Android)**
+- Tous les bulletins rangés, avec leurs dossiers année et mois, peuvent être copiés sur un autre support. Seuls les nouveaux ou modifiés partent ; rien n'est effacé à la destination.
+- **Téléphone** : Réglages › **Sauvegarde des bulletins** — NAS Synology, NAS QNAP, kDrive ou autre serveur WebDAV, en HTTPS.
+  - **Sauvegarder maintenant**, **Tout renvoyer**, ou sauvegarde automatique après chaque nouveau bulletin.
+  - **Reprendre le serveur du partage du planning** recopie l'adresse, le compte et le certificat déjà réglés.
+  - Certificat d'origine du NAS ou adresse IP : « Faire confiance à ce certificat », comme pour le partage.
+  - Bouton **Sauvegarder sur le NAS** dans Commandes › Bulletins rangés.
+- **PC** : Fichier › **Sauvegarder les bulletins (NAS, kDrive…)…** — copie du dossier « commande » vers un dossier au choix : partage réseau du NAS (\\\\NAS\\dossier ou lecteur réseau), dossier kDrive synchronisé, clé USB… ; à la demande ou automatiquement après chaque nouveau bulletin rangé.
+
 ## 2.9.8 — 30 octobre 2026
 
 **Confirmation de réception : bouton d'essai (PC et Android)**

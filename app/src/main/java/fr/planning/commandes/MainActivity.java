@@ -375,6 +375,41 @@ public class MainActivity extends Activity {
             }
         }
 
+        // ---- sauvegarde des bulletins rangés sur un serveur WebDAV (NAS, kDrive…) ----
+
+        /** {actif, service, adresse, identifiant, dossier, motDePasse, certificat, etat, envoyes, total}. */
+        @JavascriptInterface
+        public String sauvegardeReglages() {
+            return SauvegardeBulletins.reglages(MainActivity.this).toString();
+        }
+
+        /** Enregistre ; renvoie "" ou un message d'erreur. */
+        @JavascriptInterface
+        public String sauvegardeEnregistrer(String json) {
+            try {
+                SauvegardeBulletins.enregistrer(MainActivity.this, new JSONObject(json));
+                return "";
+            } catch (Exception e) {
+                return "Enregistrement impossible : " + PartagePlanning.raison(e);
+            }
+        }
+
+        /** Envoie les bulletins pas encore sauvegardés (tous si tout) ; réponse dans window.__sauvegardeFaite({ok, texte, envoyes, total, certificat}). */
+        @JavascriptInterface
+        public void sauvegardeEnvoyer(final boolean tout) {
+            new Thread(() -> appelerPage("__sauvegardeFaite", SauvegardeBulletins.envoyer(MainActivity.this, tout).toString())).start();
+        }
+
+        @JavascriptInterface
+        public String sauvegardeFaireConfiance(String empreinte) {
+            try {
+                SauvegardeBulletins.faireConfiance(MainActivity.this, empreinte);
+                return "";
+            } catch (Exception e) {
+                return "Impossible : " + e.getMessage();
+            }
+        }
+
         /** Faire confiance au certificat du serveur (empreinte proposée après un échec) ; renvoie "" ou un message. */
         @JavascriptInterface
         public String partageFaireConfiance(String empreinte) {

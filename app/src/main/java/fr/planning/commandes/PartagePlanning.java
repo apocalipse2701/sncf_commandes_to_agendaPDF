@@ -66,7 +66,7 @@ public class PartagePlanning extends JobService {
     private static final byte[] MAGIQUE = {'P', 'C', 'P', '1'};
     private static final int TOURS = 150000;
     private static final int DELAI_MS = 30000;
-    private static final Object VERROU = new Object();
+    static final Object VERROU = new Object();
 
     // ------------------------------------------------------------------ tâche (application « lecture »)
 
@@ -158,7 +158,7 @@ public class PartagePlanning extends JobService {
         programmer(c);
     }
 
-    private static String lireSecret(SharedPreferences p, String cle) {
+    static String lireSecret(SharedPreferences p, String cle) {
         String s = p.getString(cle, "");
         if (s.isEmpty()) return "";
         try {
@@ -597,8 +597,14 @@ public class PartagePlanning extends JobService {
     }
 
     static void deposer(String racine, String dossier, String identifiant, String mdp, byte[] donnees) throws IOException {
+        deposer(racine, dossier, FICHIER, identifiant, mdp, donnees);
+    }
+
+    /** Dépose « nom » dans « dossier » (créé niveau par niveau s'il manque). Sert aussi à la sauvegarde des bulletins. */
+    static void deposer(String racine, String dossier, String nom, String identifiant, String mdp, byte[] donnees) throws IOException {
         String base = racine + segments(dossier);
-        int code = put(base + FICHIER, identifiant, mdp, donnees);
+        String fichier = URLEncoder.encode(nom, "UTF-8").replace("+", "%20");
+        int code = put(base + fichier, identifiant, mdp, donnees);
         if (code == 401) throw new IOException(message(401, ""));
         // dossier absent : 404/409 selon les serveurs, 403 pour kDrive et Synology. On le crée, niveau par niveau, puis on réessaie.
         if (code == 403 || code == 404 || code == 409) {
@@ -610,7 +616,7 @@ public class PartagePlanning extends JobService {
                 if (c == 401) throw new IOException(message(401, ""));
                 if (c != 201 && c != 405 && c != 200 && c != 301) throw new IOException(diagnostic(racine, dossier, identifiant, mdp, c));
             }
-            code = put(base + FICHIER, identifiant, mdp, donnees);
+            code = put(base + fichier, identifiant, mdp, donnees);
         }
         if (code == 403 || code == 404 || code == 409) throw new IOException(diagnostic(racine, dossier, identifiant, mdp, code));
         if (code != 200 && code != 201 && code != 204) throw new IOException(message(code, "dépôt du planning"));
@@ -690,7 +696,8 @@ public class PartagePlanning extends JobService {
             return "le serveur ne répond pas (NAS éteint, port 5006 non redirigé sur la box, ou WebDAV HTTPS désactivé)";
         if (!certificatARefuse(e).isEmpty() || e instanceof javax.net.ssl.SSLException)
             return "certificat du serveur non reconnu (adresse IP, ou certificat d'origine du NAS) : touchez « Faire confiance à ce"
-                    + " certificat » dans Réglages › Partage du planning, ou installez un certificat Let's Encrypt sur le NAS";
+                    + " certificat » quand l'application le propose (Envoyer, Recevoir ou Sauvegarder maintenant), ou installez un"
+                    + " certificat Let's Encrypt sur le NAS";
         return e.getMessage() == null || e.getMessage().isEmpty() ? e.getClass().getSimpleName() : e.getMessage();
     }
 

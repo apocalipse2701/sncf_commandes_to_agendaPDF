@@ -923,6 +923,33 @@ def zip_bulletins(chemin_zip, dossier=None):
     return len(fichiers)
 
 
+def copier_bulletins(destination, dossier=None):
+    """Sauvegarde du dossier « commande » vers un autre support (NAS Synology ou QNAP par le réseau, \\\\NAS\\partage,
+    lecteur réseau, dossier kDrive synchronisé, disque USB…) : mêmes sous-dossiers année / mois ; seuls les bulletins
+    absents ou différents (taille) sont copiés, rien n'est effacé à la destination.
+    Renvoie (copiés, total, erreurs [texte])."""
+    import shutil
+    dossier = dossier or dossier_commandes()
+    if not destination or not os.path.isdir(destination):
+        raise OSError(f"dossier de sauvegarde introuvable : {destination or '(aucun)'} (NAS éteint, lecteur réseau déconnecté ?)")
+    if os.path.normcase(os.path.abspath(destination)).startswith(os.path.normcase(os.path.abspath(dossier)) + os.sep):
+        raise OSError("le dossier de sauvegarde ne peut pas être dans le dossier « commande »")
+    copies, total, erreurs = 0, 0, []
+    for f in sorted(_tous_les_pdf(dossier)):
+        total += 1
+        rel = os.path.relpath(f, dossier)
+        dst = os.path.join(destination, rel)
+        try:
+            if os.path.exists(dst) and os.path.getsize(dst) == os.path.getsize(f):
+                continue
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(f, dst)
+            copies += 1
+        except OSError as ex:
+            erreurs.append(f"{rel} : {ex.strerror or ex}")
+    return copies, total, erreurs
+
+
 def ranger_commandes(dossier=None):
     """Range les PDF du dossier « commande » (et de ses sous-dossiers) :
         commande\\2026\\10 - Octobre\\2026-10-02 au 2026-10-13 - Commande.pdf
@@ -3274,6 +3301,109 @@ def lancer_interface():
             if not n:
                 messagebox.showinfo("Exporter les bulletins", "Le dossier « commande » ne contient aucun bulletin PDF.")
 
+        def sauvegarder_bulletins(self, manuel=False, fini=None):
+            """Copie le dossier « commande » vers le dossier de sauvegarde (en arrière-plan : un NAS peut être lent)."""
+            import threading
+            dest = lire_prefs().get("copie_bulletins_dossier", "")
+            if not dest:
+                if manuel:
+                    self.fenetre_sauvegarde_bulletins()
+                return
+
+            def travail():
+                try:
+                    n, total, err = copier_bulletins(dest)
+                    texte = (f"Sauvegarde des bulletins : {n} copié(s) vers {dest} ({total} en tout)." if n else
+                             f"Sauvegarde des bulletins : tout est déjà dans {dest} ({total}).")
+                    if err:
+                        texte += f" {len(err)} problème(s) : " + " ; ".join(err[:3])
+                    echec = bool(err)
+                except OSError as ex:
+                    texte, echec = f"Sauvegarde des bulletins impossible : {ex}", True
+                ecrire_pref("copie_bulletins_etat", dt.datetime.now().strftime("%d/%m %H:%M") + " — " + texte)
+
+                def apres():
+                    try:
+                        self.statut.config(text=texte)
+                        if manuel and echec:
+                            messagebox.showwarning("Sauvegarde des bulletins", texte)
+                        if fini:
+                            fini(texte, echec)
+                    except tk.TclError:
+                        pass
+                self.after(0, apres)
+            threading.Thread(target=travail, daemon=True).start()
+
+        def fenetre_sauvegarde_bulletins(self):
+            """Réglage de la sauvegarde du dossier « commande » vers un NAS, un dossier kDrive, un disque…"""
+            pr = lire_prefs()
+            fen = tk.Toplevel(self)
+            fen.title("Sauvegarde des bulletins")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            ttk.Label(c, text="Sauvegarde des bulletins", font=("", 12, "bold")).grid(row=0, column=0, columnspan=3, sticky="w")
+            ttk.Label(c, foreground="#555", wraplength=520, justify="left", text=(
+                "Copie tout le dossier « commande » (sous-dossiers année et mois compris) vers un autre support. "
+                "Seuls les bulletins nouveaux ou modifiés sont copiés ; rien n'est effacé à la destination.\n"
+                "• NAS Synology ou QNAP : son dossier partagé par le réseau, par exemple \\\\DiskStation\\Planning "
+                "ou un lecteur réseau (Z:\\) ;\n• kDrive : le dossier kDrive synchronisé sur ce PC (application kDrive) ;\n"
+                "• ou une clé USB, un disque externe.")).grid(row=1, column=0, columnspan=3, sticky="w", pady=(2, 10))
+            ttk.Label(c, text="Dossier de sauvegarde :").grid(row=2, column=0, sticky="w")
+            v_dest = tk.StringVar(value=pr.get("copie_bulletins_dossier", ""))
+            ttk.Entry(c, textvariable=v_dest, width=52).grid(row=2, column=1, sticky="we", padx=6)
+
+            def parcourir():
+                d = filedialog.askdirectory(parent=fen, title="Dossier de sauvegarde des bulletins", initialdir=v_dest.get() or None)
+                if d:
+                    v_dest.set(os.path.normpath(d))
+            ttk.Button(c, text="Parcourir…", command=parcourir).grid(row=2, column=2, sticky="w")
+            v_auto = tk.BooleanVar(value=bool(pr.get("copie_bulletins_auto")))
+            ttk.Checkbutton(c, text="Sauvegarder automatiquement après chaque nouveau bulletin rangé",
+                            variable=v_auto).grid(row=3, column=0, columnspan=3, sticky="w", pady=(8, 0))
+            etat = ttk.Label(c, foreground="#555", wraplength=520, justify="left", text=pr.get("copie_bulletins_etat", ""))
+            etat.grid(row=4, column=0, columnspan=3, sticky="w", pady=(8, 0))
+
+            def enregistrer():
+                d = v_dest.get().strip().strip('"')
+                if d and not os.path.isdir(d):
+                    messagebox.showwarning("Sauvegarde des bulletins", f"Dossier introuvable :\n{d}\n\n"
+                                           "Vérifiez que le NAS est allumé et le dossier partagé accessible (ouvrez-le dans "
+                                           "l'Explorateur), ou choisissez-le avec « Parcourir… ».", parent=fen)
+                    return False
+                ecrire_pref("copie_bulletins_dossier", d)
+                ecrire_pref("copie_bulletins_auto", bool(v_auto.get()) and bool(d))
+                return True
+
+            def maintenant():
+                if not enregistrer():
+                    return
+                if not v_dest.get().strip():
+                    messagebox.showwarning("Sauvegarde des bulletins", "Choisissez d'abord le dossier de sauvegarde.", parent=fen)
+                    return
+                b_go.state(["disabled"])
+                etat.config(text="Copie en cours…", foreground="#555")
+
+                def fini(texte, echec):
+                    try:
+                        b_go.state(["!disabled"])
+                        etat.config(text=texte, foreground="#b00020" if echec else "#1b7a3a")
+                    except tk.TclError:
+                        pass
+                self.sauvegarder_bulletins(manuel=False, fini=fini)
+
+            def fermer():
+                if enregistrer():
+                    self.statut.config(text="Réglages de la sauvegarde des bulletins enregistrés.")
+                    fen.destroy()
+            b = ttk.Frame(c, padding=(0, 12, 0, 0))
+            b.grid(row=5, column=0, columnspan=3, sticky="we")
+            b_go = ttk.Button(b, text="Sauvegarder maintenant", command=maintenant)
+            b_go.pack(side="left")
+            ttk.Button(b, text="Enregistrer", command=fermer).pack(side="left", padx=6)
+            ttk.Button(b, text="Annuler", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+
         def exporter_agenda(self):
             """Fichier .ics pour Outlook, Google Agenda ou l'agenda du téléphone."""
             fen = tk.Toplevel(self)
@@ -3516,6 +3646,7 @@ def lancer_interface():
             fichier.add_command(label="Ajouter une commande…", accelerator=f"{ctrl}+O", command=self.ouvrir)
             fichier.add_command(label="Dossier commande", accelerator=f"{ctrl}+D", command=self.dossier_commande)
             fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
+            fichier.add_command(label="Sauvegarder les bulletins (NAS, kDrive…)…", command=self.fenetre_sauvegarde_bulletins)
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
                 # confirmation de réception : seulement pour les commandes reçues par mail
@@ -4111,6 +4242,8 @@ def lancer_interface():
                 if not silencieux:
                     messagebox.showerror("Dossier commande", str(ex))
                 return
+            if renommes and lire_prefs().get("copie_bulletins_auto"):
+                self.after(1500, self.sauvegarder_bulletins)        # copie automatique vers le NAS / kDrive
             if renommes:
                 self.statut.config(text=f"Dossier commande : {len(renommes)} bulletin(s) rangé(s) — "
                                         + ", ".join(os.path.basename(n) for _, n in renommes[:3])

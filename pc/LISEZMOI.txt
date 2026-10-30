@@ -137,6 +137,10 @@ DOSSIER « commande »
   • Fichier › « Exporter les bulletins en ZIP… » : tout le dossier
     « commande » (avec ses dossiers année / mois) dans une archive ZIP, pour
     le sauvegarder ou l'envoyer. Le téléphone fait le même ZIP.
+  • Fichier › « Sauvegarder les bulletins (NAS, kDrive…)… » : copie le dossier
+    « commande » vers un NAS (partage réseau \\NAS\dossier ou lecteur réseau),
+    un dossier kDrive synchronisé ou une clé USB ; seuls les nouveaux bulletins
+    sont copiés, à la demande ou après chaque nouveau bulletin rangé.
   • « Ajouter une commande » s'ouvre dans ce dossier. Un bulletin ouvert depuis un
     autre endroit y est COPIÉ et rangé automatiquement (l'original reste
     en place ; pas de copie en double).
