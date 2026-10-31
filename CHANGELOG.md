@@ -7,6 +7,15 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.13.5 — 31 octobre 2026
+
+**DII : heures de la journée selon les horaires AUTO, horaires du jour visibles (PC et Android)**
+- Le bouton **Grève sur la journée prévue** (et les heures proposées) prend le **début du premier horaire AUTO** et la **fin du dernier horaire AUTO** de la commande, au lieu de la prise et de la fin de service. Exemple : AUTO 03:25 – 04:15 … AUTO 14:45 – 15:35 → grève de 03h25 à 15h35. Sans horaire AUTO, PS et FS restent utilisés. Pour une nuit, la reprise est au lendemain.
+- La fenêtre de déclaration affiche la **commande du jour** (code, toutes les lignes horaires, « Journée : de … à … »), pour ne pas avoir à la quitter :
+  - téléphone : juste au-dessus de la partie 1 ;
+  - PC : cadre à droite.
+- Les heures restent modifiables à la main.
+
 ## 2.13.4 — 31 octobre 2026
 
 **Version lecture : fenêtre de mise à jour (Android)**

@@ -1755,22 +1755,25 @@ def adresse_modele_dii(modele=None):
 
 
 def horaires_service(services, jour):
-    """(PS, FS, date de fin) du service prévu ce jour d'après la commande (« HH:MM ») ; fin le lendemain pour une nuit.
-    Sans PS/FS : première et dernière heure des plages. Rien : ("", "", jour)."""
-    hh = lambda m: f"{int(m.group(1)):02d}:{m.group(2)}" if m else ""
+    """(début, fin, date de fin) de la journée de travail d'après la commande (« HH:MM ») : début du premier horaire
+    AUTO et fin du dernier horaire AUTO ; sans AUTO, prise (PS) et fin (FS) de service ; sinon première et dernière
+    heure des plages. Fin le lendemain pour une nuit. Rien : ("", "", jour)."""
+    hh = lambda h, m: f"{int(h):02d}:{m}"
     for sv in services or []:
         h = sv.get("horaires", "") or ""
-        ps = hh(re.search(r"\bPS\s+(\d{1,2}):(\d{2})", h))
-        fins = list(re.finditer(r"\bFS\s+(\d{1,2}):(\d{2})", h))
-        fs = hh(fins[-1]) if fins else ""
-        if not ps:
-            t = list(re.finditer(r"(\d{1,2}):(\d{2})", h))
+        autos = re.findall(r"\bAUTO\s+(\d{1,2}):(\d{2})\s*[–-]?\s*(\d{1,2}):(\d{2})", h)
+        ps, fs = re.search(r"\bPS\s+(\d{1,2}):(\d{2})", h), list(re.finditer(r"\bFS\s+(\d{1,2}):(\d{2})", h))
+        if autos:
+            debut, fin = hh(*autos[0][:2]), hh(*autos[-1][2:])
+        elif ps:
+            debut, fin = hh(*ps.groups()), (hh(*fs[-1].groups()) if fs else "")
+        else:
+            t = re.findall(r"(\d{1,2}):(\d{2})", h)
             if not t:
                 continue
-            ps, fs = hh(t[0]), (hh(t[-1]) if len(t) > 1 else "")
-        return ps, fs, (jour + dt.timedelta(days=1) if fs and fs <= ps else jour)
+            debut, fin = hh(*t[0]), (hh(*t[-1]) if len(t) > 1 else "")
+        return debut, fin, (jour + dt.timedelta(days=1) if fin and fin <= debut else jour)
     return "", "", jour
-
 
 def remplir_dii(v, signature=None, modele=None):
     """Remplit le « Cadre réservé à l'agent » (parties 1 et/ou 2) ; v : dict (dates dt.date, heures « HH:MM »).
@@ -3815,6 +3818,21 @@ def lancer_interface():
                 ttk.Entry(c, textvariable=vs[cle], width=largeur).grid(row=r, column=col + 1, sticky="w", pady=2)
             fd = lambda d: d.strftime("%d/%m/%Y") if d else ""
             sd = lambda x: fd(dt.date.fromisoformat(x)) if x else ""
+            # horaires de la journée (commande), visibles pendant la saisie
+            cadre_h = ttk.LabelFrame(c, text=f" Commande du {JOURS[jour.weekday()]} {fd(jour)} ", padding=8)
+            cadre_h.grid(row=0, column=4, rowspan=13, sticky="nw", padx=(16, 0))
+            lignes_jour = []
+            for sv in avec_dn(self.pl.jours).get(jour, []):
+                if sv.get("code"):
+                    lignes_jour.append((nom_affiche(sv), True))
+                lignes_jour += [("  " + x.replace("     ", "   "), False) for x in lignes_horaires(sv.get("horaires", ""))]
+            if not lignes_jour:
+                lignes_jour = [("Aucun horaire pour ce jour.", False)]
+            for t, gras in lignes_jour:
+                ttk.Label(cadre_h, text=t, font=("", 10, "bold") if gras else ("", 10)).pack(anchor="w")
+            if ps and fs_:
+                ttk.Label(cadre_h, text=f"Journée : de {ps.replace(':', 'h')} à {fs_.replace(':', 'h')}"
+                          + (" (lendemain)" if fin != jour else ""), foreground="#1a5fb4").pack(anchor="w", pady=(6, 0))
             ttk.Label(c, text="Agent", font=("", 10, "bold")).grid(row=0, column=0, sticky="w")
             ligne(1, "Nom :", "nom", S.get("nom") or (agent[0] if agent else ""))
             ligne(1, "Prénom :", "prenom", S.get("prenom") or (" ".join(agent[1:]).capitalize() if len(agent) > 1 else ""), col=2)
@@ -3829,7 +3847,7 @@ def lancer_interface():
             v_p1, v_p2 = tk.BooleanVar(value=True), tk.BooleanVar(value=False)
             ttk.Checkbutton(c, text="Partie 1 : intention de participer à la grève", variable=v_p1).grid(row=7, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
-            def sur_service():          # grève sur tout le service prévu : PS en partie 1, FS en partie 2 « reprendre le travail »
+            def sur_service():          # grève sur toute la journée : début du 1er AUTO en partie 1, fin du dernier AUTO en partie 2
                 v_p1.set(True)
                 v_p2.set(True)
                 v_choix.set("reprendre")
@@ -3840,7 +3858,7 @@ def lancer_interface():
                 etat.config(foreground="#555", text=f"Grève du {fd(jour)} à {ps.replace(':', 'h')}, reprise le {fd(fin)} à "
                                                     f"{fs_.replace(':', 'h')} (parties 1 et 2 cochées, heures modifiables).")
             if ps and fs_:
-                ttk.Button(c, text=f"Grève sur le service prévu : de {ps.replace(':', 'h')} à {fs_.replace(':', 'h')}",
+                ttk.Button(c, text=f"Grève sur la journée prévue : de {ps.replace(':', 'h')} à {fs_.replace(':', 'h')}",
                            command=sur_service).grid(row=7, column=2, columnspan=2, sticky="w", pady=(8, 0))
             else:
                 ttk.Label(c, text="Pas d'horaire sur la commande de ce jour : heures à la main.", foreground="#555").grid(

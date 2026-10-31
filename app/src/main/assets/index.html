@@ -3367,20 +3367,23 @@ PGVRVSD    ; [date]
   }
   const dateCourte = d => d ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(2, 4)}` : "";
   const dateLongueFr = d => d ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}` : "";
-  // horaires du service de ce jour pris sur la commande : prise (PS) et fin (FS) de service, avec la date de fin
-  // (lendemain pour un service de nuit). Sans PS/FS : première et dernière heure des plages. Rien : chaînes vides.
+  // journée de travail de ce jour d'après la commande : début du premier horaire AUTO et fin du dernier (sans AUTO :
+  // prise PS et fin FS de service ; sinon première et dernière heure), avec la date de fin (lendemain pour une nuit)
   function horairesService(d) {
-    const hh = m => m ? m[1].padStart(2, "0") + ":" + m[2] : "";
+    const hh = (h, m) => h.padStart(2, "0") + ":" + m;
     for (const sv of E.pl.jours[d] || []) {
       const h = sv.horaires || "";
-      let ps = hh(/\bPS\s+(\d{1,2}):(\d{2})/.exec(h)), fs = hh([...h.matchAll(/\bFS\s+(\d{1,2}):(\d{2})/g)].pop());
-      if (!ps) {
+      const autos = [...h.matchAll(/\bAUTO\s+(\d{1,2}):(\d{2})\s*[–-]?\s*(\d{1,2}):(\d{2})/g)];
+      const ps = /\bPS\s+(\d{1,2}):(\d{2})/.exec(h), fs = [...h.matchAll(/\bFS\s+(\d{1,2}):(\d{2})/g)].pop();
+      let debut, fin;
+      if (autos.length) { debut = hh(autos[0][1], autos[0][2]); fin = hh(autos[autos.length - 1][3], autos[autos.length - 1][4]); }
+      else if (ps) { debut = hh(ps[1], ps[2]); fin = fs ? hh(fs[1], fs[2]) : ""; }
+      else {
         const t = [...h.matchAll(/(\d{1,2}):(\d{2})/g)];
         if (!t.length) continue;
-        ps = hh(t[0]); fs = t.length > 1 ? hh(t[t.length - 1]) : "";
+        debut = hh(t[0][1], t[0][2]); fin = t.length > 1 ? hh(t[t.length - 1][1], t[t.length - 1][2]) : "";
       }
-      const finJour = fs && fs <= ps ? M.decaler(d, 1) : d;
-      return { ps, fs, finJour };
+      return { ps: debut, fs: fin, finJour: fin && fin <= debut ? M.decaler(d, 1) : d };
     }
     return { ps: "", fs: "", finJour: d };
   }
@@ -3528,9 +3531,20 @@ PGVRVSD    ; [date]
     const [lDate, iDate] = champ("dii-date", "le", { type: "date", value: auj });
     // raccourci : grève sur tout le service prévu (PS → partie 1, FS → partie 2 « reprendre le travail ») ; heures modifiables ensuite
     const btnService = hs.ps && hs.fs ? el("button", { type: "button", class: "btn plein", id: "dii-service", style: "margin:4px 0 8px" },
-      `Grève sur le service prévu : de ${hs.ps.replace(":", "h")} à ${hs.fs.replace(":", "h")}`) : null;
+      `Grève sur la journée prévue : de ${hs.ps.replace(":", "h")} à ${hs.fs.replace(":", "h")}`) : null;
     const p1 = el("div", {}, btnService || "", grille(lGDu, lGH),
-      el("p", { class: "discret", style: "margin:4px 0 0", text: hs.ps ? `Service prévu ce jour : ${hs.ps.replace(":", "h")}${hs.fs ? " – " + hs.fs.replace(":", "h") : ""}. Heures modifiables à la main.` : "Pas d'horaire sur la commande de ce jour : indiquez l'heure à la main." }));
+      el("p", { class: "discret", style: "margin:4px 0 0", text: hs.ps ? "Heures modifiables à la main." : "Pas d'horaire sur la commande de ce jour : indiquez l'heure à la main." }));
+    // horaires de la journée (commande), visibles pendant la saisie
+    const horairesJour = el("div", { class: "carte", id: "dii-horaires", style: "margin:0 0 6px;padding:10px 12px;background:var(--surface-2)" },
+      el("b", { text: `Commande du ${M.dateLongue(jour).toLowerCase()}` }));
+    const svJour = (M.pourAffichage(E.pl.jours)[jour] || []);
+    if (!svJour.length) horairesJour.append(el("div", { class: "discret", text: "Aucun horaire pour ce jour." }));
+    for (const sv of svJour) {
+      if (sv.code) horairesJour.append(el("div", { style: "font-weight:600;margin-top:4px", text: M.nomAffiche(sv) }));
+      for (const l of M.lignesHoraires(sv.horaires)) horairesJour.append(el("div", { class: "discret", style: "font-variant-numeric:tabular-nums", text: l.replace(/\s{2,}/g, "  ·  ") }));
+    }
+    if (hs.ps && hs.fs) horairesJour.append(el("div", { style: "margin-top:6px;font-weight:600;color:var(--accent)",
+      text: `Journée : de ${hs.ps.replace(":", "h")} à ${hs.fs.replace(":", "h")}${hs.finJour !== jour ? " (lendemain)" : ""}` }));
     const p2 = el("div", { hidden: true }, grille(lNum, el("span")),
       el("label", { class: "case-a-cocher", for: "dii-ren" }, ren, "Renoncer à participer à la grève"),
       el("label", { class: "case-a-cocher", for: "dii-rep" }, rep, "Reprendre le travail"), grille(lRDu, lRH));
@@ -3555,7 +3569,8 @@ PGVRVSD    ; [date]
     contenu.append(
       titre("Agent"), grille(lNom, lPre, lCp, lEnt),
       titre("Préavis"), lEtab, grille(lPDu, lPDuH, lPAu, lPAuH),
-      el("label", { class: "case-a-cocher", style: "margin-top:12px", for: "dii-p1" }, c1, el("b", { text: "Partie 1 : intention de participer à la grève" })), p1,
+      el("div", { style: "margin-top:12px" }, horairesJour),
+      el("label", { class: "case-a-cocher", style: "margin-top:4px", for: "dii-p1" }, c1, el("b", { text: "Partie 1 : intention de participer à la grève" })), p1,
       el("label", { class: "case-a-cocher", style: "margin-top:8px", for: "dii-p2" }, c2, el("b", { text: "Partie 2 : renoncer ou reprendre le travail" })), p2,
       grille(lLieu, lDate),
       titre("Signature"), sig.el,
