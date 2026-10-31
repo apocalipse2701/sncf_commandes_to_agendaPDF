@@ -561,7 +561,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
 window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"smtp":"smtp.free.fr","port_smtp":465,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"smtp":"smtp.orange.fr","port_smtp":465,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"smtp":"smtp.sfr.fr","port_smtp":465,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"smtp":"smtp.bbox.fr","port_smtp":465,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"smtp":"smtp.laposte.net","port_smtp":465,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"smtp":"smtp.gmail.com","port_smtp":465,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"smtp":"smtp.mail.yahoo.com","port_smtp":465,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"smtp":"smtp.mail.me.com","port_smtp":587,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"smtp":"mail.gmx.net","port_smtp":587,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"smtp":"mail.infomaniak.com","port_smtp":465,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"smtp":"","port_smtp":465,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) et, pour envoyer les confirmations, son serveur SMTP (port 465 en SSL, ou 587 avec STARTTLS) : ils figurent dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]},"_lisezmoi_confirmation":"Message de confirmation de réception envoyé à l'expéditeur d'une commande (bouton « Confirmer la réception »). Valeurs par défaut, modifiables dans les réglages. Champs remplacés : {type} (commande / contrairement), {debut}, {fin}, {edition}, {agent}, {fichier}.","confirmation":{"sujet":"Bien reçu : {type} du {debut} au {fin}","corps":"Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin} (édition du {edition}).\n\nCordialement,\n{agent}"}};
-window.VERSION_APPLI = "2.12.0";
+window.VERSION_APPLI = "2.13.0";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -1971,16 +1971,90 @@ PGVRVSD    ; [date]
     catch (e) { envoisDIICache = []; }
     return envoisDIICache;
   }
-  const NATURES_DII = { remise: "remise", lecture: "lue", reponse: "réponse", echec: "ÉCHEC de remise", retard: "remise retardée" };
+  const NATURES_DII = { remise: "remise", lecture: "lue", reponse: "réponse", echec: "ÉCHEC de remise", retard: "remise retardée",
+    avis: "AVIS DE RÉCEPTION de l'établissement" };
   const LIBELLES_DII = { remise: "remise au destinataire", lecture: "lue par le destinataire", reponse: "réponse reçue",
-    echec: "ÉCHEC de remise (non distribuée)", retard: "remise retardée" };
+    echec: "ÉCHEC de remise (non distribuée)", retard: "remise retardée", avis_recu: "réponse de l'établissement reçue, vérification…" };
   const quandCourt = ms => { const t = new Date(ms); return `${String(t.getDate()).padStart(2, "0")}/${String(t.getMonth() + 1).padStart(2, "0")} à ${String(t.getHours()).padStart(2, "0")}h${String(t.getMinutes()).padStart(2, "0")}`; };
   function ligneSuiviDII(e) {
-    const etats = Object.keys(NATURES_DII).filter(k => e[k]).map(k => `${NATURES_DII[k]} le ${quandCourt(e[k])}`);
-    const ok = (e.remise || e.lecture || e.reponse) && !e.echec;
-    return el("div", { class: e.echec ? "ko" : ok ? "ok" : "discret", style: "margin:2px 0" },
+    const etats = Object.keys(NATURES_DII).filter(k => e[k]).map(k => `${NATURES_DII[k]} le ${quandCourt(e[k])}` + (k === "avis" && e.avisManuel ? " (vérifié par vous)" : ""));
+    const incomplet = !e.avis && (e.retours || []).filter(x => x.etat === "incomplet").pop();
+    if (incomplet) etats.push(`réponse de l'établissement le ${quandCourt(incomplet.le)} : cadre partie 1 INCOMPLET (manque : ${(incomplet.manque || []).join(", ")})`);
+    if (e.greveAuRetour && !e.avis) etats.push("filigrane GRÈVE posé à la réception de l'avis de l'établissement");
+    const ok = (e.avis || e.remise || e.lecture || e.reponse) && !e.echec && !incomplet;
+    const z = el("div", { class: e.echec || incomplet ? "ko" : ok ? "ok" : "discret", style: "margin:2px 0" },
       `${ok ? "✔" : "✉"} DII envoyée le ${quandCourt(e.le)} à ${e.a || ""} — ` +
       (etats.length ? etats.join(" · ") : e.accuse ? "en attente d'accusé de réception" : "sans accusé demandé"));
+    const fichier = e.avisFichier || (incomplet && incomplet.fichier);
+    if (fichier || incomplet) {
+      const r = el("div", { class: "rangee", style: "margin:4px 0" });
+      if (fichier) r.append(el("button", { class: "btn fantome", onclick: () => { const m = window.Android.diiRetourOuvrir(fichier); if (m) toast(m); } }, "Ouvrir l'avis reçu"));
+      if (incomplet) r.append(el("button", { class: "btn", onclick: () => {
+        envoisDIICache = JSON.parse(window.Android.diiAvis(JSON.stringify({ id: e.id, manuel: true })) || "[]");
+        poserGreveDII(e); rendreDetail();
+      } }, "Avis vérifié : mettre la grève"));
+      z.append(r);
+    }
+    return z;
+  }
+  function poserGreveDII(e) {                        // filigrane GRÈVE sur le jour déclaré (avis de l'établissement reçu)
+    const d = e.jour;
+    if (!d || E.pl.greves.includes(d)) return false;
+    E.pl.greves = [...E.pl.greves, d].sort(); Stock.marquer([d.slice(0, 7)], true); rendrePlanning();
+    return true;
+  }
+  // PDF reçus de l'établissement (relevés par l'application Android) : partie 1 du « Cadre réservé à l'établissement »
+  const DII_ETAB1 = [["Text12", "n° de la DII"], ["Nom et prénom du représentant du lEmployeur", "représentant de l'employeur"],
+    ["Fonction", "fonction"], ["Service", "service"], ["Text29", "nom de l'agent"], ["Text30", "date de réception"],
+    ["Text31", "heure de réception"], ["Group1", "mode de réception"], ["Text25", "lieu (« A … »)"], ["Text26", "date (« le … »)"]];
+  async function avisEtablissement(octets) {         // null : pas le formulaire DII ; sinon { complet, manque }
+    const PDFLib = await chargerPdfLib();
+    let form;
+    try { form = (await PDFLib.PDFDocument.load(octets, { ignoreEncryption: true })).getForm(); } catch (e) { return null; }
+    const noms = form.getFields().map(f => f.getName());
+    if (!noms.includes(DII_CHAMPS.nom1) || !noms.includes("Group1")) {
+      try {                                          // formulaire imprimé / scanné / aplati : plus de champs lisibles
+        const pdfjs = await chargerPdfjs();
+        const doc = await pdfjs.getDocument({ data: octets.slice(0), isEvalSupported: false }).promise;
+        const t = (await (await doc.getPage(1)).getTextContent()).items.map(i => i.str).join(" ").toUpperCase();
+        if (t.includes("DII") && /R[EÉ]SERV/.test(t)) return { complet: false, manque: ["cadre illisible automatiquement (imprimé, scanné ou aplati) : à vérifier vous-même"] };
+      } catch (e) { /* illisible */ }
+      return null;
+    }
+    const manque = [];
+    for (const [nom, lib] of DII_ETAB1) {
+      let v = "";
+      try {
+        if (nom === "Group1") {                       // case cochée : valeur du groupe, ou un bouton dans l'état coché
+          const g = form.getRadioGroup(nom);
+          v = g.getSelected() || (g.acroField.getWidgets().some(w => { const a = w.getAppearanceState(); return a && String(a) !== "/Off"; }) ? "oui" : "");
+        } else v = form.getTextField(nom).getText() || "";
+      } catch (e) { v = ""; }
+      if (!String(v).trim() || v === "Off") manque.push(lib);
+    }
+    if (manque.length >= DII_ETAB1.length - 1) return null;   // cadre vide : notre propre formulaire renvoyé
+    return { complet: !manque.length, manque };
+  }
+  let retoursEnCours = false;
+  async function traiterRetoursDII() {
+    if (retoursEnCours || !(ANDROID && typeof window.Android.diiRetourLire === "function")) return;
+    retoursEnCours = true;
+    try {
+      for (const e of envoisDII()) {
+        for (const x of (e.retours || []).filter(x => x.etat === "a_verifier")) {
+          const b64 = window.Android.diiRetourLire(x.fichier) || "";
+          let res = null;
+          if (b64) { const bin = atob(b64), o = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i); res = await avisEtablissement(o); }
+          envoisDIICache = JSON.parse(window.Android.diiAvis(JSON.stringify({ id: e.id, fichier: x.fichier,
+            etat: !res ? "ignore" : res.complet ? "complet" : "incomplet", manque: res ? res.manque : [] })) || "[]");
+          if (!res) continue;
+          if (res.complet) {
+            const pose = e.greveAuRetour && poserGreveDII(e);
+            toast(`Avis de réception de l'établissement reçu pour la DII du ${dateFr(e.jour)}` + (pose ? " : filigrane GRÈVE mis au planning." : "."));
+          } else toast(`Réponse de l'établissement pour la DII du ${dateFr(e.jour)} : cadre partie 1 incomplet (${res.manque.join(", ")}). Grève non posée : vérifiez l'avis.`);
+        }
+      }
+    } finally { retoursEnCours = false; envoisDIICache = null; rendreDetail(); }
   }
   let verifManuelle = false;
   function verifierAccusesDII(manuel) {
@@ -1993,10 +2067,11 @@ PGVRVSD    ; [date]
     const n = (r && r.nouveaux) || [];
     if (n.length) {
       const x = n[n.length - 1];
-      toast(`DII du ${x.jour ? dateFr(x.jour) : ""} : ${LIBELLES_DII[x.nature] || x.nature} (${x.a}, le ${quandCourt(x.quand)})` + (n.length > 1 ? ` (+ ${n.length - 1})` : ""));
+      if (x.nature !== "avis_recu") toast(`DII du ${x.jour ? dateFr(x.jour) : ""} : ${LIBELLES_DII[x.nature] || x.nature} (${x.a}, le ${quandCourt(x.quand)})` + (n.length > 1 ? ` (+ ${n.length - 1})` : ""));
     } else if (verifManuelle && r) toast(r.texte || "Pas de nouvel accusé de réception.");
     verifManuelle = false;
     rendreDetail();
+    traiterRetoursDII();
   };
   function confirmerSuppr(bloc, d, idx) {
     const zone = el("div", { class: "rangee", style: "grid-column:1/-1;margin-top:6px" },
@@ -3409,7 +3484,7 @@ PGVRVSD    ; [date]
     });
     const sig = zoneSignature(S.signature || "");
     const garderSig = el("input", { type: "checkbox", id: "dii-garder" }); garderSig.checked = true;
-    const greve = el("input", { type: "checkbox", id: "dii-greve" }); greve.checked = !E.pl.greves.includes(jour);
+    const greve = el("input", { type: "checkbox", id: "dii-greve" }); greve.checked = true;   // grève posée à l'avis reçu
     const accuse = el("input", { type: "checkbox", id: "dii-accuse" }); accuse.checked = S.accuse !== false;
     const [lA, iA] = champ("dii-a", "Envoyer à", { type: "email", value: S.a || "", autocapitalize: "none", placeholder: "adresse du destinataire" });
     const [lObj, iObj] = champ("dii-objet", "Objet", { value: "" });
@@ -3432,7 +3507,9 @@ PGVRVSD    ; [date]
       el("p", { class: "discret", style: "margin:0 0 6px", text: direct
         ? "Avis de remise par votre serveur mail (s'il le permet) et accusé de lecture si le destinataire l'accepte. L'application les cherche dans votre boîte pendant 30 jours, vous prévient à leur arrivée et les affiche dans le détail du jour."
         : "Envoi par l'application mail : activez l'accusé de réception dans ses options (toutes ne le proposent pas)." }),
-      el("label", { class: "case-a-cocher", style: "margin:4px 0 10px", for: "dii-greve" }, greve, `Marquer le ${dateFr(jour)} comme jour de grève dans le planning`),
+      direct ? el("label", { class: "case-a-cocher", style: "margin:4px 0 10px", for: "dii-greve" }, greve,
+        "Filigrane GRÈVE à la réception de l'avis de l'établissement (cadre partie 1 rempli)")
+        : el("p", { class: "discret", style: "margin:4px 0 10px", text: "Filigrane GRÈVE : à mettre vous-même (Jour de grève) à la réception de l'avis de l'établissement." }),
       envoyer, pdfBtn, etat,
       el("p", { class: "discret", style: "margin:10px 0 0", text: "Le formulaire vierge reste sur ce téléphone. " },
         el("button", { type: "button", class: "lien", onclick: () => { if (ANDROID) window.Android.formulaireEnregistrer(""); else { try { localStorage.removeItem("pc:formulaire-dii"); } catch (e) { /* rien */ } } modeleDII = null; fermer(); feuilleDII(jour); } }, "Changer de formulaire")));
@@ -3454,7 +3531,6 @@ PGVRVSD    ; [date]
       E.dii = { ...(E.dii || {}), nom: v.nom, prenom: v.prenom, cp: v.cp, entite: v.entite, etab: v.etab, pDu: v.pDu, pDuH: v.pDuH,
         pAu: v.pAu, pAuH: v.pAuH, lieu: v.lieu, num: v.num, a: iA.value.trim(), corps: corps.value, accuse: accuse.checked,
         signature: garderSig.checked ? (sig.complete() || "") : "" };
-      if (greve.checked && v.p1 && v.gDu && !E.pl.greves.includes(v.gDu)) { E.pl.greves = [...E.pl.greves, v.gDu].sort(); Stock.marquer([v.gDu.slice(0, 7)], true); rendrePlanning(); }
       Stock.marquer([], true);
     }
     const nomFichier = v => `DII ${v.nom} ${v.prenom}`.trim().replace(/\s+/g, " ") + ` ${v.p1 && v.gDu ? v.gDu : v.date}.pdf`;
@@ -3508,7 +3584,7 @@ PGVRVSD    ; [date]
         else { etat.className = "ko"; etat.textContent = r.texte || "Formulaire non envoyé."; }
       } };
       window.Android.mailConfirmer(JSON.stringify({ id, a: dest, sujet: iObj.value, corps: corps.value, enReponseA: "", pieceNom: prep.nom, pieceB64: b64, accuse: accuse.checked,
-        jour: prep.v.p1 && prep.v.gDu ? prep.v.gDu : jour }));
+        jour: prep.v.p1 && prep.v.gDu ? prep.v.gDu : jour, greveAuRetour: greve.checked && prep.v.p1 }));
     });
   }
 
@@ -4017,6 +4093,7 @@ PGVRVSD    ; [date]
     // DII envoyées ces 30 derniers jours : accusés de réception cherchés à l'ouverture (silencieux)
     const limite = Date.now() - 30 * 864e5;
     if (envoisDII().some(e => e.le >= limite)) setTimeout(() => verifierAccusesDII(false), 4000);
+    if (envoisDII().some(e => (e.retours || []).some(x => x.etat === "a_verifier"))) setTimeout(traiterRetoursDII, 1500);
   }
   // Application Android : bouton Retour, PDF ouvert depuis une autre appli (mail, fichiers…)
   window.__retourArriere = () => {

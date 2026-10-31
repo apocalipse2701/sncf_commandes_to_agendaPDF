@@ -327,7 +327,8 @@ public class ReleveMail extends JobService {
                 try {
                     AccusesDII.ajouter(c, new JSONObject().put("id", envoi.messageId).put("a", a).put("sujet", o.optString("sujet", ""))
                             .put("nom", o.optString("pieceNom", "")).put("jour", o.optString("jour", "")).put("le", System.currentTimeMillis())
-                            .put("accuse", envoi.accuse).put("remiseDemandee", envoi.remiseDemandee));
+                            .put("accuse", envoi.accuse).put("remiseDemandee", envoi.remiseDemandee)
+                            .put("greveAuRetour", o.optBoolean("greveAuRetour", false)));
                     programmer(c);
                 } catch (org.json.JSONException e) {
                     // impossible

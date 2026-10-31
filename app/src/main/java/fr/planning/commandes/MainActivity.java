@@ -406,6 +406,52 @@ public class MainActivity extends Activity {
             return AccusesDII.liste(MainActivity.this).toString();
         }
 
+        /** PDF reçu de l'établissement pour une DII (base64), à vérifier par la page. */
+        @JavascriptInterface
+        public String diiRetourLire(String fichier) {
+            return AccusesDII.lireRetour(MainActivity.this, fichier);
+        }
+
+        /** Résultat de la vérification d'un PDF reçu {id, fichier, etat, manque} ou {id, manuel:true} ; renvoie la liste. */
+        @JavascriptInterface
+        public String diiAvis(String json) {
+            try {
+                return AccusesDII.noterAvis(MainActivity.this, new JSONObject(json)).toString();
+            } catch (org.json.JSONException e) {
+                return AccusesDII.liste(MainActivity.this).toString();
+            }
+        }
+
+        /** Ouvre un PDF reçu de l'établissement (application PDF du téléphone). */
+        @JavascriptInterface
+        public String diiRetourOuvrir(String fichier) {
+            String b64 = AccusesDII.lireRetour(MainActivity.this, fichier);
+            if (b64.isEmpty()) return "PDF introuvable";
+            try {
+                java.io.File d = new java.io.File(getCacheDir(), BulletinsFournisseur.DOSSIER_ENVOI);
+                //noinspection ResultOfMethodCallIgnored
+                d.mkdirs();
+                String n = "Avis établissement " + fichier;
+                try (OutputStream out = new java.io.FileOutputStream(new java.io.File(d, n))) {
+                    out.write(Base64.decode(b64, Base64.DEFAULT));
+                }
+                final Uri u = BulletinsFournisseur.adresse(MainActivity.this, BulletinsFournisseur.DOSSIER_ENVOI + "/" + n);
+                final Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setDataAndType(u, "application/pdf");
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                runOnUiThread(() -> {
+                    try {
+                        startActivity(Intent.createChooser(i, "Ouvrir l'avis reçu"));
+                    } catch (Exception e) {
+                        // aucune application PDF
+                    }
+                });
+                return "";
+            } catch (Exception e) {
+                return "Ouverture impossible : " + e.getMessage();
+            }
+        }
+
         /** Cherche maintenant les accusés de réception ; réponse par __diiEnvois({ok, texte, envois, nouveaux}). */
         @JavascriptInterface
         public void diiVerifier() {

@@ -163,27 +163,54 @@ final class AccusesDII {
                 JSONArray l = liste(c);
                 long limite = System.currentTimeMillis() - JOURS_SUIVI * 86400000L;
                 Map<String, Long> depuis = new LinkedHashMap<>();
+                Map<String, String> de = new LinkedHashMap<>();
                 for (int i = 0; i < l.length(); i++) {
                     JSONObject e = l.optJSONObject(i);
-                    if (e != null && !e.optString("id").isEmpty() && e.optLong("le") >= limite) depuis.put(e.optString("id"), e.optLong("le"));
+                    if (e != null && !e.optString("id").isEmpty() && e.optLong("le") >= limite) {
+                        depuis.put(e.optString("id"), e.optLong("le"));
+                        de.put(e.optString("id"), e.optString("a"));
+                    }
                 }
                 if (!depuis.isEmpty()) {
-                    Map<String, List<byte[]>> r = new CourrierImap().retours(p.getString("serveur", ReleveMail.SERVEUR_DEFAUT),
-                            p.getInt("port", ReleveMail.PORT_DEFAUT), adresse, mdp, depuis);
+                    Map<String, List<CourrierImap.Retour>> r = new CourrierImap().retours(p.getString("serveur", ReleveMail.SERVEUR_DEFAUT),
+                            p.getInt("port", ReleveMail.PORT_DEFAUT), adresse, mdp, depuis, de);
+                    File dossier = dossierRetours(c);
                     for (int i = 0; i < l.length(); i++) {
                         JSONObject e = l.optJSONObject(i);
                         if (e == null || !r.containsKey(e.optString("id"))) continue;
-                        for (byte[] b : r.get(e.optString("id"))) {
-                            String brut = new String(b, StandardCharsets.UTF_8);
-                            String nature = classer(brut, e.optString("id"));
-                            if (nature.isEmpty() || e.optLong(nature, 0) != 0) continue;
+                        JSONArray vus = e.optJSONArray("vus");
+                        if (vus == null) e.put("vus", vus = new JSONArray());
+                        for (CourrierImap.Retour ret : r.get(e.optString("id"))) {
+                            String brut = new String(ret.brut, StandardCharsets.UTF_8);
                             long quand = dateDe(brut);
-                            e.put(nature, quand);
-                            nouveaux.put(new JSONObject().put("jour", e.optString("jour")).put("a", e.optString("a"))
-                                    .put("nature", nature).put("quand", quand));
+                            String nature = classer(brut, e.optString("id"));
+                            if (!nature.isEmpty() && e.optLong(nature, 0) == 0) {
+                                e.put(nature, quand);
+                                nouveaux.put(new JSONObject().put("jour", e.optString("jour")).put("a", e.optString("a"))
+                                        .put("nature", nature).put("quand", quand));
+                            }
+                            // avis de l'établissement : formulaire en pièce jointe, vérifié par la page (pdf-lib) ;
+                            // chaque message n'est regardé qu'une fois
+                            if (e.optLong("avis", 0) != 0 || contient(vus, ret.uid)) continue;
+                            vus.put(ret.uid);
+                            CourrierImap.Mime.Message m = CourrierImap.Mime.lire(ret.brut);
+                            if (m.messageId.trim().equalsIgnoreCase(e.optString("id"))) continue;     // le message envoyé
+                            JSONArray recus = e.optJSONArray("retours");
+                            if (recus == null) e.put("retours", recus = new JSONArray());
+                            int k = 0;
+                            for (CourrierImap.Mime.Partie pdf : m.pdf) {
+                                String nom = (e.optString("jour") + "-" + ret.uid + "-" + (k++) + ".pdf").replaceAll("[^A-Za-z0-9._-]", "_");
+                                try (OutputStream out = new FileOutputStream(new File(dossier, nom))) {
+                                    out.write(pdf.octets);
+                                }
+                                recus.put(new JSONObject().put("fichier", nom).put("le", quand).put("nom", pdf.nom).put("etat", "a_verifier"));
+                                nouveaux.put(new JSONObject().put("jour", e.optString("jour")).put("a", e.optString("a"))
+                                        .put("nature", "avis_recu").put("quand", quand));
+                            }
                         }
+                        while (vus.length() > 200) vus.remove(0);
                     }
-                    if (nouveaux.length() > 0) ecrire(c, l);
+                    ecrire(c, l);
                 }
                 ok = true;
                 texte = nouveaux.length() == 0 ? "Pas de nouvel accusé de réception." : nouveaux.length() + " nouvel"
@@ -204,6 +231,64 @@ final class AccusesDII {
         return res;
     }
 
+    static File dossierRetours(Context c) {
+        File d = new File(c.getFilesDir(), "dii-retours");
+        //noinspection ResultOfMethodCallIgnored
+        d.mkdirs();
+        return d;
+    }
+
+    private static boolean contient(JSONArray a, long v) {
+        for (int i = 0; i < a.length(); i++) if (a.optLong(i, -1) == v) return true;
+        return false;
+    }
+
+    /** PDF reçu de l'établissement (base64), ou "". */
+    static String lireRetour(Context c, String nom) {
+        if (nom == null || !nom.matches("[A-Za-z0-9._-]+")) return "";
+        File f = new File(dossierRetours(c), nom);
+        try {
+            return f.exists() ? android.util.Base64.encodeToString(BulletinsRanges.lire(f), android.util.Base64.NO_WRAP) : "";
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Résultat de la vérification par la page d'un PDF reçu : {id, fichier, etat: complet | incomplet | ignore, manque: [..]}.
+     * « complet » : l'avis de l'établissement est noté (date du message). Renvoie la liste à jour.
+     */
+    static JSONArray noterAvis(Context c, JSONObject o) {
+        synchronized (VERROU) {
+            JSONArray l = liste(c);
+            for (int i = 0; i < l.length(); i++) {
+                JSONObject e = l.optJSONObject(i);
+                if (e == null || !e.optString("id").equals(o.optString("id"))) continue;
+                try {
+                    if (o.optBoolean("manuel", false)) {               // avis vérifié par l'agent lui-même
+                        e.put("avis", System.currentTimeMillis()).put("avisManuel", true);
+                        continue;
+                    }
+                    JSONArray recus = e.optJSONArray("retours");
+                    if (recus == null) continue;
+                    for (int k = 0; k < recus.length(); k++) {
+                        JSONObject x = recus.optJSONObject(k);
+                        if (x == null || !x.optString("fichier").equals(o.optString("fichier"))) continue;
+                        x.put("etat", o.optString("etat", "ignore"));
+                        if (o.has("manque")) x.put("manque", o.optJSONArray("manque"));
+                        if ("complet".equals(o.optString("etat")) && e.optLong("avis", 0) == 0) {
+                            e.put("avis", x.optLong("le", System.currentTimeMillis())).put("avisFichier", x.optString("fichier"));
+                        }
+                    }
+                } catch (org.json.JSONException ex) {
+                    // impossible
+                }
+            }
+            ecrire(c, l);
+            return l;
+        }
+    }
+
     static String libelle(String nature) {
         switch (nature) {
             case "remise": return "remise au destinataire";
@@ -211,6 +296,7 @@ final class AccusesDII {
             case "reponse": return "réponse reçue";
             case "echec": return "ÉCHEC de remise (non distribuée)";
             case "retard": return "remise retardée";
+            case "avis_recu": return "réponse avec PDF reçue : ouvrez l'application pour vérifier l'avis de l'établissement";
             default: return nature;
         }
     }

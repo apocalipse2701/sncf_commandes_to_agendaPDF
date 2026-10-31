@@ -160,13 +160,25 @@ final class CourrierImap {
 
     // ------------------------------------------------------------------ accusés de réception des DII envoyées
 
+    /** Message reçu qui cite une DII envoyée, ou venu de son destinataire. */
+    static final class Retour {
+        final long uid;
+        final byte[] brut;
+
+        Retour(long uid, byte[] brut) {
+            this.uid = uid;
+            this.brut = brut;
+        }
+    }
+
     /**
-     * Pour chaque Message-ID (clé de « depuis » : date d'envoi en ms), les messages bruts de la boîte de réception
-     * qui le citent (accusés de remise / de lecture, réponses), 15 au plus. Lecture seule (EXAMINE, BODY.PEEK).
+     * Pour chaque Message-ID (clé de « depuis » : date d'envoi en ms) : les messages de la boîte de réception qui le
+     * citent (accusés, réponses) ou qui viennent de son destinataire (clé de « de ») depuis l'envoi — avis de
+     * l'établissement en pièce jointe. 25 au plus par envoi. Lecture seule (EXAMINE, BODY.PEEK).
      */
-    java.util.Map<String, List<byte[]>> retours(String serveur, int port, String adresse, String motDePasse,
-                                                java.util.Map<String, Long> depuis) throws IOException {
-        java.util.Map<String, List<byte[]>> res = new java.util.HashMap<>();
+    java.util.Map<String, List<Retour>> retours(String serveur, int port, String adresse, String motDePasse,
+                                                java.util.Map<String, Long> depuis, java.util.Map<String, String> de) throws IOException {
+        java.util.Map<String, List<Retour>> res = new java.util.HashMap<>();
         connecter(serveur, port);
         try {
             lireLigne();
@@ -176,20 +188,28 @@ final class CourrierImap {
             if (!ok(rep)) throw new IOException("boîte de réception introuvable");
             for (java.util.Map.Entry<String, Long> e : depuis.entrySet()) {
                 String cle = e.getKey().replaceAll("[<>\"\\\\]", "");
-                rep = commande("UID SEARCH SINCE " + dateImap(new Date(e.getValue() - 86400000L)) + " TEXT " + quoter(cle), null);
-                List<byte[]> l = new ArrayList<>();
-                res.put(e.getKey(), l);
-                if (!ok(rep)) continue;
-                List<Long> uids = new ArrayList<>();
-                for (String x : rep) {
-                    if (!x.toUpperCase(Locale.ROOT).startsWith("* SEARCH")) continue;
-                    for (String u : x.substring(8).trim().split("\\s+")) if (!u.isEmpty()) uids.add(Long.parseLong(u));
+                String date = dateImap(new Date(e.getValue() - 86400000L));
+                java.util.TreeSet<Long> uids = new java.util.TreeSet<>();
+                List<String> criteres = new ArrayList<>();
+                criteres.add("TEXT " + quoter(cle));
+                String dest = de == null ? "" : de.get(e.getKey());
+                if (dest != null && !dest.trim().isEmpty()) criteres.add("FROM " + quoter(dest.trim()));
+                for (String critere : criteres) {
+                    rep = commande("UID SEARCH SINCE " + date + " " + critere, null);
+                    if (!ok(rep)) continue;
+                    for (String x : rep) {
+                        if (!x.toUpperCase(Locale.ROOT).startsWith("* SEARCH")) continue;
+                        for (String u : x.substring(8).trim().split("\\s+")) if (!u.isEmpty()) uids.add(Long.parseLong(u));
+                    }
                 }
-                if (uids.size() > 15) uids = uids.subList(uids.size() - 15, uids.size());
-                for (long uid : uids) {
+                List<Retour> l = new ArrayList<>();
+                res.put(e.getKey(), l);
+                List<Long> liste = new ArrayList<>(uids);
+                if (liste.size() > 25) liste = liste.subList(liste.size() - 25, liste.size());
+                for (long uid : liste) {
                     byte[][] corps = new byte[1][];
                     rep = commande("UID FETCH " + uid + " BODY.PEEK[]", corps);
-                    if (ok(rep) && corps[0] != null) l.add(corps[0]);
+                    if (ok(rep) && corps[0] != null) l.add(new Retour(uid, corps[0]));
                 }
             }
             try {

@@ -7,6 +7,18 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.13.0 — 31 octobre 2026
+
+**Grève posée seulement à la réception de l'avis de l'établissement (PC et Android)**
+- À l'envoi d'une DII, le filigrane GRÈVE n'est plus posé tout de suite. Nouvelle case (envoi direct) : « Filigrane GRÈVE à la réception de l'avis de l'établissement (cadre partie 1 rempli) ».
+- L'application cherche dans la boîte mail le formulaire DII renvoyé par l'établissement : en pièce jointe d'une réponse, ou d'un message du destinataire.
+- Elle vérifie que la **partie 1 du « Cadre réservé à l'établissement »** est remplie intégralement : n° de DII, représentant, fonction, service, nom de l'agent, date et heure de réception, mode de réception, lieu et date.
+  - **Complète** : l'avis est noté et le **filigrane GRÈVE est posé** sur le jour déclaré, avec un message (notification sur le téléphone).
+  - **Incomplète**, ou formulaire imprimé, scanné ou aplati : pas de grève. L'application dit ce qui manque, avec **Ouvrir l'avis reçu** et **Avis vérifié : mettre la grève** pour valider soi-même.
+- Où le voir : détail du jour (téléphone et PC) et Fichier › Suivi des DII envoyées (PC).
+- Envoi par l'application mail ou la messagerie du PC : la grève se pose à la main (« Jour de grève ») à la réception de l'avis.
+- Le bouton « Jour de grève » reste disponible à tout moment.
+
 ## 2.12.0 — 31 octobre 2026
 
 **Suivi des DII envoyées : l'application prévient quand l'accusé de réception arrive (PC et Android)**
