@@ -142,7 +142,8 @@ DOSSIER « commande »
     votre signature (dessinée ou image) et l'envoie au destinataire
     (proposé : l'adresse en haut à gauche du formulaire). Bouton « Grève
     sur le service prévu » : heures de prise et de fin de service de la
-    commande du jour, modifiables. Le formulaire vierge est choisi une
+    commande du jour, modifiables. Accusé de réception possible (avis de
+    remise et accusé de lecture). Le formulaire vierge est choisi une
     fois et reste sur ce PC.
   • Fichier › « Sauvegarder les bulletins (NAS, kDrive…)… » : copie le dossier
     « commande » vers un NAS (partage réseau \\NAS\dossier ou lecteur réseau),

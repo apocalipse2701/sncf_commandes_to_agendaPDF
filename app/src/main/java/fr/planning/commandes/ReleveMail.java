@@ -314,11 +314,17 @@ public class ReleveMail extends JobService {
             String a = o.optString("a", "").trim();
             String pieceB64 = o.optString("pieceB64", "");
             byte[] piece = pieceB64.isEmpty() ? null : android.util.Base64.decode(pieceB64, android.util.Base64.DEFAULT);
-            new EnvoiMail().envoyer(smtp, p.getInt("port_smtp", 465), adresse, mdp, a,
+            EnvoiMail envoi = new EnvoiMail();
+            envoi.accuse = o.optBoolean("accuse", false);
+            envoi.envoyer(smtp, p.getInt("port_smtp", 465), adresse, mdp, a,
                     o.optString("sujet", ""), o.optString("corps", ""), o.optString("enReponseA", ""),
                     piece == null ? null : o.optString("pieceNom", "document.pdf"), piece);
             ok = true;
-            texte = (piece == null ? "Confirmation envoyée à " : "Envoyé à ") + a + ".";
+            texte = (piece == null ? "Confirmation envoyée à " : "Envoyé à ") + a + " le "
+                    + new java.text.SimpleDateFormat("dd/MM/yyyy 'à' HH:mm", java.util.Locale.FRANCE).format(new java.util.Date()) + ".";
+            if (envoi.accuse) texte += envoi.remiseDemandee
+                    ? " Accusé de réception demandé : avis de remise du serveur et accusé de lecture si le destinataire l'accepte, dans votre boîte mail."
+                    : " Accusé de lecture demandé (renvoyé dans votre boîte si le destinataire l'accepte) ; votre serveur d'envoi ne propose pas l'avis de remise.";
         } catch (Exception e) {
             String m = e.getMessage();
             if (e instanceof java.net.UnknownHostException) m = "pas d'Internet ou serveur introuvable";

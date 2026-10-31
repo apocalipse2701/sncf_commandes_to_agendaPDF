@@ -1422,9 +1422,12 @@ def remplir_modele(modele, c):
     return t.replace(" (édition du )", "").replace(" du  au ", " ")
 
 
-def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, en_reponse_a="", contexte=None, piece=None):
+def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, en_reponse_a="", contexte=None, piece=None,
+                         accuse=False):
     """Envoie la confirmation (SMTP authentifié, toujours chiffré : port 465 = SSL, sinon STARTTLS obligatoire).
-    Lève OSError avec un message clair."""
+    accuse : demande un accusé de réception — de lecture (Disposition-Notification-To, la messagerie du destinataire
+    propose de le renvoyer) et de remise (DSN, si le serveur d'envoi le permet). Renvoie True si la remise a pu être
+    demandée au serveur. Lève OSError avec un message clair."""
     import smtplib
     import ssl as ssl_
     from email.message import EmailMessage
@@ -1439,6 +1442,9 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
     m["Message-ID"] = make_msgid(domain=adresse.rsplit("@", 1)[-1] if "@" in adresse else None)
     if re.match(r"^<[^<>\s]+>$", (en_reponse_a or "").strip()):
         m["In-Reply-To"] = m["References"] = en_reponse_a.strip()
+    if accuse:                                  # accusé de lecture : réponse attendue à l'adresse d'envoi
+        m["Disposition-Notification-To"] = adresse
+        m["Return-Receipt-To"] = adresse
     m.set_content(corps or "", charset="utf-8")
     if piece:                                   # (nom, octets) : PDF joint (ex. formulaire DII rempli)
         m.add_attachment(piece[1], maintype="application", subtype="pdf", filename=piece[0])
@@ -1465,8 +1471,12 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
             raise OSError("envoi refusé : adresse ou mot de passe incorrect (ou mot de passe d'application nécessaire)")
         except smtplib.SMTPException as ex:
             raise OSError(f"authentification impossible ({ex})")
+        dsn = bool(accuse and smtp.has_extn("dsn"))   # accusé de remise : avis du serveur quand le mail est livré
         try:
-            smtp.send_message(m)
+            if dsn:
+                smtp.send_message(m, mail_options=["RET=HDRS"], rcpt_options=["NOTIFY=SUCCESS,FAILURE"])
+            else:
+                smtp.send_message(m)
         except smtplib.SMTPRecipientsRefused:
             raise OSError("destinataire refusé par le serveur")
         except smtplib.SMTPException as ex:
@@ -1476,6 +1486,7 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
             smtp.quit()
         except Exception:
             pass
+    return dsn
 
 
 # ---- formulaire DII (déclaration individuelle d'intention) : le PDF vierge est choisi par l'utilisateur et gardé dans
@@ -3685,7 +3696,10 @@ def lancer_interface():
             txt.insert("1.0", S.get("corps") or f"Bonjour,\n\nVeuillez trouver ci-joint ma déclaration individuelle d'intention.\n\nCordialement,\n{vs['prenom'].get()} {vs['nom'].get()}")
             v_greve = tk.BooleanVar(value=jour not in self.pl.greves)
             ttk.Checkbutton(c, text=f"Marquer le {fd(jour)} comme jour de grève dans le planning", variable=v_greve).grid(
-                row=19, column=0, columnspan=4, sticky="w", pady=(6, 0))
+                row=19, column=0, columnspan=2, sticky="w", pady=(6, 0))
+            v_accuse = tk.BooleanVar(value=S.get("accuse", True))
+            ttk.Checkbutton(c, text="Demander un accusé de réception", variable=v_accuse).grid(
+                row=19, column=2, columnspan=2, sticky="w", pady=(6, 0))
             etat = ttk.Label(c, foreground="#555", wraplength=620, justify="left")
             etat.grid(row=21, column=0, columnspan=4, sticky="w", pady=(6, 0))
 
@@ -3724,7 +3738,8 @@ def lancer_interface():
                 ecrire_pref("dii", {"nom": v["nom"], "prenom": v["prenom"], "cp": v["cp"], "entite": v["entite"], "etab": v["etab"],
                                     "pDu": v["pDu"].isoformat() if v["pDu"] else "", "pDuH": v["pDuH"],
                                     "pAu": v["pAu"].isoformat() if v["pAu"] else "", "pAuH": v["pAuH"], "lieu": v["lieu"],
-                                    "num": v["num"], "a": vs["a"].get().strip(), "corps": txt.get("1.0", "end-1c"), "signature": v_sig.get()})
+                                    "num": v["num"], "a": vs["a"].get().strip(), "corps": txt.get("1.0", "end-1c"), "signature": v_sig.get(),
+                                    "accuse": v_accuse.get()})
                 if v_greve.get() and v["p1"] and v["gDu"] and v["gDu"] not in self.pl.greves:
                     self.basculer_greve(v["gDu"])
                 return octets, nom
@@ -3764,16 +3779,19 @@ def lancer_interface():
                     import webbrowser
                     webbrowser.open(mailto(a, sujet, corps))
                     self.ouvrir_fichier(d)
-                    etat.config(foreground="#555", text=f"Votre messagerie s'ouvre : joignez-y le fichier « {nom} » (dossier ouvert à côté).")
+                    etat.config(foreground="#555", text=f"Votre messagerie s'ouvre : joignez-y le fichier « {nom} » (dossier ouvert à côté)."
+                                + (" Accusé de réception : cochez-le dans les options du message (Outlook : Options › Demander un accusé de lecture)."
+                                   if v_accuse.get() else ""))
                     return
                 b_env.state(["disabled"])
                 etat.config(text=f"Envoi à {a}…", foreground="#555")
                 p = lire_prefs()
 
                 def travail():
+                    accuse, dsn = v_accuse.get(), False
                     try:
-                        envoyer_confirmation(p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465), p.get("mail_adresse"),
-                                             deproteger(p.get("mail_mdp", "")), a, sujet, corps, piece=(nom, octets))
+                        dsn = envoyer_confirmation(p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465), p.get("mail_adresse"),
+                                                   deproteger(p.get("mail_mdp", "")), a, sujet, corps, piece=(nom, octets), accuse=accuse)
                         err = None
                     except OSError as ex:
                         err = str(ex)
@@ -3786,7 +3804,15 @@ def lancer_interface():
                             if err:
                                 etat.config(text=f"Formulaire non envoyé : {err}.", foreground="#b00020")
                             else:
-                                self.statut.config(text=f"Formulaire DII envoyé à {a}.")
+                                quand = dt.datetime.now().strftime("%d/%m/%Y à %H:%M")
+                                info = ""
+                                if accuse:
+                                    info = (" Accusé de réception demandé : avis de remise par votre serveur et accusé de lecture"
+                                            " si le destinataire l'accepte, dans votre boîte mail." if dsn else
+                                            " Accusé de lecture demandé (renvoyé dans votre boîte si le destinataire l'accepte) ;"
+                                            " votre serveur d'envoi ne propose pas l'avis de remise.")
+                                self.statut.config(text=f"Formulaire DII envoyé à {a} le {quand}.")
+                                messagebox.showinfo("Déclaration de grève (DII)", f"Formulaire envoyé à {a} le {quand}.{info}", parent=self)
                                 fen.destroy()
                         except tk.TclError:
                             pass

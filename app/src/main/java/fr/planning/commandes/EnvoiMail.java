@@ -32,6 +32,10 @@ final class EnvoiMail {
 
     private final SocketFactory fabrique;          // connexion de départ (TLS direct pour le port 465)
     private final SSLSocketFactory fabriqueTls;     // passage en TLS après STARTTLS
+    /** Demander un accusé de réception : de lecture (Disposition-Notification-To) et de remise (DSN, si le serveur le permet). */
+    boolean accuse;
+    /** Après l'envoi : vrai si l'avis de remise (DSN) a pu être demandé au serveur. */
+    boolean remiseDemandee;
     private Socket socket;
     private BufferedReader in;
     private OutputStream out;
@@ -81,14 +85,17 @@ final class EnvoiMail {
                 ehlo = ehlo();
             }
             authentifier(ehlo, adresse, motDePasse);
-            envoyerLigne("MAIL FROM:<" + adresse + ">");
+            boolean dsn = false;
+            if (accuse) for (String l : ehlo) if (l.toUpperCase(Locale.ROOT).matches("^\\d{3}[ -]DSN\\b.*")) dsn = true;
+            remiseDemandee = dsn;
+            envoyerLigne("MAIL FROM:<" + adresse + ">" + (dsn ? " RET=HDRS" : ""));
             attendre(250);
-            envoyerLigne("RCPT TO:<" + a.trim() + ">");
+            envoyerLigne("RCPT TO:<" + a.trim() + ">" + (dsn ? " NOTIFY=SUCCESS,FAILURE" : ""));
             int code = lireReponse(null);
             if (code != 250 && code != 251) throw new IOException("destinataire refusé par le serveur (" + code + ")");
             envoyerLigne("DATA");
             attendre(354);
-            out.write(message(adresse, a.trim(), sujet, corps, enReponseA, nomPiece, piece).getBytes(StandardCharsets.UTF_8));
+            out.write(message(adresse, a.trim(), sujet, corps, enReponseA, nomPiece, piece, accuse).getBytes(StandardCharsets.UTF_8));
             envoyerLigne(".");
             attendre(250);
             try {
@@ -112,6 +119,11 @@ final class EnvoiMail {
     }
 
     static String message(String de, String a, String sujet, String corps, String enReponseA, String nomPiece, byte[] piece) {
+        return message(de, a, sujet, corps, enReponseA, nomPiece, piece, false);
+    }
+
+    static String message(String de, String a, String sujet, String corps, String enReponseA, String nomPiece, byte[] piece,
+                          boolean accuse) {
         StringBuilder m = new StringBuilder();
         String domaine = de.contains("@") ? de.substring(de.indexOf('@') + 1) : "planning.local";
         m.append("From: <").append(de).append(">\r\n");
@@ -123,6 +135,10 @@ final class EnvoiMail {
         if (ref.matches("<[^<>\\s]+>")) {
             m.append("In-Reply-To: ").append(ref).append("\r\n");
             m.append("References: ").append(ref).append("\r\n");
+        }
+        if (accuse) {                     // accusé de lecture : renvoyé à l'adresse d'envoi si le destinataire l'accepte
+            m.append("Disposition-Notification-To: <").append(de).append(">\r\n");
+            m.append("Return-Receipt-To: <").append(de).append(">\r\n");
         }
         m.append("MIME-Version: 1.0\r\n");
         String texte = b64(

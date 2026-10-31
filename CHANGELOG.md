@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.11.2 — 31 octobre 2026
+
+**Déclaration de grève (DII) : accusé de réception (PC et Android)**
+- Case **Demander un accusé de réception** (cochée par défaut, choix gardé) lors de l'envoi de la DII.
+- Envoi direct (version « mail ») : **avis de remise** demandé au serveur d'envoi quand il le permet (DSN) et **accusé de lecture** demandé au destinataire (sa messagerie lui propose de le renvoyer). Les deux arrivent dans votre boîte mail.
+- Après l'envoi, la date et l'heure d'envoi sont affichées, avec ce qui a été demandé.
+- Envoi par l'application mail ou la messagerie du PC : l'accusé se demande dans les options de cette application.
+
 ## 2.11.1 — 31 octobre 2026
 
 **Déclaration de grève (DII) : destinataire, horaires du service, signature (PC et Android)**
