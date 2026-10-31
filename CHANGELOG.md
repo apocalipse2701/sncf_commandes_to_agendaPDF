@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.13.4 — 31 octobre 2026
+
+**Version lecture : fenêtre de mise à jour (Android)**
+- Quand une nouvelle version de l'application est publiée, une fenêtre le propose : « Mise à jour disponible », avec les nouveautés, **Mettre à jour maintenant** ou **Plus tard** (reproposée le lendemain). Elle remplace le cadre en haut du planning.
+- Vérification à l'ouverture, au retour dans l'application (une fois par jour) et avec le bouton **Actualiser**.
+- Applications manuelle et mail : inchangées (cadre en haut du planning).
+
 ## 2.13.3 — 31 octobre 2026
 
 **Version lecture : une seule ligne de boutons (Android)**
