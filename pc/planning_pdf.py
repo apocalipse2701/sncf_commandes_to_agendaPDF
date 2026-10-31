@@ -874,11 +874,42 @@ def _empreinte(f):
     return md5
 
 
-def _tous_les_pdf(dossier):
+# DII archivées avec les commandes (« 2026-11-03 - DII envoyée - NOM Prénom.pdf », « … - DII avis de l'établissement… »)
+R_DII_ARCHIVE = re.compile(r"^\d{4}-\d{2}-\d{2} - DII ", re.I)
+
+
+def _tous_les_pdf(dossier, avec_dii=False):
+    """PDF du dossier « commande » ; les DII archivées n'en font partie que pour les copies (ZIP, sauvegarde)."""
     for racine, _, fichiers in os.walk(dossier):
         for f in fichiers:
-            if f.lower().endswith(".pdf"):
+            if f.lower().endswith(".pdf") and (avec_dii or not R_DII_ARCHIVE.match(f)):
                 yield os.path.join(racine, f)
+
+
+def archiver_dii(octets, jour, quoi, dossier=None):
+    """Range une DII dans le dossier « commande », comme les bulletins : commande\2026\11 - Novembre\
+    « 2026-11-03 - DII envoyée - NOM Prénom.pdf » ou « 2026-11-03 - DII avis de l'établissement.pdf ».
+    quoi : fin du nom (« envoyée - NOM Prénom »…). Même contenu déjà rangé : rien. Renvoie le chemin (ou "")."""
+    import hashlib
+    dossier = dossier or dossier_commandes()
+    jour = jour if isinstance(jour, dt.date) else dt.date.fromisoformat(str(jour))
+    cible = os.path.join(dossier, sous_dossier(jour.year, jour.month))
+    os.makedirs(cible, exist_ok=True)
+    md5 = hashlib.md5(octets).hexdigest()
+    for f in os.listdir(cible):
+        g = os.path.join(cible, f)
+        if R_DII_ARCHIVE.match(f) and os.path.getsize(g) == len(octets):
+            with open(g, "rb") as x:
+                if hashlib.md5(x.read()).hexdigest() == md5:
+                    return g
+    base = re.sub(r'[\\/:*?"<>|\r\n]', "_", f"{jour.isoformat()} - DII {quoi}").strip()
+    for k in range(1, 50):
+        g = os.path.join(cible, base + (f" ({k})" if k > 1 else "") + ".pdf")
+        if not os.path.exists(g):
+            with open(g, "wb") as f:
+                f.write(octets)
+            return g
+    return ""
 
 
 def ajouter_au_dossier(chemin, dossier=None):
@@ -915,7 +946,7 @@ def zip_bulletins(chemin_zip, dossier=None):
     même arborescence que l'export ZIP du téléphone). Renvoie le nombre de bulletins."""
     import zipfile
     dossier = dossier or dossier_commandes()
-    fichiers = sorted(_tous_les_pdf(dossier))
+    fichiers = sorted(_tous_les_pdf(dossier, avec_dii=True))
     with zipfile.ZipFile(chemin_zip, "w", zipfile.ZIP_DEFLATED) as z:
         for f in fichiers:
             rel = os.path.relpath(f, dossier).replace(os.sep, "/")
@@ -935,7 +966,7 @@ def copier_bulletins(destination, dossier=None):
     if os.path.normcase(os.path.abspath(destination)).startswith(os.path.normcase(os.path.abspath(dossier)) + os.sep):
         raise OSError("le dossier de sauvegarde ne peut pas être dans le dossier « commande »")
     copies, total, erreurs = 0, 0, []
-    for f in sorted(_tous_les_pdf(dossier)):
+    for f in sorted(_tous_les_pdf(dossier, avec_dii=True)):
         total += 1
         rel = os.path.relpath(f, dossier)
         dst = os.path.join(destination, rel)
@@ -1566,11 +1597,12 @@ def avis_etablissement_dii(octets):
     return not manque, manque
 
 
-def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None, ssl=True, dossier_retours=None):
+def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None, ssl=True, archiver=None):
     """Fouille la boîte pour chaque envoi récent ; complète les envois (dates « jj/mm/aaaa hh:mm » de remise, lecture,
     réponse, échec, retard, avis de l'établissement) et renvoie la liste des nouveautés [(envoi, nature)].
     Avis : formulaire DII reçu en pièce jointe (réponse ou message du destinataire) ; « avis » si la partie 1 du cadre
-    établissement est remplie, sinon « avis_incomplet » (PDF gardé dans dossier_retours). Lève OSError (message clair)."""
+    établissement est remplie, sinon « avis_incomplet ». archiver(octets, envoi, complet) range le PDF reçu et renvoie
+    son chemin. Lève OSError (message clair)."""
     import imaplib
     import email
     from email import policy
@@ -1640,12 +1672,11 @@ def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None,
                         continue
                     complet, manque = res
                     chemin = ""
-                    if dossier_retours:
-                        os.makedirs(dossier_retours, exist_ok=True)
-                        chemin = os.path.join(dossier_retours, re.sub(r'[\\/:*?"<>|]', "_",
-                                              f"Avis {e.get('jour', '')} {quand:%Y-%m-%d %Hh%M} {nom or 'formulaire.pdf'}"))
-                        with open(chemin, "wb") as f:
-                            f.write(octets)
+                    if archiver:
+                        try:
+                            chemin = archiver(octets, e, complet) or ""
+                        except OSError:
+                            chemin = ""
                     if complet:
                         e["avis"] = quand.strftime("%d/%m/%Y %H:%M")
                         e["avis_fichier"] = chemin
@@ -3981,16 +4012,32 @@ def lancer_interface():
                     etat.config(text=f"Impossible : {ex}.", foreground="#b00020")
                     return
                 sujet, corps = vs["objet"].get(), txt.get("1.0", "end-1c")
+                try:                                    # jour déclaré : rangement et suivi
+                    jour_dii = date_de("gDu") if v_p1.get() and vs["gDu"].get().strip() else jour
+                except ValueError:
+                    jour_dii = jour
+                qui = f"{vs['nom'].get().strip().upper()} {vs['prenom'].get().strip()}".strip()
+
+                def archiver_envoi():                   # rangée avec les commandes : commande\AAAA\MM - Mois\
+                    try:
+                        ch_ = archiver_dii(octets, jour_dii, f"envoyée - {qui}" if qui else "envoyée")
+                    except OSError:
+                        return ""
+                    return ch_
                 if not self._envoi_direct():
-                    d = os.path.join(dossier_donnees(), "DII")
-                    os.makedirs(d, exist_ok=True)
-                    ch = os.path.join(d, nom)
-                    with open(ch, "wb") as f:
-                        f.write(octets)
+                    ch = archiver_envoi()
+                    if ch and lire_prefs().get("copie_bulletins_auto"):
+                        self.sauvegarder_bulletins()
+                    if not ch:
+                        d = os.path.join(dossier_donnees(), "DII")
+                        os.makedirs(d, exist_ok=True)
+                        ch = os.path.join(d, nom)
+                        with open(ch, "wb") as f:
+                            f.write(octets)
                     import webbrowser
                     webbrowser.open(mailto(a, sujet, corps))
-                    self.ouvrir_fichier(d)
-                    etat.config(foreground="#555", text=f"Votre messagerie s'ouvre : joignez-y le fichier « {nom} » (dossier ouvert à côté)."
+                    self.ouvrir_fichier(os.path.dirname(ch))
+                    etat.config(foreground="#555", text=f"Votre messagerie s'ouvre : joignez-y le fichier « {os.path.basename(ch)} » (dossier ouvert à côté, rangé avec les commandes)."
                                 + (" Accusé de réception : cochez-le dans les options du message (Outlook : Options › Demander un accusé de lecture)."
                                    if v_accuse.get() else ""))
                     return
@@ -4008,11 +4055,8 @@ def lancer_interface():
                                                    deproteger(p.get("mail_mdp", "")), a, sujet, corps, piece=(nom, octets),
                                                    accuse=accuse, message_id=mid)
                         err = None
-                        try:                            # gardé pour le suivi des accusés (90 derniers envois)
-                            jour_dii = date_de("gDu") if v_p1.get() and vs["gDu"].get().strip() else jour
-                        except ValueError:
-                            jour_dii = jour
-                        envois = (lire_prefs().get("dii_envois") or [])[-89:]
+                        archiver_envoi()                # le PDF envoyé, rangé avec les commandes
+                        envois = (lire_prefs().get("dii_envois") or [])[-89:]   # gardé pour le suivi des accusés
                         envois.append({"id": mid, "a": a, "sujet": sujet, "nom": nom, "jour": jour_dii.isoformat(),
                                        "le": dt.datetime.now().isoformat(timespec="seconds"), "accuse": accuse, "remise_demandee": dsn,
                                        "greve_au_retour": bool(v_greve.get() and v_p1.get())})
@@ -4042,7 +4086,9 @@ def lancer_interface():
                                     info += ("\n\nLe filigrane GRÈVE sera mis quand l'établissement renverra le formulaire avec"
                                              " la partie 1 de son cadre remplie.")
                                     self._suivi_dii_rapide = 4
-                                self.statut.config(text=f"Formulaire DII envoyé à {a} le {quand}.")
+                                self.statut.config(text=f"Formulaire DII envoyé à {a} le {quand} (rangé avec les commandes).")
+                                if lire_prefs().get("copie_bulletins_auto"):
+                                    self.sauvegarder_bulletins()
                                 messagebox.showinfo("Déclaration de grève (DII)", f"Formulaire envoyé à {a} le {quand}.{info}", parent=self)
                                 fen.destroy()
                         except tk.TclError:
@@ -5114,7 +5160,9 @@ def lancer_interface():
                     envois = list(lire_prefs().get("dii_envois") or [])
                     nouveaux = verifier_accuses_dii(envois, pr.get("mail_adresse"), deproteger(pr.get("mail_mdp", "")),
                                                     pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT),
-                                                    dossier_retours=os.path.join(dossier_donnees(), "DII", "avis reçus"))
+                                                    archiver=lambda o, e, complet: archiver_dii(
+                                                        o, e.get("jour") or dt.date.today().isoformat(),
+                                                        "avis de l'établissement" + ("" if complet else " (incomplet)")))
                     if nouveaux:
                         ecrire_pref("dii_envois", envois)
                 except OSError as ex:
@@ -5129,6 +5177,8 @@ def lancer_interface():
                             j = dt.date.fromisoformat(e["jour"])
                             if j not in self.pl.greves:
                                 self.basculer_greve(j)
+                    if any(n in ("avis", "avis_incomplet") for _, n in nouveaux) and lire_prefs().get("copie_bulletins_auto"):
+                        self.sauvegarder_bulletins()       # avis rangé avec les commandes : sauvegarde NAS / kDrive
                     if nouveaux:
                         lignes = []
                         for e, n in nouveaux:

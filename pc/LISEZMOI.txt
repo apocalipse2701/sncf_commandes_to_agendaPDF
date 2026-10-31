@@ -147,6 +147,8 @@ DOSSIER « commande »
     mail et prévient à son arrivée (Fichier › « Suivi des DII envoyées… »).
     Le filigrane GRÈVE n'est posé qu'à la réception de l'avis de
     l'établissement (partie 1 de son cadre remplie), ou par vous.
+    La DII envoyée et l'avis reçu sont rangés dans le dossier « commande »
+    (année / mois du jour déclaré), comme les bulletins.
     Le formulaire vierge est choisi une fois et reste sur ce PC.
   • Fichier › « Sauvegarder les bulletins (NAS, kDrive…)… » : copie le dossier
     « commande » vers un NAS (partage réseau \\NAS\dossier ou lecteur réseau),

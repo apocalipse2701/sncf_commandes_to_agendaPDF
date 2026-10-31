@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.13.1 — 31 octobre 2026
+
+**DII archivées avec les commandes (PC et Android)**
+- La DII remplie et envoyée, et le formulaire renvoyé par l'établissement (avis), sont rangés comme les bulletins de commande, dans le dossier du mois du jour déclaré :
+  - `2026/11 - Novembre/2026-11-03 - DII envoyée - NOM Prénom.pdf`
+  - `2026/11 - Novembre/2026-11-03 - DII avis de l'établissement.pdf` (« (incomplet) » si la partie 1 n'est pas remplie)
+- Téléphone : Documents/Planning Commandes (liste « Bulletins rangés »). PC : dossier « commande ».
+- Les DII sont comprises dans le ZIP des bulletins et dans la sauvegarde sur le NAS ou le kDrive (automatique si elle est activée).
+- Elles ne sont pas lues comme des bulletins : le planning n'est pas modifié.
+- Envoi par la messagerie du PC : le fichier à joindre est celui rangé dans le dossier « commande » (dossier ouvert).
+
 ## 2.13.0 — 31 octobre 2026
 
 **Grève posée seulement à la réception de l'avis de l'établissement (PC et Android)**
