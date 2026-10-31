@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.13.2 — 31 octobre 2026
+
+**Version lecture : bouton Actualiser (Android)**
+- Le bouton **Exporter** est remplacé par **Actualiser** : il vérifie tout de suite si le planning partagé a changé. Le planning se met à jour (« Planning mis à jour »), ou le message « Aucune modification du planning » s'affiche, avec l'heure de vérification et celle du dernier envoi.
+- Les pastilles colorées qui résument le mois (codes, heures de service, nuits, dimanches, fériés, repos) ne sont plus affichées dans la version lecture.
+- Applications manuelle et mail : inchangées.
+
 ## 2.13.1 — 31 octobre 2026
 
 **DII archivées avec les commandes (PC et Android)**
