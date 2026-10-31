@@ -561,7 +561,7 @@ button.ligne { all: unset; display: flex; align-items: center; gap: 12px; width:
 <script>window.CONF_APPLI={pdfjsLib:"./lib/pdf.min.js",pdfjsWorker:"./lib/pdf.worker.min.js",pdflib:"./lib/pdf-lib.min.js"};</script>
 <script>
 window.REGLES = {"_lisezmoi":"Règles communes au programme PC (planning_pdf.py) et à la version mobile (mobile/src). Modifier ici change les deux après « python mobile/construire.py » et une nouvelle fabrication de l'exe.","codes_repos":["RP","RU","RQ","CA","RN","RM","CET","JF","VT","RS"],"fond_bloque":{"_lisezmoi":"Codes dont la couleur de fond est imposée (non modifiable dans l'éditeur, et appliquée même s'ils sont absents de codes.txt) : la liste ci-dessous + tous les codes_repos + les codes qui correspondent au motif (F0, F1… F9).","couleur":"orange","codes":["C","AH","RP","RPP","F","FV"],"motif":"^F[0-9]$"},"couleurs":{"bleu":[214,230,250],"vert":[215,240,215],"violet":[228,215,245],"orange":[255,221,186],"jaune":[255,245,180],"rose":[252,220,235],"rouge":[250,205,205],"turquoise":[205,240,238],"gris":[225,225,225],"beige":[245,235,215],"marron":[230,210,190],"blanc":[255,255,255],"noir":[45,45,45],"gris fonce":[100,100,100],"gris foncé":[100,100,100],"bleu fonce":[40,70,130],"bleu foncé":[40,70,130],"vert fonce":[40,110,60],"vert foncé":[40,110,60],"rouge fonce":[150,40,40],"rouge foncé":[150,40,40]},"themes":{"base":{"fond":[255,255,255],"titre":[90,90,90],"annee":[60,60,60],"trait":[85,85,85],"grille":[190,190,190],"weekend":[252,226,226],"weekend_entete":[248,208,208],"entete":null,"entete_txt":[85,85,85],"entete_txt_we":[175,75,75],"hors_mois":null,"chiffre":[80,80,80],"chiffre_we":[175,75,75],"txt":[35,35,35],"txt_doux":[95,95,95],"txt_repos":[150,150,150],"gros":[140,80,25]},"liste":{"Classique":{},"Bleu moderne":{"titre":[31,78,121],"annee":[31,78,121],"trait":[31,78,121],"grille":[200,212,226],"weekend":[234,241,250],"weekend_entete":[21,58,95],"entete":[31,78,121],"entete_txt":[255,255,255],"entete_txt_we":[255,210,120],"hors_mois":[246,248,251],"chiffre":[31,78,121],"chiffre_we":[200,110,30],"gros":[31,78,121]},"Minimal":{"titre":[40,40,40],"annee":[120,120,120],"trait":[40,40,40],"grille":[225,225,225],"weekend":[245,245,245],"weekend_entete":[255,255,255],"entete_txt":[120,120,120],"entete_txt_we":[120,120,120],"chiffre":[40,40,40],"chiffre_we":[40,40,40],"gros":[70,70,70]},"Contraste (impression)":{"titre":[0,0,0],"annee":[0,0,0],"trait":[0,0,0],"grille":[60,60,60],"weekend":[255,246,190],"weekend_entete":[255,230,120],"entete_txt":[0,0,0],"entete_txt_we":[0,0,0],"chiffre":[0,0,0],"chiffre_we":[0,0,0],"txt":[0,0,0],"txt_doux":[40,40,40],"txt_repos":[90,90,90],"gros":[0,0,0]},"Vert sauge":{"titre":[62,99,72],"annee":[62,99,72],"trait":[62,99,72],"grille":[200,216,204],"weekend":[232,242,234],"weekend_entete":[62,99,72],"entete":[94,135,104],"entete_txt":[255,255,255],"entete_txt_we":[255,255,255],"chiffre":[62,99,72],"chiffre_we":[160,90,60],"gros":[62,99,72]},"Sépia":{"fond":[253,248,238],"titre":[120,84,50],"annee":[120,84,50],"trait":[120,84,50],"grille":[222,205,180],"weekend":[246,232,212],"weekend_entete":[236,214,184],"entete_txt":[120,84,50],"entete_txt_we":[160,70,40],"hors_mois":[247,240,228],"chiffre":[110,80,50],"chiffre_we":[160,70,40],"txt":[60,42,25],"txt_doux":[115,90,65],"txt_repos":[165,140,115],"gros":[140,70,30]},"Sombre":{"fond":[32,34,38],"titre":[200,205,212],"annee":[170,175,185],"trait":[150,155,165],"grille":[70,74,82],"weekend":[58,40,44],"weekend_entete":[78,48,54],"entete":[45,48,54],"entete_txt":[220,222,228],"entete_txt_we":[240,150,150],"hors_mois":[26,27,30],"chiffre":[215,218,224],"chiffre_we":[240,150,150],"txt":[235,236,240],"txt_doux":[180,184,190],"txt_repos":[130,134,140],"gros":[255,190,110]}}},"_lisezmoi_mail":"Boîtes mail proposées dans les réglages « Commandes par mail » (PC et Android) : choisir le fournisseur remplit le serveur IMAP (SSL) ; il est aussi reconnu d'après le domaine de l'adresse. Aide affichée sous la liste.","fournisseurs_mail":[{"id":"free","nom":"Free","serveur":"imap.free.fr","port":993,"smtp":"smtp.free.fr","port_smtp":465,"domaines":["free.fr","freesbee.fr","libertysurf.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Free."},{"id":"orange","nom":"Orange / Wanadoo","serveur":"imap.orange.fr","port":993,"smtp":"smtp.orange.fr","port_smtp":465,"domaines":["orange.fr","wanadoo.fr"],"aide":"Mot de passe de la boîte Orange. Si la connexion est refusée : dans l'Espace client Orange, autorisez l'accès des logiciels de messagerie (IMAP) ou créez le mot de passe dédié qu'il propose."},{"id":"sfr","nom":"SFR / Neuf","serveur":"imap.sfr.fr","port":993,"smtp":"smtp.sfr.fr","port_smtp":465,"domaines":["sfr.fr","neuf.fr","cegetel.net","club-internet.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte SFR."},{"id":"bbox","nom":"Bouygues Telecom (Bbox)","serveur":"imap.bbox.fr","port":993,"smtp":"smtp.bbox.fr","port_smtp":465,"domaines":["bbox.fr"],"aide":"Adresse complète et mot de passe habituel de la boîte Bbox."},{"id":"laposte","nom":"La Poste (laposte.net)","serveur":"imap.laposte.net","port":993,"smtp":"smtp.laposte.net","port_smtp":465,"domaines":["laposte.net"],"aide":"Adresse complète et mot de passe habituel. Si la connexion est refusée : dans les réglages de laposte.net, autorisez l'accès par un logiciel de messagerie."},{"id":"gmail","nom":"Gmail","serveur":"imap.gmail.com","port":993,"smtp":"smtp.gmail.com","port_smtp":465,"domaines":["gmail.com","googlemail.com"],"aide":"Mot de passe d'application obligatoire (le mot de passe Google habituel est refusé) : Compte Google › Sécurité › Validation en deux étapes (à activer) › Mots de passe des applications."},{"id":"yahoo","nom":"Yahoo","serveur":"imap.mail.yahoo.com","port":993,"smtp":"smtp.mail.yahoo.com","port_smtp":465,"domaines":["yahoo.fr","yahoo.com","ymail.com","rocketmail.com"],"aide":"Mot de passe d'application obligatoire : Compte Yahoo › Sécurité du compte › Générer un mot de passe d'application."},{"id":"icloud","nom":"iCloud (Apple)","serveur":"imap.mail.me.com","port":993,"smtp":"smtp.mail.me.com","port_smtp":587,"domaines":["icloud.com","me.com","mac.com"],"aide":"Mot de passe d'application obligatoire : account.apple.com › Connexion et sécurité › Mots de passe pour app."},{"id":"gmx","nom":"GMX","serveur":"imap.gmx.net","port":993,"smtp":"mail.gmx.net","port_smtp":587,"domaines":["gmx.fr","gmx.com","gmx.net","gmx.de"],"aide":"Mot de passe habituel. Activez d'abord l'accès POP3/IMAP dans les paramètres de la boîte GMX."},{"id":"infomaniak","nom":"Infomaniak (ik.me)","serveur":"mail.infomaniak.com","port":993,"smtp":"mail.infomaniak.com","port_smtp":465,"domaines":["ik.me","etik.com","ikmail.com"],"aide":"Créez un mot de passe d'appareil dans les réglages de l'adresse (Infomaniak Mail) et utilisez-le ici."},{"id":"autre","nom":"Autre fournisseur","serveur":"","port":993,"smtp":"","port_smtp":465,"domaines":[],"aide":"Indiquez le serveur IMAP de votre fournisseur (connexion sécurisée SSL, port 993 en général) et, pour envoyer les confirmations, son serveur SMTP (port 465 en SSL, ou 587 avec STARTTLS) : ils figurent dans son aide « configurer un logiciel de messagerie »."}],"mail_non_pris_en_charge":{"domaines":["outlook.fr","outlook.com","hotmail.fr","hotmail.com","live.fr","live.com","msn.com","proton.me","protonmail.com","pm.me"],"message":"Cette boîte ne peut pas être relevée : Microsoft (Outlook, Hotmail, Live) exige une connexion « Se connecter avec Microsoft » et Proton Mail n'a pas d'accès IMAP direct. Faites suivre automatiquement les commandes vers une autre boîte (Free, Orange, Gmail…) et indiquez celle-ci."},"_lisezmoi_contrairement":"Bulletin « Contrairement » (reconnu à son nom de fichier) : ses jours modifiés ont le numéro en violet (couleur_modifie : clair = sur une case claire, sombre = sur une case foncée), et un avis jaune écrit en rouge reste affiché jusqu'à « Valider ».","contrairement":{"mot":"contrairement","couleur_modifie":{"clair":[123,31,162],"sombre":[225,180,255]},"avis_fond":[255,245,157],"avis_texte":[198,40,40]},"_lisezmoi_confirmation":"Message de confirmation de réception envoyé à l'expéditeur d'une commande (bouton « Confirmer la réception »). Valeurs par défaut, modifiables dans les réglages. Champs remplacés : {type} (commande / contrairement), {debut}, {fin}, {edition}, {agent}, {fichier}.","confirmation":{"sujet":"Bien reçu : {type} du {debut} au {fin}","corps":"Bonjour,\n\nJe vous confirme la bonne réception de la {type} du {debut} au {fin} (édition du {edition}).\n\nCordialement,\n{agent}"}};
-window.VERSION_APPLI = "2.11.0";
+window.VERSION_APPLI = "2.11.1";
 // Lecture d'un bulletin de commande SNCF (port JavaScript de lire_bulletin, planning_pdf.py)
 // Utilisable dans le navigateur et dans node (tests).
 (function (racine) {
@@ -3184,16 +3184,47 @@ PGVRVSD    ; [date]
     if (ANDROID && typeof window.Android.formulaireEnregistrer === "function") err = window.Android.formulaireEnregistrer(b64);
     else { try { localStorage.setItem("pc:formulaire-dii", b64); } catch (e) { /* gardé pour cette session seulement */ } }
     if (err) throw new Error(err);
-    modeleDII = octets;
+    modeleDII = octets; adresseDII = null;
   }
   const dateCourte = d => d ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(2, 4)}` : "";
   const dateLongueFr = d => d ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}` : "";
-  function priseDeService(d) {                    // heure de prise de service de ce jour (PS…), ou ""
+  // horaires du service de ce jour pris sur la commande : prise (PS) et fin (FS) de service, avec la date de fin
+  // (lendemain pour un service de nuit). Sans PS/FS : première et dernière heure des plages. Rien : chaînes vides.
+  function horairesService(d) {
+    const hh = m => m ? m[1].padStart(2, "0") + ":" + m[2] : "";
     for (const sv of E.pl.jours[d] || []) {
-      const m = /\bPS\s+(\d{1,2}):(\d{2})/.exec(sv.horaires || "") || /(\d{1,2}):(\d{2})/.exec(sv.horaires || "");
-      if (m) return m[1].padStart(2, "0") + ":" + m[2];
+      const h = sv.horaires || "";
+      let ps = hh(/\bPS\s+(\d{1,2}):(\d{2})/.exec(h)), fs = hh([...h.matchAll(/\bFS\s+(\d{1,2}):(\d{2})/g)].pop());
+      if (!ps) {
+        const t = [...h.matchAll(/(\d{1,2}):(\d{2})/g)];
+        if (!t.length) continue;
+        ps = hh(t[0]); fs = t.length > 1 ? hh(t[t.length - 1]) : "";
+      }
+      const finJour = fs && fs <= ps ? M.decaler(d, 1) : d;
+      return { ps, fs, finJour };
     }
-    return "";
+    return { ps: "", fs: "", finJour: d };
+  }
+  const priseDeService = d => horairesService(d).ps;
+  // adresse mail écrite dans l'en-tête du formulaire vierge (en haut à gauche) : destinataire proposé par défaut
+  let adresseDII = null;
+  async function adresseModeleDII() {
+    if (adresseDII !== null) return adresseDII;
+    const octets = lireModeleDII();
+    if (!octets) return "";
+    try {
+      const pdfjs = await chargerPdfjs();
+      const doc = await pdfjs.getDocument({ data: octets.slice(0), isEvalSupported: false }).promise;
+      const tc = await (await doc.getPage(1)).getTextContent();
+      // les morceaux en haut à gauche d'abord (y grand, x petit), recollés pour une adresse coupée en plusieurs morceaux
+      const items = tc.items.filter(i => i.str).sort((a, b) => (b.transform[5] - a.transform[5]) || (a.transform[4] - b.transform[4]));
+      const R = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[a-z]{2,}/;
+      let m = null;
+      for (const i of items) if ((m = R.exec(i.str))) break;                       // adresse dans un seul morceau
+      if (!m) m = R.exec(items.map(i => i.str + (i.hasEOL ? "\n" : "")).join(""));  // sinon morceaux recollés ligne par ligne
+      adresseDII = m ? m[0].replace(/\.+$/, "") : "";
+    } catch (e) { adresseDII = ""; }
+    return adresseDII;
   }
   function nomPrenomAgent() {                     // « NOM PRÉNOM » du bulletin → nom, prénom
     const m = (E.pl.agent || "").trim().split(/\s+/);
@@ -3224,7 +3255,8 @@ PGVRVSD    ; [date]
         if (!oui) continue;
         let r;
         try { r = form.getTextField(DII_CHAMPS[cle]).acroField.getWidgets()[0].getRectangle(); } catch (e) { continue; }
-        const k = Math.min(r.width / img.width, r.height / img.height);
+        const H = r.height + 12;                  // un peu plus haut que le cadre (6 pt dessus, 6 pt dessous) pour une signature lisible
+        const k = Math.min((r.width - 4) / img.width, H / img.height);
         page.drawImage(img, { x: r.x + 2, y: r.y + (r.height - img.height * k) / 2, width: img.width * k, height: img.height * k });
       }
     }
@@ -3233,8 +3265,8 @@ PGVRVSD    ; [date]
 
   // signature au doigt : trait noir sur fond transparent, rognée avant d'être posée
   function zoneSignature(depart) {
-    const c = el("canvas", { width: 600, height: 200, class: "signature", "aria-label": "Signature" });
-    c.style.cssText = "width:100%;height:120px;border:1px dashed var(--line);border-radius:8px;background:#fff;touch-action:none;display:block";
+    const c = el("canvas", { width: 750, height: 300, class: "signature", "aria-label": "Signature" });
+    c.style.cssText = "width:100%;height:190px;border:1px dashed var(--line);border-radius:8px;background:#fff;touch-action:none;display:block";
     const ctx = c.getContext("2d");
     ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#0b1f4a";
     let trace = false, vide = true, dernier = null;
@@ -3246,12 +3278,25 @@ PGVRVSD    ; [date]
     });
     const fin = () => { trace = false; };
     c.addEventListener("pointerup", fin); c.addEventListener("pointercancel", fin);
-    if (depart) { const i = new Image(); i.onload = () => { ctx.drawImage(i, 0, 0, c.width, c.height); vide = false; }; i.src = depart; }
+    if (depart) { const i = new Image(); i.onload = () => { const k = Math.min(c.width / i.width, c.height / i.height); ctx.drawImage(i, (c.width - i.width * k) / 2, (c.height - i.height * k) / 2, i.width * k, i.height * k); vide = false; }; i.src = depart; }
     return {
       el: c,
       effacer() { ctx.clearRect(0, 0, c.width, c.height); vide = true; },
       vide: () => vide,
-      dataUrl: () => vide ? "" : c.toDataURL("image/png"),
+      dataUrl() {                                 // rognée au trait (+ petite marge) : la signature remplit mieux le cadre du PDF
+        if (vide) return "";
+        const px = ctx.getImageData(0, 0, c.width, c.height).data;
+        let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+        for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+          if (px[(y * c.width + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+        if (x1 < 0) return "";
+        const m = 6; x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(c.width - 1, x1 + m); y1 = Math.min(c.height - 1, y1 + m);
+        const r = document.createElement("canvas"); r.width = x1 - x0 + 1; r.height = y1 - y0 + 1;
+        r.getContext("2d").drawImage(c, x0, y0, r.width, r.height, 0, 0, r.width, r.height);
+        return r.toDataURL("image/png");
+      },
+      complete: () => vide ? "" : c.toDataURL("image/png"),   // dessin entier, gardé pour la prochaine fois
     };
   }
 
@@ -3297,16 +3342,27 @@ PGVRVSD    ; [date]
     const [lNum, iNum] = champ("dii-num", "Suite à la DII n°", { value: S.num || "", inputmode: "numeric" });
     const ren = el("input", { type: "radio", name: "dii-choix", id: "dii-ren", value: "renoncer" }); ren.checked = true;
     const rep = el("input", { type: "radio", name: "dii-choix", id: "dii-rep", value: "reprendre" });
-    const [lRDu, iRDu] = champ("dii-rdu", "Reprise à compter du", { type: "date", value: jour });
-    const [lRH, iRH] = champ("dii-rh", "à", { type: "time", value: priseDeService(jour) });
+    const hs = horairesService(jour);
+    const [lRDu, iRDu] = champ("dii-rdu", "Reprise à compter du", { type: "date", value: hs.fs ? hs.finJour : jour });
+    const [lRH, iRH] = champ("dii-rh", "à", { type: "time", value: hs.fs || hs.ps });
     const [lLieu, iLieu] = champ("dii-lieu", "Fait à", { value: S.lieu || "" });
     const [lDate, iDate] = champ("dii-date", "le", { type: "date", value: auj });
-    const p1 = el("div", {}, grille(lGDu, lGH));
+    // raccourci : grève sur tout le service prévu (PS → partie 1, FS → partie 2 « reprendre le travail ») ; heures modifiables ensuite
+    const btnService = hs.ps && hs.fs ? el("button", { type: "button", class: "btn plein", id: "dii-service", style: "margin:4px 0 8px" },
+      `Grève sur le service prévu : de ${hs.ps.replace(":", "h")} à ${hs.fs.replace(":", "h")}`) : null;
+    const p1 = el("div", {}, btnService || "", grille(lGDu, lGH),
+      el("p", { class: "discret", style: "margin:4px 0 0", text: hs.ps ? `Service prévu ce jour : ${hs.ps.replace(":", "h")}${hs.fs ? " – " + hs.fs.replace(":", "h") : ""}. Heures modifiables à la main.` : "Pas d'horaire sur la commande de ce jour : indiquez l'heure à la main." }));
     const p2 = el("div", { hidden: true }, grille(lNum, el("span")),
       el("label", { class: "case-a-cocher", for: "dii-ren" }, ren, "Renoncer à participer à la grève"),
       el("label", { class: "case-a-cocher", for: "dii-rep" }, rep, "Reprendre le travail"), grille(lRDu, lRH));
     const majParties = () => { p1.hidden = !c1.checked; p2.hidden = !c2.checked; lRDu.hidden = lRH.hidden = !rep.checked; };
     [c1, c2, ren, rep].forEach(x => x.addEventListener("change", majParties));
+    if (btnService) btnService.addEventListener("click", () => {
+      c1.checked = true; iGDu.value = jour; iGH.value = hs.ps;
+      c2.checked = true; rep.checked = true; iRDu.value = hs.finJour; iRH.value = hs.fs;
+      majParties(); if (!objetTouche) iObj.value = objetAuto();
+      etat.className = "discret"; etat.textContent = `Grève du ${dateFr(jour)} à ${hs.ps.replace(":", "h")}, reprise le ${dateFr(hs.finJour)} à ${hs.fs.replace(":", "h")} (parties 1 et 2 cochées).`;
+    });
     const sig = zoneSignature(S.signature || "");
     const garderSig = el("input", { type: "checkbox", id: "dii-garder" }); garderSig.checked = true;
     const greve = el("input", { type: "checkbox", id: "dii-greve" }); greve.checked = !E.pl.greves.includes(jour);
@@ -3334,6 +3390,7 @@ PGVRVSD    ; [date]
     majParties();
     const objetAuto = () => `Déclaration individuelle d'intention – ${iNom.value.trim()} ${iPre.value.trim()}`.trim() + (c1.checked && iGDu.value ? ` – grève du ${dateLongueFr(iGDu.value)}` : "");
     iObj.value = objetAuto();
+    if (!iA.value) adresseModeleDII().then(a => { if (a && !iA.value) { iA.value = a; lA.title = "adresse lue dans l'en-tête du formulaire"; } });
     corps.value = S.corps || "Bonjour,\n\nVeuillez trouver ci-joint ma déclaration individuelle d'intention.\n\nCordialement,\n" + `${iPre.value} ${iNom.value}`.trim();
     let objetTouche = false;
     iObj.addEventListener("input", () => { objetTouche = true; });
@@ -3347,7 +3404,7 @@ PGVRVSD    ; [date]
     function memoriser(v) {
       E.dii = { ...(E.dii || {}), nom: v.nom, prenom: v.prenom, cp: v.cp, entite: v.entite, etab: v.etab, pDu: v.pDu, pDuH: v.pDuH,
         pAu: v.pAu, pAuH: v.pAuH, lieu: v.lieu, num: v.num, a: iA.value.trim(), corps: corps.value,
-        signature: garderSig.checked ? (sig.dataUrl() || "") : "" };
+        signature: garderSig.checked ? (sig.complete() || "") : "" };
       if (greve.checked && v.p1 && v.gDu && !E.pl.greves.includes(v.gDu)) { E.pl.greves = [...E.pl.greves, v.gDu].sort(); Stock.marquer([v.gDu.slice(0, 7)], true); rendrePlanning(); }
       Stock.marquer([], true);
     }

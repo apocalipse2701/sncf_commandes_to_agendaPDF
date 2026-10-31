@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.11.1 — 31 octobre 2026
+
+**Déclaration de grève (DII) : destinataire, horaires du service, signature (PC et Android)**
+- **Destinataire** proposé : l'adresse mail écrite en haut à gauche du formulaire vierge, lue dans le PDF choisi (rien n'est inscrit dans l'application). Modifiable ; PC : bouton « Adresse du formulaire ».
+- **Horaires du service prévu** : bouton « Grève sur le service prévu : de PS à FS » (heures de la commande du jour). Partie 1 à la prise de service, partie 2 « reprendre le travail » à la fin de service, le lendemain pour un service de nuit. Heures toujours modifiables à la main ; la reprise propose la fin de service par défaut.
+- **Signature** : cadre de dessin plus grand sur le téléphone ; sur le PC, **Dessiner…** à la souris ou au stylet (en plus d'une image). Signature rognée au trait et posée un peu plus grande dans le formulaire.
+
 ## 2.11.0 — 30 octobre 2026
 
 **Déclaration de grève (formulaire DII) : remplir et envoyer (PC et Android)**

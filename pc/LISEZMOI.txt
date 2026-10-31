@@ -139,8 +139,11 @@ DOSSIER « commande »
     le sauvegarder ou l'envoyer. Le téléphone fait le même ZIP.
   • Fichier › « Déclaration de grève (DII)… » (ou clic droit sur un jour) :
     remplit le cadre agent du formulaire DII (parties 1 et 2), ajoute
-    votre signature (image) et l'envoie au destinataire choisi. Le
-    formulaire vierge est choisi une fois et reste sur ce PC.
+    votre signature (dessinée ou image) et l'envoie au destinataire
+    (proposé : l'adresse en haut à gauche du formulaire). Bouton « Grève
+    sur le service prévu » : heures de prise et de fin de service de la
+    commande du jour, modifiables. Le formulaire vierge est choisi une
+    fois et reste sur ce PC.
   • Fichier › « Sauvegarder les bulletins (NAS, kDrive…)… » : copie le dossier
     « commande » vers un NAS (partage réseau \\NAS\dossier ou lecteur réseau),
     un dossier kDrive synchronisé ou une clé USB ; seuls les nouveaux bulletins

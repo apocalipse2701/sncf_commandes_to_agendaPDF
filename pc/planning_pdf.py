@@ -1505,6 +1505,35 @@ def garder_modele_dii(chemin):
     shutil.copyfile(chemin, chemin_modele_dii())
 
 
+def adresse_modele_dii(modele=None):
+    """Adresse mail écrite dans l'en-tête du formulaire vierge (en haut à gauche) : destinataire proposé. "" si aucune."""
+    try:
+        from pypdf import PdfReader
+        texte = PdfReader(modele or chemin_modele_dii()).pages[0].extract_text() or ""
+    except Exception:
+        return ""
+    m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[a-z]{2,}", texte)
+    return m.group(0).rstrip(".") if m else ""
+
+
+def horaires_service(services, jour):
+    """(PS, FS, date de fin) du service prévu ce jour d'après la commande (« HH:MM ») ; fin le lendemain pour une nuit.
+    Sans PS/FS : première et dernière heure des plages. Rien : ("", "", jour)."""
+    hh = lambda m: f"{int(m.group(1)):02d}:{m.group(2)}" if m else ""
+    for sv in services or []:
+        h = sv.get("horaires", "") or ""
+        ps = hh(re.search(r"\bPS\s+(\d{1,2}):(\d{2})", h))
+        fins = list(re.finditer(r"\bFS\s+(\d{1,2}):(\d{2})", h))
+        fs = hh(fins[-1]) if fins else ""
+        if not ps:
+            t = list(re.finditer(r"(\d{1,2}):(\d{2})", h))
+            if not t:
+                continue
+            ps, fs = hh(t[0]), (hh(t[-1]) if len(t) > 1 else "")
+        return ps, fs, (jour + dt.timedelta(days=1) if fs and fs <= ps else jour)
+    return "", "", jour
+
+
 def remplir_dii(v, signature=None, modele=None):
     """Remplit le « Cadre réservé à l'agent » (parties 1 et/ou 2) ; v : dict (dates dt.date, heures « HH:MM »).
     signature : image (PNG/JPEG) posée dans le cadre « Signature » de chaque partie remplie. Renvoie les octets du PDF."""
@@ -1544,6 +1573,11 @@ def remplir_dii(v, signature=None, modele=None):
     if signature:
         from PIL import Image
         img = Image.open(signature).convert("RGBA")
+        from PIL import ImageChops
+        boite = ImageChops.invert(Image.alpha_composite(Image.new("RGBA", img.size, "white"), img).convert("L")).getbbox()
+        if boite:                              # rognée au trait (+ marge) : la signature remplit mieux le cadre
+            m = 6
+            img = img.crop((max(0, boite[0] - m), max(0, boite[1] - m), min(img.width, boite[2] + m), min(img.height, boite[3] + m)))
         fond = Image.new("RGB", img.size, (255, 255, 255))
         fond.paste(img, mask=img.split()[3])
         tampon = io.BytesIO()
@@ -1561,7 +1595,7 @@ def remplir_dii(v, signature=None, modele=None):
             if not rect:
                 continue
             x0, y0, x1, y1 = rect
-            k = min((x1 - x0 - 4) / lw, (y1 - y0 - 2) / lh)
+            k = min((x1 - x0 - 4) / lw, (y1 - y0 + 12) / lh)     # un peu plus haut que le cadre : signature lisible
             page.merge_transformed_page(calque, Transformation().scale(k, k).translate(x0 + 2, y0 + (y1 - y0 - lh * k) / 2))
     out = io.BytesIO()
     w.write(out)
@@ -2254,7 +2288,7 @@ _VTIMEZONE_PARIS = [
 
 
 def _ics_texte(t):
-    return t.replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,").replace("\n", "\\n")
+    return t.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
 
 def _ics_plier(ligne):
@@ -3516,12 +3550,7 @@ def lancer_interface():
             jour = jour or dt.date.today()
             S = dict(lire_prefs().get("dii") or {})
             agent = (self.pl.agent or "").split()
-            ps = ""
-            for sv in self.pl.jours.get(jour, []):
-                m = re.search(r"\bPS\s+(\d{1,2}):(\d{2})", sv.get("horaires", "")) or re.search(r"(\d{1,2}):(\d{2})", sv.get("horaires", ""))
-                if m:
-                    ps = f"{int(m.group(1)):02d}:{m.group(2)}"
-                    break
+            ps, fs_, fin = horaires_service(self.pl.jours.get(jour, []), jour)
             fen = tk.Toplevel(self)
             fen.title("Déclaration de grève (DII)")
             fen.transient(self)
@@ -3547,7 +3576,24 @@ def lancer_interface():
             ligne(6, "Au (jj/mm/aaaa) :", "pAu", sd(S.get("pAu")), 12)
             ligne(6, "à (hh:mm) :", "pAuH", S.get("pAuH", ""), 8, col=2)
             v_p1, v_p2 = tk.BooleanVar(value=True), tk.BooleanVar(value=False)
-            ttk.Checkbutton(c, text="Partie 1 : intention de participer à la grève", variable=v_p1).grid(row=7, column=0, columnspan=4, sticky="w", pady=(8, 0))
+            ttk.Checkbutton(c, text="Partie 1 : intention de participer à la grève", variable=v_p1).grid(row=7, column=0, columnspan=2, sticky="w", pady=(8, 0))
+
+            def sur_service():          # grève sur tout le service prévu : PS en partie 1, FS en partie 2 « reprendre le travail »
+                v_p1.set(True)
+                v_p2.set(True)
+                v_choix.set("reprendre")
+                vs["gDu"].set(fd(jour))
+                vs["gH"].set(ps)
+                vs["rDu"].set(fd(fin))
+                vs["rH"].set(fs_)
+                etat.config(foreground="#555", text=f"Grève du {fd(jour)} à {ps.replace(':', 'h')}, reprise le {fd(fin)} à "
+                                                    f"{fs_.replace(':', 'h')} (parties 1 et 2 cochées, heures modifiables).")
+            if ps and fs_:
+                ttk.Button(c, text=f"Grève sur le service prévu : de {ps.replace(':', 'h')} à {fs_.replace(':', 'h')}",
+                           command=sur_service).grid(row=7, column=2, columnspan=2, sticky="w", pady=(8, 0))
+            else:
+                ttk.Label(c, text="Pas d'horaire sur la commande de ce jour : heures à la main.", foreground="#555").grid(
+                    row=7, column=2, columnspan=2, sticky="w", pady=(8, 0))
             ligne(8, "Grève à compter du :", "gDu", fd(jour), 12)
             ligne(8, "à (hh:mm) :", "gH", ps, 8, col=2)
             ttk.Checkbutton(c, text="Partie 2 : renoncer ou reprendre le travail", variable=v_p2).grid(row=9, column=0, columnspan=4, sticky="w", pady=(8, 0))
@@ -3557,8 +3603,8 @@ def lancer_interface():
             fr.grid(row=11, column=0, columnspan=4, sticky="w")
             ttk.Radiobutton(fr, text="Renoncer à participer à la grève", value="renoncer", variable=v_choix).pack(side="left")
             ttk.Radiobutton(fr, text="Reprendre le travail", value="reprendre", variable=v_choix).pack(side="left", padx=12)
-            ligne(12, "Reprise à compter du :", "rDu", fd(jour), 12)
-            ligne(12, "à (hh:mm) :", "rH", ps, 8, col=2)
+            ligne(12, "Reprise à compter du :", "rDu", fd(fin if fs_ else jour), 12)
+            ligne(12, "à (hh:mm) :", "rH", fs_ or ps, 8, col=2)
             ligne(13, "Fait à :", "lieu", S.get("lieu", ""))
             ligne(13, "le :", "date", fd(dt.date.today()), 12, col=2)
             ttk.Label(c, text="Signature (image) :").grid(row=14, column=0, sticky="w", pady=(8, 2))
@@ -3577,10 +3623,57 @@ def lancer_interface():
             def sans_sig():
                 v_sig.set("")
                 l_sig.config(text="aucune (signer à la main)")
-            ttk.Button(fs, text="Choisir…", command=choisir_sig).pack(side="left", padx=6)
+            def dessiner_sig():         # signature à la souris (ou au stylet) dans un grand cadre, gardée en PNG
+                from PIL import Image, ImageDraw
+                d = tk.Toplevel(fen)
+                d.title("Signature")
+                d.transient(fen)
+                L, H = 720, 280
+                cv = tk.Canvas(d, width=L, height=H, bg="white", highlightthickness=1, highlightbackground="#999", cursor="pencil")
+                cv.pack(padx=10, pady=10)
+                im = Image.new("RGBA", (L, H), (255, 255, 255, 0))
+                dr = ImageDraw.Draw(im)
+                der = [None]
+
+                def bas(e):
+                    der[0] = (e.x, e.y)
+
+                def bouge(e):
+                    if der[0]:
+                        cv.create_line(*der[0], e.x, e.y, width=3, fill="#0b1f4a", capstyle="round", smooth=True)
+                        dr.line([der[0], (e.x, e.y)], fill=(11, 31, 74, 255), width=4)
+                        dr.ellipse([e.x - 2, e.y - 2, e.x + 2, e.y + 2], fill=(11, 31, 74, 255))
+                        der[0] = (e.x, e.y)
+
+                def effacer():
+                    cv.delete("all")
+                    dr.rectangle([0, 0, L, H], fill=(255, 255, 255, 0))
+
+                def valider():
+                    if not im.getbbox():
+                        d.destroy()
+                        return
+                    ch = os.path.join(dossier_donnees(), "signature-dii.png")
+                    im.save(ch)
+                    v_sig.set(ch)
+                    l_sig.config(text="signature dessinée")
+                    d.destroy()
+                cv.bind("<ButtonPress-1>", bas)
+                cv.bind("<B1-Motion>", bouge)
+                cv.bind("<ButtonRelease-1>", lambda e: der.__setitem__(0, None))
+                b = ttk.Frame(d, padding=(10, 0, 10, 10))
+                b.pack(fill="x")
+                ttk.Button(b, text="Effacer", command=effacer).pack(side="left")
+                ttk.Button(b, text="Valider", command=valider).pack(side="right")
+                d.grab_set()
+            ttk.Button(fs, text="Dessiner…", command=dessiner_sig).pack(side="left", padx=6)
+            ttk.Button(fs, text="Choisir…", command=choisir_sig).pack(side="left", padx=(0, 6))
             ttk.Button(fs, text="Aucune", command=sans_sig).pack(side="left")
             ttk.Label(c, text="Envoi", font=("", 10, "bold")).grid(row=15, column=0, sticky="w", pady=(8, 0))
-            ligne(16, "À :", "a", S.get("a", ""), 34)
+            a_modele = adresse_modele_dii()
+            ligne(16, "À :", "a", S.get("a", "") or a_modele, 44)
+            if a_modele:
+                ttk.Button(c, text="Adresse du formulaire", command=lambda: vs["a"].set(a_modele)).grid(row=16, column=2, sticky="w", padx=(12, 0))
             vs["objet"] = tk.StringVar()
             ttk.Label(c, text="Objet :").grid(row=17, column=0, sticky="w")
             ttk.Entry(c, textvariable=vs["objet"], width=70).grid(row=17, column=1, columnspan=3, sticky="we", pady=2)
