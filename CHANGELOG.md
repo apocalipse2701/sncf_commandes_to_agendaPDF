@@ -7,6 +7,11 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.13.3 — 31 octobre 2026
+
+**Version lecture : une seule ligne de boutons (Android)**
+- Compact, Page A4, Aujourd'hui et Actualiser sont sur la même ligne, ce qui laisse plus de place au planning. Les boutons sont un peu plus petits ; sur les écrans étroits, l'icône d'Actualiser est masquée.
+
 ## 2.13.2 — 31 octobre 2026
 
 **Version lecture : bouton Actualiser (Android)**
