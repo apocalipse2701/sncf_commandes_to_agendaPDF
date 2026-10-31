@@ -56,7 +56,10 @@ public class ReleveMail extends JobService {
             return false;
         }
         new Thread(() -> {
-            relever(getApplicationContext());
+            Context c = getApplicationContext();
+            if (prefs(c).getBoolean("actif", false)) relever(c);
+            if (AccusesDII.aSuivre(c)) AccusesDII.verifier(c, true);      // accusés des DII envoyées
+            else programmer(c);                                             // plus rien à suivre : la tâche s'arrête si besoin
             jobFinished(params, false);
         }).start();
         return true;
@@ -138,7 +141,7 @@ public class ReleveMail extends JobService {
         JobScheduler js = (JobScheduler) c.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (js == null) return;
         SharedPreferences p = prefs(c);
-        if (!ACTIF || !p.getBoolean("actif", false)) {
+        if (!ACTIF || (!p.getBoolean("actif", false) && !AccusesDII.aSuivre(c))) {
             js.cancel(ID_TACHE);
             return;
         }
@@ -320,11 +323,22 @@ public class ReleveMail extends JobService {
                     o.optString("sujet", ""), o.optString("corps", ""), o.optString("enReponseA", ""),
                     piece == null ? null : o.optString("pieceNom", "document.pdf"), piece);
             ok = true;
+            if (piece != null) {                       // DII (ou autre formulaire) : gardé pour le suivi des accusés
+                try {
+                    AccusesDII.ajouter(c, new JSONObject().put("id", envoi.messageId).put("a", a).put("sujet", o.optString("sujet", ""))
+                            .put("nom", o.optString("pieceNom", "")).put("jour", o.optString("jour", "")).put("le", System.currentTimeMillis())
+                            .put("accuse", envoi.accuse).put("remiseDemandee", envoi.remiseDemandee));
+                    programmer(c);
+                } catch (org.json.JSONException e) {
+                    // impossible
+                }
+            }
             texte = (piece == null ? "Confirmation envoyée à " : "Envoyé à ") + a + " le "
                     + new java.text.SimpleDateFormat("dd/MM/yyyy 'à' HH:mm", java.util.Locale.FRANCE).format(new java.util.Date()) + ".";
             if (envoi.accuse) texte += envoi.remiseDemandee
-                    ? " Accusé de réception demandé : avis de remise du serveur et accusé de lecture si le destinataire l'accepte, dans votre boîte mail."
-                    : " Accusé de lecture demandé (renvoyé dans votre boîte si le destinataire l'accepte) ; votre serveur d'envoi ne propose pas l'avis de remise.";
+                    ? " Accusé de réception demandé : avis de remise du serveur et accusé de lecture si le destinataire l'accepte."
+                    : " Accusé de lecture demandé (si le destinataire l'accepte) ; votre serveur d'envoi ne propose pas l'avis de remise.";
+            if (piece != null && envoi.accuse) texte += " L'application vous préviendra à leur arrivée.";
         } catch (Exception e) {
             String m = e.getMessage();
             if (e instanceof java.net.UnknownHostException) m = "pas d'Internet ou serveur introuvable";

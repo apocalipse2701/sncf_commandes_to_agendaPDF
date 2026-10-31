@@ -1423,7 +1423,7 @@ def remplir_modele(modele, c):
 
 
 def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, en_reponse_a="", contexte=None, piece=None,
-                         accuse=False):
+                         accuse=False, message_id=None):
     """Envoie la confirmation (SMTP authentifié, toujours chiffré : port 465 = SSL, sinon STARTTLS obligatoire).
     accuse : demande un accusé de réception — de lecture (Disposition-Notification-To, la messagerie du destinataire
     propose de le renvoyer) et de remise (DSN, si le serveur d'envoi le permet). Renvoie True si la remise a pu être
@@ -1439,7 +1439,7 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
     m = EmailMessage()
     m["From"], m["To"], m["Subject"] = adresse, a.strip(), sujet or ""
     m["Date"] = formatdate(localtime=True)
-    m["Message-ID"] = make_msgid(domain=adresse.rsplit("@", 1)[-1] if "@" in adresse else None)
+    m["Message-ID"] = message_id or make_msgid(domain=adresse.rsplit("@", 1)[-1] if "@" in adresse else None)
     if re.match(r"^<[^<>\s]+>$", (en_reponse_a or "").strip()):
         m["In-Reply-To"] = m["References"] = en_reponse_a.strip()
     if accuse:                                  # accusé de lecture : réponse attendue à l'adresse d'envoi
@@ -1474,7 +1474,8 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
         dsn = bool(accuse and smtp.has_extn("dsn"))   # accusé de remise : avis du serveur quand le mail est livré
         try:
             if dsn:
-                smtp.send_message(m, mail_options=["RET=HDRS"], rcpt_options=["NOTIFY=SUCCESS,FAILURE"])
+                envid = "".join(ch if 33 <= ord(ch) <= 126 and ch not in "+=" else f"+{ord(ch):02X}" for ch in m["Message-ID"])
+                smtp.send_message(m, mail_options=["RET=HDRS", f"ENVID={envid}"], rcpt_options=["NOTIFY=SUCCESS,FAILURE"])
             else:
                 smtp.send_message(m)
         except smtplib.SMTPRecipientsRefused:
@@ -1487,6 +1488,114 @@ def envoyer_confirmation(serveur, port, adresse, mot_de_passe, a, sujet, corps, 
         except Exception:
             pass
     return dsn
+
+
+# ---- suivi des DII envoyées : accusés de remise / de lecture et réponses retrouvés dans la boîte de réception.
+# Chaque envoi direct est gardé (préférence « dii_envois ») avec son Message-ID ; la boîte est fouillée (lecture
+# seule) pendant 30 jours pour les messages qui citent ce Message-ID. Même logique que AccusesDII.java (Android).
+DII_SUIVI_JOURS = 30
+_MOIS_IMAP = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def classer_retour(brut, message_id):
+    """Nature d'un message reçu qui cite message_id : "remise", "echec", "retard", "lecture", "reponse" ou ""."""
+    if isinstance(brut, bytes):
+        brut = brut.decode("utf-8", "replace")
+    coupe = re.split(r"\r?\n\r?\n", brut, maxsplit=1)
+    entete = re.sub(r"\r?\n[ \t]+", " ", coupe[0])
+    mid = (message_id or "").strip().lower()
+    propre = re.search(r"(?im)^message-id:\s*(\S+)", entete)
+    if propre and propre.group(1).strip().lower() == mid:
+        return ""                              # le message envoyé lui-même (copie reçue)
+    bas = brut.lower()
+    sujet = (re.search(r"(?im)^subject:\s*(.*)$", entete) or [None, ""])[1].strip().lower()
+    if "disposition-notification" in bas:
+        d = re.search(r"(?im)^disposition:\s*[^;\r\n]*;\s*([a-z-]+)", brut)
+        return "lecture" if not d or d.group(1).lower() == "displayed" else ""
+    if "delivery-status" in bas:
+        actions = [a.lower() for a in re.findall(r"(?im)^action:\s*([a-z]+)", brut)]
+        if "failed" in actions:
+            return "echec"
+        if any(a in ("delivered", "relayed", "expanded") for a in actions):
+            return "remise"
+        if "delayed" in actions:
+            return "retard"
+        return ""
+    if re.match(r"^(lu|read|lecture)\s*:", sujet):              # accusés « maison » (Exchange, Outlook…)
+        return "lecture"
+    if re.match(r"^(remis|delivered|distribu[ée])\s*:", sujet):
+        return "remise"
+    refs = " ".join(m.group(1) for m in re.finditer(r"(?im)^(?:in-reply-to|references):\s*(.*)$", entete)).lower()
+    if mid and mid in refs:
+        return "reponse"
+    return ""
+
+
+def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None, ssl=True):
+    """Fouille la boîte pour chaque envoi récent ; complète les envois (dates « jj/mm/aaaa hh:mm » de remise, lecture,
+    réponse, échec, retard) et renvoie la liste des nouveautés [(envoi, nature)]. Lève OSError avec un message clair."""
+    import imaplib
+    from email.utils import parsedate_to_datetime
+    serveur, port = serveur or MAIL_SERVEUR, int(port or MAIL_PORT)
+    maintenant = dt.datetime.now()
+    a_voir = [e for e in envois if e.get("id") and
+              (maintenant - dt.datetime.fromisoformat(e.get("le", maintenant.isoformat()))).days <= DII_SUIVI_JOURS]
+    if not a_voir:
+        return []
+    try:
+        imap = imaplib.IMAP4_SSL(serveur, port, timeout=30) if ssl else imaplib.IMAP4(serveur, port, timeout=30)
+    except (OSError, imaplib.IMAP4.error) as ex:
+        raise OSError(f"serveur {serveur} injoignable ({ex})")
+    nouveaux = []
+    try:
+        try:
+            imap.login(adresse, mot_de_passe)
+        except imaplib.IMAP4.error:
+            raise OSError("connexion refusée : adresse ou mot de passe incorrect")
+        if imap.select("INBOX", readonly=True)[0] != "OK":
+            raise OSError("boîte de réception introuvable")
+        for e in a_voir:
+            d = dt.datetime.fromisoformat(e["le"]).date() - dt.timedelta(days=1)
+            depuis = f"{d.day}-{_MOIS_IMAP[d.month - 1]}-{d.year}"
+            cle = e["id"].strip("<>").replace('"', "")
+            typ, data = imap.uid("SEARCH", None, f'SINCE {depuis} TEXT "{cle}"')
+            if typ != "OK":
+                continue
+            for uid in [x for x in (data[0] or b"").split()][-15:]:
+                typ, msg = imap.uid("FETCH", uid, "(BODY.PEEK[])")
+                brut = next((x[1] for x in msg or [] if isinstance(x, tuple)), b"")
+                nature = classer_retour(brut, e["id"])
+                if not nature or e.get(nature):
+                    continue
+                quand = maintenant
+                m = re.search(rb"(?im)^date:\s*(.+)$", brut.split(b"\r\n\r\n", 1)[0])
+                if m:
+                    try:
+                        quand = parsedate_to_datetime(m.group(1).decode("ascii", "replace").strip()).astimezone().replace(tzinfo=None)
+                    except (TypeError, ValueError):
+                        pass
+                e[nature] = quand.strftime("%d/%m/%Y %H:%M")
+                nouveaux.append((e, nature))
+    finally:
+        try:
+            imap.logout()
+        except Exception:
+            pass
+    return nouveaux
+
+
+DII_NATURES = {"remise": "remise au destinataire", "lecture": "lue par le destinataire", "reponse": "réponse reçue",
+               "echec": "ÉCHEC de remise (non distribuée)", "retard": "remise retardée"}
+
+
+def resume_suivi_dii(e):
+    """« Envoyée le … à … — remise le … · lue le … » pour un envoi gardé."""
+    le = dt.datetime.fromisoformat(e["le"]).strftime("%d/%m/%Y %H:%M") if e.get("le") else ""
+    court = {"remise": "remise", "lecture": "lue", "reponse": "réponse", "echec": "ÉCHEC de remise", "retard": "retard"}
+    etats = [f"{court[k]} le {e[k]}" for k in ("remise", "lecture", "reponse", "echec", "retard") if e.get(k)]
+    if not etats:
+        etats = ["en attente d'accusé" if e.get("accuse") else "sans accusé demandé"]
+    return f"DII envoyée le {le} à {e.get('a', '')} — " + " · ".join(etats)
 
 
 # ---- formulaire DII (déclaration individuelle d'intention) : le PDF vierge est choisi par l'utilisateur et gardé dans
@@ -2807,6 +2916,8 @@ def lancer_interface():
             self.after(4000, lambda: self.verifier_maj(manuel=False))    # nouvelle version de l'exe ? (1 fois/jour)
             self._mail_en_cours = False
             self.after(6000, self._minuteur_mail)                       # commandes reçues par mail (toutes les heures)
+            if MAIL_DISPONIBLE:
+                self.after(15 * 60 * 1000, self._suivi_dii_periodique)  # accusés des DII juste envoyées
             self.tout_rafraichir(sauver=False)
             self.afficher_sortie()
             self.appliquer_panneau()                  # cadre « Informations extraites » masqué par défaut
@@ -3325,6 +3436,15 @@ def lancer_interface():
                               foreground="#a33").pack(anchor="w", pady=(4, 0))
                 ttk.Separator(cadre).pack(fill="x", pady=4)
 
+            envois = [e for e in (lire_prefs().get("dii_envois") or []) if e.get("jour") == date.isoformat()]
+            for e in envois:                            # suivi des DII envoyées pour ce jour (accusés reçus)
+                ok = e.get("lecture") or e.get("remise") or e.get("reponse")
+                ttk.Label(cadre, text=("✔ " if ok and not e.get("echec") else "✉ ") + resume_suivi_dii(e), wraplength=460,
+                          foreground="#c00000" if e.get("echec") else "#1b7a3a" if ok else "#555").pack(anchor="w", pady=(4, 0))
+            if envois and self._envoi_direct():
+                ttk.Button(cadre, text="Vérifier les accusés de réception",
+                           command=lambda: (fen.destroy(), self.verifier_accuses_dii(manuel=True))).pack(anchor="w", pady=(4, 0))
+
             boutons = ttk.Frame(cadre, padding=(0, 10, 0, 0))
             boutons.pack(fill="x")
             ttk.Button(boutons, text="Ajouter une note",
@@ -3789,10 +3909,22 @@ def lancer_interface():
 
                 def travail():
                     accuse, dsn = v_accuse.get(), False
+                    from email.utils import make_msgid
+                    exp = p.get("mail_adresse") or ""
+                    mid = make_msgid(domain=exp.rsplit("@", 1)[-1] if "@" in exp else None)
                     try:
-                        dsn = envoyer_confirmation(p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465), p.get("mail_adresse"),
-                                                   deproteger(p.get("mail_mdp", "")), a, sujet, corps, piece=(nom, octets), accuse=accuse)
+                        dsn = envoyer_confirmation(p.get("mail_smtp"), int(p.get("mail_port_smtp") or 465), exp,
+                                                   deproteger(p.get("mail_mdp", "")), a, sujet, corps, piece=(nom, octets),
+                                                   accuse=accuse, message_id=mid)
                         err = None
+                        try:                            # gardé pour le suivi des accusés (90 derniers envois)
+                            jour_dii = date_de("gDu") if v_p1.get() and vs["gDu"].get().strip() else jour
+                        except ValueError:
+                            jour_dii = jour
+                        envois = (lire_prefs().get("dii_envois") or [])[-89:]
+                        envois.append({"id": mid, "a": a, "sujet": sujet, "nom": nom, "jour": jour_dii.isoformat(),
+                                       "le": dt.datetime.now().isoformat(timespec="seconds"), "accuse": accuse, "remise_demandee": dsn})
+                        ecrire_pref("dii_envois", envois)
                     except OSError as ex:
                         err = str(ex)
                     except Exception as ex:
@@ -3808,9 +3940,13 @@ def lancer_interface():
                                 info = ""
                                 if accuse:
                                     info = (" Accusé de réception demandé : avis de remise par votre serveur et accusé de lecture"
-                                            " si le destinataire l'accepte, dans votre boîte mail." if dsn else
-                                            " Accusé de lecture demandé (renvoyé dans votre boîte si le destinataire l'accepte) ;"
+                                            " si le destinataire l'accepte." if dsn else
+                                            " Accusé de lecture demandé (si le destinataire l'accepte) ;"
                                             " votre serveur d'envoi ne propose pas l'avis de remise.")
+                                    info += ("\n\nLe programme les cherche dans votre boîte à chaque relevé (et toutes les 15 min"
+                                             " pendant la première heure) : il vous prévient à leur arrivée, et le détail du jour"
+                                             " les affiche.")
+                                    self._suivi_dii_rapide = 4
                                 self.statut.config(text=f"Formulaire DII envoyé à {a} le {quand}.")
                                 messagebox.showinfo("Déclaration de grève (DII)", f"Formulaire envoyé à {a} le {quand}.{info}", parent=self)
                                 fen.destroy()
@@ -4080,6 +4216,7 @@ def lancer_interface():
             fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
             fichier.add_command(label="Sauvegarder les bulletins (NAS, kDrive…)…", command=self.fenetre_sauvegarde_bulletins)
             fichier.add_command(label="Déclaration de grève (DII)…", command=lambda: self.fenetre_dii(None))
+            fichier.add_command(label="Suivi des DII envoyées…", command=self.fenetre_suivi_dii)
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
                 # confirmation de réception : seulement pour les commandes reçues par mail
@@ -4767,7 +4904,9 @@ def lancer_interface():
             if not MAIL_DISPONIBLE:                     # version manuelle : jamais de relevé
                 return
             if lire_prefs().get("mail_actif"):
-                self.relever_mail_maintenant(manuel=False)
+                self.relever_mail_maintenant(manuel=False)       # les accusés des DII sont cherchés à la suite
+            elif self._dii_a_suivre():
+                self.verifier_accuses_dii()
             self.after(MAIL_INTERVALLE_MS, self._minuteur_mail)
 
         def relever_mail_maintenant(self, manuel=True, fini=None):
@@ -4817,6 +4956,8 @@ def lancer_interface():
                 etat = f"Relevé le {heure} : " + ("aucune nouvelle commande" if not n else
                                                   f"{n} nouvelle{'s' if n > 1 else ''} commande{'s' if n > 1 else ''}")
             ecrire_pref("mail_etat", etat)
+            if not erreur and self._dii_a_suivre():
+                self.after(2000, self.verifier_accuses_dii)       # accusés des DII envoyées, avec le relevé
             if crees:
                 self.actualiser()                       # range les PDF et les ajoute au planning
                 self.statut.config(text=f"{len(crees)} commande(s) reçue(s) par mail et ajoutée(s) au planning.")
@@ -4850,6 +4991,94 @@ def lancer_interface():
             """« Message 1 — adresse de l'expéditeur 1 », …"""
             exp = list(lire_prefs().get("mail_expediteurs") or []) + [""] * NB_EXPEDITEURS
             return [f"Message {i + 1} — " + (exp[i] or f"expéditeur {i + 1}") for i in range(NB_EXPEDITEURS)]
+
+        # ---- suivi des DII envoyées (accusés de réception) ------------------------
+        def _dii_a_suivre(self):
+            pr = lire_prefs()
+            maintenant = dt.datetime.now()
+            return [e for e in (pr.get("dii_envois") or []) if e.get("id") and e.get("le")
+                    and (maintenant - dt.datetime.fromisoformat(e["le"])).days <= DII_SUIVI_JOURS]
+
+        def verifier_accuses_dii(self, manuel=False, fini=None):
+            """Cherche dans la boîte (fil à part) les accusés et réponses des DII envoyées ; prévient de chaque nouveauté."""
+            import threading
+            if getattr(self, "_accuses_en_cours", False):
+                return
+            pr = lire_prefs()
+            if not (pr.get("mail_adresse") and pr.get("mail_mdp")) or not self._dii_a_suivre():
+                if manuel:
+                    messagebox.showinfo("Accusés de réception", "Aucune DII envoyée par le programme à suivre (30 derniers jours).", parent=self)
+                return
+            self._accuses_en_cours = True
+            if manuel:
+                self.statut.config(text="Recherche des accusés de réception…")
+
+            def travail():
+                nouveaux, err = [], None
+                try:
+                    envois = list(lire_prefs().get("dii_envois") or [])
+                    nouveaux = verifier_accuses_dii(envois, pr.get("mail_adresse"), deproteger(pr.get("mail_mdp", "")),
+                                                    pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT))
+                    if nouveaux:
+                        ecrire_pref("dii_envois", envois)
+                except OSError as ex:
+                    err = str(ex)
+                except Exception as ex:
+                    err = f"{type(ex).__name__} : {ex}"
+
+                def fin():
+                    self._accuses_en_cours = False
+                    if nouveaux:
+                        lignes = [f"• DII du {dt.date.fromisoformat(e['jour']).strftime('%d/%m/%Y')} ({e.get('a', '')}) : "
+                                  f"{DII_NATURES[n]} le {e[n]}" for e, n in nouveaux if e.get("jour")]
+                        self.statut.config(text="Accusé de réception reçu : " + lignes[-1].lstrip("• "))
+                        (messagebox.showwarning if any(n == "echec" for _, n in nouveaux) else messagebox.showinfo)(
+                            "Accusé de réception", "\n".join(lignes), parent=self)
+                    elif manuel:
+                        self.statut.config(text=f"Accusés de réception : échec ({err})." if err else "Pas de nouvel accusé de réception pour l'instant.")
+                    if fini:
+                        fini()
+                self.after(0, fin)
+            threading.Thread(target=travail, daemon=True).start()
+
+        def fenetre_suivi_dii(self):
+            """Liste des DII envoyées par le programme, avec les accusés de réception retrouvés."""
+            fen = tk.Toplevel(self)
+            fen.title("Suivi des DII envoyées")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            liste = ttk.Frame(c)
+            liste.pack(fill="x")
+
+            def remplir():
+                for w in liste.winfo_children():
+                    w.destroy()
+                envois = list(reversed(lire_prefs().get("dii_envois") or []))[:15]
+                if not envois:
+                    ttk.Label(liste, text="Aucune DII envoyée directement par le programme.", foreground="#555").pack(anchor="w")
+                for e in envois:
+                    ok = e.get("lecture") or e.get("remise") or e.get("reponse")
+                    j = dt.date.fromisoformat(e["jour"]).strftime("%d/%m/%Y") if e.get("jour") else ""
+                    ttk.Label(liste, text=f"{'✔' if ok and not e.get('echec') else '✉'} Grève du {j} — " + resume_suivi_dii(e),
+                              wraplength=640, foreground="#c00000" if e.get("echec") else "#1b7a3a" if ok else "#333").pack(anchor="w", pady=2)
+            remplir()
+            ttk.Label(c, text="Le programme cherche les accusés dans votre boîte mail pendant 30 jours après l'envoi, à chaque relevé.",
+                      foreground="#555", wraplength=640).pack(anchor="w", pady=(10, 0))
+            b = ttk.Frame(c, padding=(0, 10, 0, 0))
+            b.pack(fill="x")
+            ttk.Button(b, text="Vérifier maintenant",
+                       command=lambda: self.verifier_accuses_dii(manuel=True, fini=lambda: fen.winfo_exists() and remplir())).pack(side="left")
+            ttk.Button(b, text="Fermer", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
+
+        def _suivi_dii_periodique(self):
+            """Juste après un envoi : 4 recherches à 15 min d'intervalle ; ensuite à chaque relevé de la boîte."""
+            n = getattr(self, "_suivi_dii_rapide", 0)
+            if n > 0:
+                self._suivi_dii_rapide = n - 1
+                self.verifier_accuses_dii()
+            self.after(15 * 60 * 1000, self._suivi_dii_periodique)
 
         def _envoi_direct(self):
             """Envoi par le programme : version « mail », adresse, mot de passe et serveur d'envoi enregistrés."""

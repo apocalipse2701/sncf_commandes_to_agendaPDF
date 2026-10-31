@@ -158,6 +158,51 @@ final class CourrierImap {
         return r;
     }
 
+    // ------------------------------------------------------------------ accusés de réception des DII envoyées
+
+    /**
+     * Pour chaque Message-ID (clé de « depuis » : date d'envoi en ms), les messages bruts de la boîte de réception
+     * qui le citent (accusés de remise / de lecture, réponses), 15 au plus. Lecture seule (EXAMINE, BODY.PEEK).
+     */
+    java.util.Map<String, List<byte[]>> retours(String serveur, int port, String adresse, String motDePasse,
+                                                java.util.Map<String, Long> depuis) throws IOException {
+        java.util.Map<String, List<byte[]>> res = new java.util.HashMap<>();
+        connecter(serveur, port);
+        try {
+            lireLigne();
+            List<String> rep = commande("LOGIN " + quoter(adresse) + " " + quoter(motDePasse), null);
+            if (!ok(rep)) throw new IOException("connexion refusée : adresse ou mot de passe incorrect");
+            rep = commande("EXAMINE INBOX", null);
+            if (!ok(rep)) throw new IOException("boîte de réception introuvable");
+            for (java.util.Map.Entry<String, Long> e : depuis.entrySet()) {
+                String cle = e.getKey().replaceAll("[<>\"\\\\]", "");
+                rep = commande("UID SEARCH SINCE " + dateImap(new Date(e.getValue() - 86400000L)) + " TEXT " + quoter(cle), null);
+                List<byte[]> l = new ArrayList<>();
+                res.put(e.getKey(), l);
+                if (!ok(rep)) continue;
+                List<Long> uids = new ArrayList<>();
+                for (String x : rep) {
+                    if (!x.toUpperCase(Locale.ROOT).startsWith("* SEARCH")) continue;
+                    for (String u : x.substring(8).trim().split("\\s+")) if (!u.isEmpty()) uids.add(Long.parseLong(u));
+                }
+                if (uids.size() > 15) uids = uids.subList(uids.size() - 15, uids.size());
+                for (long uid : uids) {
+                    byte[][] corps = new byte[1][];
+                    rep = commande("UID FETCH " + uid + " BODY.PEEK[]", corps);
+                    if (ok(rep) && corps[0] != null) l.add(corps[0]);
+                }
+            }
+            try {
+                commande("LOGOUT", null);
+            } catch (IOException e) {
+                // le serveur ferme parfois avant de répondre
+            }
+        } finally {
+            fermer();
+        }
+        return res;
+    }
+
     // ------------------------------------------------------------------ « Trouver les expéditeurs »
 
     /** Expéditeur des bulletins trouvé dans la boîte. */

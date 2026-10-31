@@ -400,6 +400,18 @@ public class MainActivity extends Activity {
             new Thread(() -> appelerPage("__sauvegardeFaite", SauvegardeBulletins.envoyer(MainActivity.this, tout).toString())).start();
         }
 
+        /** DII envoyées par l'application, avec les accusés de réception retrouvés (JSON). */
+        @JavascriptInterface
+        public String diiEnvois() {
+            return AccusesDII.liste(MainActivity.this).toString();
+        }
+
+        /** Cherche maintenant les accusés de réception ; réponse par __diiEnvois({ok, texte, envois, nouveaux}). */
+        @JavascriptInterface
+        public void diiVerifier() {
+            new Thread(() -> appelerPage("__diiEnvois", AccusesDII.verifier(MainActivity.this, false).toString())).start();
+        }
+
         @JavascriptInterface
         public String sauvegardeFaireConfiance(String empreinte) {
             try {

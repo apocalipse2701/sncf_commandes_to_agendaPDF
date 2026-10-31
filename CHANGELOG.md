@@ -7,6 +7,23 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.12.0 — 31 octobre 2026
+
+**Suivi des DII envoyées : l'application prévient quand l'accusé de réception arrive (PC et Android)**
+- Chaque DII envoyée directement par l'application est gardée avec son identifiant de message. Pendant 30 jours, la boîte de réception est fouillée (lecture seule) pour retrouver :
+  - l'**avis de remise** du serveur (ou un **échec** de remise, ou un retard) ;
+  - l'**accusé de lecture** du destinataire ;
+  - une **réponse** du destinataire.
+- **Téléphone** :
+  - recherche à l'ouverture, puis toutes les heures en arrière-plan, et sur demande ;
+  - **notification** « DII du … : remise au destinataire / lue par le destinataire » ;
+  - le **détail du jour** affiche l'état : envoyée le …, remise le …, lue le …, avec un bouton **Vérifier les accusés de réception**.
+- **PC** :
+  - recherche avec chaque relevé de la boîte (toutes les heures), et toutes les 15 min pendant l'heure qui suit un envoi ;
+  - une fenêtre prévient de chaque nouvel accusé ;
+  - le détail du jour affiche l'état, et Fichier › **Suivi des DII envoyées…** liste les envois avec **Vérifier maintenant**.
+- Fonctionne avec la version « mail » (boîte réglée). L'avis de remise dépend du fournisseur ; l'accusé de lecture dépend du destinataire.
+
 ## 2.11.2 — 31 octobre 2026
 
 **Déclaration de grève (DII) : accusé de réception (PC et Android)**

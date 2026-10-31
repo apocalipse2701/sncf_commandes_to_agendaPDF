@@ -36,6 +36,8 @@ final class EnvoiMail {
     boolean accuse;
     /** Après l'envoi : vrai si l'avis de remise (DSN) a pu être demandé au serveur. */
     boolean remiseDemandee;
+    /** Message-ID du dernier message envoyé (« <…@…> ») : sert à retrouver ses accusés de réception. */
+    String messageId = "";
     private Socket socket;
     private BufferedReader in;
     private OutputStream out;
@@ -88,14 +90,15 @@ final class EnvoiMail {
             boolean dsn = false;
             if (accuse) for (String l : ehlo) if (l.toUpperCase(Locale.ROOT).matches("^\\d{3}[ -]DSN\\b.*")) dsn = true;
             remiseDemandee = dsn;
-            envoyerLigne("MAIL FROM:<" + adresse + ">" + (dsn ? " RET=HDRS" : ""));
+            messageId = "<" + UUID.randomUUID() + "@" + (adresse.contains("@") ? adresse.substring(adresse.indexOf('@') + 1) : "planning.local") + ">";
+            envoyerLigne("MAIL FROM:<" + adresse + ">" + (dsn ? " RET=HDRS ENVID=" + xtext(messageId) : ""));
             attendre(250);
             envoyerLigne("RCPT TO:<" + a.trim() + ">" + (dsn ? " NOTIFY=SUCCESS,FAILURE" : ""));
             int code = lireReponse(null);
             if (code != 250 && code != 251) throw new IOException("destinataire refusé par le serveur (" + code + ")");
             envoyerLigne("DATA");
             attendre(354);
-            out.write(message(adresse, a.trim(), sujet, corps, enReponseA, nomPiece, piece, accuse).getBytes(StandardCharsets.UTF_8));
+            out.write(message(adresse, a.trim(), sujet, corps, enReponseA, nomPiece, piece, accuse, messageId).getBytes(StandardCharsets.UTF_8));
             envoyerLigne(".");
             attendre(250);
             try {
@@ -124,13 +127,29 @@ final class EnvoiMail {
 
     static String message(String de, String a, String sujet, String corps, String enReponseA, String nomPiece, byte[] piece,
                           boolean accuse) {
+        return message(de, a, sujet, corps, enReponseA, nomPiece, piece, accuse, null);
+    }
+
+    /** xtext (RFC 3461) : caractères hors 33-126, « + » et « = » en +HH. */
+    static String xtext(String s) {
+        StringBuilder b = new StringBuilder();
+        for (char ch : s.toCharArray()) {
+            if (ch >= 33 && ch <= 126 && ch != '+' && ch != '=') b.append(ch);
+            else b.append('+').append(String.format(Locale.ROOT, "%02X", (int) ch & 0xFF));
+        }
+        return b.toString();
+    }
+
+    static String message(String de, String a, String sujet, String corps, String enReponseA, String nomPiece, byte[] piece,
+                          boolean accuse, String messageId) {
         StringBuilder m = new StringBuilder();
         String domaine = de.contains("@") ? de.substring(de.indexOf('@') + 1) : "planning.local";
         m.append("From: <").append(de).append(">\r\n");
         m.append("To: <").append(a).append(">\r\n");
         m.append("Subject: ").append(encoderEntete(sujet == null ? "" : sujet)).append("\r\n");
         m.append("Date: ").append(new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US).format(new Date())).append("\r\n");
-        m.append("Message-ID: <").append(UUID.randomUUID()).append('@').append(domaine).append(">\r\n");
+        m.append("Message-ID: ").append(messageId != null && !messageId.isEmpty() ? messageId
+                : "<" + UUID.randomUUID() + "@" + domaine + ">").append("\r\n");
         String ref = enReponseA == null ? "" : enReponseA.trim();
         if (ref.matches("<[^<>\\s]+>")) {
             m.append("In-Reply-To: ").append(ref).append("\r\n");

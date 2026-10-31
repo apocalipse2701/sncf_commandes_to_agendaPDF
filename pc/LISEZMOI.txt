@@ -143,8 +143,9 @@ DOSSIER « commande »
     (proposé : l'adresse en haut à gauche du formulaire). Bouton « Grève
     sur le service prévu » : heures de prise et de fin de service de la
     commande du jour, modifiables. Accusé de réception possible (avis de
-    remise et accusé de lecture). Le formulaire vierge est choisi une
-    fois et reste sur ce PC.
+    remise et accusé de lecture) : le programme le cherche dans la boîte
+    mail et prévient à son arrivée (Fichier › « Suivi des DII envoyées… »).
+    Le formulaire vierge est choisi une fois et reste sur ce PC.
   • Fichier › « Sauvegarder les bulletins (NAS, kDrive…)… » : copie le dossier
     « commande » vers un NAS (partage réseau \\NAS\dossier ou lecteur réseau),
     un dossier kDrive synchronisé ou une clé USB ; seuls les nouveaux bulletins
