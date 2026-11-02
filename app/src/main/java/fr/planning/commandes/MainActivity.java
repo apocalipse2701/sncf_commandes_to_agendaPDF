@@ -406,6 +406,33 @@ public class MainActivity extends Activity {
             return AccusesDII.liste(MainActivity.this).toString();
         }
 
+        /** Avis de l'établissement reçus (JSON), vérifiés ou à vérifier par la page. */
+        @JavascriptInterface
+        public String diiAvisListe() {
+            return AccusesDII.listeAvis(MainActivity.this).toString();
+        }
+
+        /** Note la vérification d'un avis reçu ({fichier, etat, jour, manque, agent, autre} ou {fichier, valide}) ; renvoie la liste. */
+        @JavascriptInterface
+        public String diiAvisNoter(String json) {
+            try {
+                return AccusesDII.noterAvisRecu(MainActivity.this, new JSONObject(json)).toString();
+            } catch (org.json.JSONException e) {
+                return AccusesDII.listeAvis(MainActivity.this).toString();
+            }
+        }
+
+        /** Adresse(s) du service DII d'où viennent les avis ("" : pas réglée). */
+        @JavascriptInterface
+        public String diiAvisDe() {
+            return AccusesDII.avisDe(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void diiAvisDeEnregistrer(String de) {
+            AccusesDII.enregistrerAvisDe(MainActivity.this, de);
+        }
+
         /** PDF reçu de l'établissement pour une DII (base64), à vérifier par la page. */
         @JavascriptInterface
         public String diiRetourLire(String fichier) {

@@ -7,6 +7,21 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.14.0 — 2 novembre 2026
+
+**DII acceptée : l'application lit les avis du service DII (PC et Android, version « mail »)**
+- Nouveau réglage **Avis de l'établissement attendus de** : l'adresse du service DII qui renvoie le formulaire. Plusieurs adresses : séparées par des virgules.
+  - Par défaut, c'est l'adresse écrite en haut du formulaire vierge, lue dans le PDF : rien n'est inscrit dans l'application.
+  - Téléphone : dans la fenêtre DII, partie Envoi. PC : Fichier › **Suivi des DII (avis de l'établissement)…**
+- L'application lit les messages de cette adresse des 60 derniers jours, à chaque relevé (toutes les heures), à l'ouverture et avec **Vérifier**. Elle les lit même si la DII a été envoyée autrement (application mail, papier…).
+- Pour chaque formulaire DII joint, elle contrôle le **« Cadre réservé à l'établissement »** :
+  - **partie 1** : n° de DII, représentant, fonction, service, nom de l'agent, date et heure de réception, mode de réception, lieu et date ;
+  - **partie 2** aussi, si vous avez rempli la vôtre (renoncer ou reprendre).
+- **Tout rempli** : DII **acceptée**, et le **filigrane GRÈVE** est posé sur le jour de grève **lu dans le formulaire** (partie 1 de l'agent). Vous êtes prévenu : notification sur le téléphone, fenêtre sur le PC.
+- **Incomplet**, ou formulaire scanné : pas de grève. L'application dit ce qui manque, avec **Ouvrir l'avis reçu** et **Avis vérifié : mettre la grève**.
+- Formulaire d'un autre agent (nom différent de celui du planning) : ignoré.
+- Les avis sont rangés avec les commandes (« 2026-11-03 - DII avis de l'établissement.pdf ») et affichés dans le détail du jour.
+
 ## 2.13.5 — 31 octobre 2026
 
 **DII : heures de la journée selon les horaires AUTO, horaires du jour visibles (PC et Android)**

@@ -77,6 +77,7 @@ final class AccusesDII {
     }
 
     static boolean aSuivre(Context c) {
+        if (avisASuivre(c)) return true;                       // avis de l'établissement attendus du service DII
         JSONArray l = liste(c);
         long limite = System.currentTimeMillis() - JOURS_SUIVI * 86400000L;
         for (int i = 0; i < l.length(); i++) {
@@ -173,8 +174,7 @@ final class AccusesDII {
                 }
                 if (!depuis.isEmpty()) {
                     Map<String, List<CourrierImap.Retour>> r = new CourrierImap().retours(p.getString("serveur", ReleveMail.SERVEUR_DEFAUT),
-                            p.getInt("port", ReleveMail.PORT_DEFAUT), adresse, mdp, depuis, de);
-                    File dossier = dossierRetours(c);
+                            p.getInt("port", ReleveMail.PORT_DEFAUT), adresse, mdp, depuis, null);
                     for (int i = 0; i < l.length(); i++) {
                         JSONObject e = l.optJSONObject(i);
                         if (e == null || !r.containsKey(e.optString("id"))) continue;
@@ -189,28 +189,47 @@ final class AccusesDII {
                                 nouveaux.put(new JSONObject().put("jour", e.optString("jour")).put("a", e.optString("a"))
                                         .put("nature", nature).put("quand", quand));
                             }
-                            // avis de l'établissement : formulaire en pièce jointe, vérifié par la page (pdf-lib) ;
-                            // chaque message n'est regardé qu'une fois
-                            if (e.optLong("avis", 0) != 0 || contient(vus, ret.uid)) continue;
-                            vus.put(ret.uid);
-                            CourrierImap.Mime.Message m = CourrierImap.Mime.lire(ret.brut);
-                            if (m.messageId.trim().equalsIgnoreCase(e.optString("id"))) continue;     // le message envoyé
-                            JSONArray recus = e.optJSONArray("retours");
-                            if (recus == null) e.put("retours", recus = new JSONArray());
-                            int k = 0;
-                            for (CourrierImap.Mime.Partie pdf : m.pdf) {
-                                String nom = (e.optString("jour") + "-" + ret.uid + "-" + (k++) + ".pdf").replaceAll("[^A-Za-z0-9._-]", "_");
-                                try (OutputStream out = new FileOutputStream(new File(dossier, nom))) {
-                                    out.write(pdf.octets);
-                                }
-                                recus.put(new JSONObject().put("fichier", nom).put("le", quand).put("nom", pdf.nom).put("etat", "a_verifier"));
-                                nouveaux.put(new JSONObject().put("jour", e.optString("jour")).put("a", e.optString("a"))
-                                        .put("nature", "avis_recu").put("quand", quand));
-                            }
                         }
                         while (vus.length() > 200) vus.remove(0);
                     }
                     ecrire(c, l);
+                }
+                // avis de l'établissement : messages du service DII (adresse réglée) avec le formulaire DII joint ;
+                // le « Cadre réservé à l'établissement » est vérifié par la page (pdf-lib) à l'ouverture
+                List<String> exps = expediteursAvis(c, l);
+                if (!exps.isEmpty()) {
+                    SharedPreferences pa = c.getSharedPreferences(PREFS_AVIS, Context.MODE_PRIVATE);
+                    JSONArray vusAvis = new JSONArray(pa.getString("uids", "[]"));
+                    java.util.Set<Long> deja = new java.util.HashSet<>();
+                    for (int i = 0; i < vusAvis.length(); i++) deja.add(vusAvis.optLong(i));
+                    long[] validite = {pa.getLong("validite", 0)};
+                    List<CourrierImap.Retour> msgs = new CourrierImap().avis(p.getString("serveur", ReleveMail.SERVEUR_DEFAUT),
+                            p.getInt("port", ReleveMail.PORT_DEFAUT), adresse, mdp, exps,
+                            System.currentTimeMillis() - 60 * 86400000L, validite, deja);
+                    JSONArray avis = listeAvis(c);
+                    File dossier = dossierRetours(c);
+                    for (CourrierImap.Retour ret : msgs) {
+                        deja.add(ret.uid);
+                        long quand = dateDe(new String(ret.brut, StandardCharsets.UTF_8));
+                        CourrierImap.Mime.Message m = CourrierImap.Mime.lire(ret.brut);
+                        int k = 0;
+                        for (CourrierImap.Mime.Partie pdf : m.pdf) {
+                            String nom = ("avis-" + ret.uid + "-" + (k++) + ".pdf");
+                            try (OutputStream out = new FileOutputStream(new File(dossier, nom))) {
+                                out.write(pdf.octets);
+                            }
+                            avis.put(new JSONObject().put("fichier", nom).put("recu", quand).put("nom", pdf.nom)
+                                    .put("de", CourrierImap.adresse(m.de)).put("etat", "a_verifier"));
+                            nouveaux.put(new JSONObject().put("jour", "").put("a", CourrierImap.adresse(m.de))
+                                    .put("nature", "avis_recu").put("quand", quand));
+                        }
+                    }
+                    JSONArray u = new JSONArray();
+                    List<Long> tri = new java.util.ArrayList<>(deja);
+                    java.util.Collections.sort(tri);
+                    for (long x : tri.subList(Math.max(0, tri.size() - 500), tri.size())) u.put(x);
+                    pa.edit().putString("uids", u.toString()).putLong("validite", validite[0]).apply();
+                    if (!msgs.isEmpty()) ecrireAvis(c, avis);
                 }
                 ok = true;
                 texte = nouveaux.length() == 0 ? "Pas de nouvel accusé de réception." : nouveaux.length() + " nouvel"
@@ -229,6 +248,83 @@ final class AccusesDII {
             // impossible
         }
         return res;
+    }
+
+    static final String PREFS_AVIS = "dii-avis";
+
+    /** Adresses du service DII (réglage « Avis DII attendus de », séparées par des virgules), plus les destinataires
+     *  des DII envoyées ces 30 derniers jours. */
+    static List<String> expediteursAvis(Context c, JSONArray envois) {
+        List<String> l = new java.util.ArrayList<>();
+        for (String x : c.getSharedPreferences(PREFS_AVIS, Context.MODE_PRIVATE).getString("de", "").split("[,;\\s]+"))
+            if (x.contains("@") && !l.contains(x.trim().toLowerCase(Locale.ROOT))) l.add(x.trim().toLowerCase(Locale.ROOT));
+        long limite = System.currentTimeMillis() - JOURS_SUIVI * 86400000L;
+        for (int i = 0; i < envois.length(); i++) {
+            JSONObject e = envois.optJSONObject(i);
+            String a = e == null ? "" : e.optString("a").trim().toLowerCase(Locale.ROOT);
+            if (e != null && e.optLong("le") >= limite && a.contains("@") && !l.contains(a)) l.add(a);
+        }
+        return l;
+    }
+
+    static String avisDe(Context c) {
+        return c.getSharedPreferences(PREFS_AVIS, Context.MODE_PRIVATE).getString("de", "");
+    }
+
+    static void enregistrerAvisDe(Context c, String de) {
+        c.getSharedPreferences(PREFS_AVIS, Context.MODE_PRIVATE).edit().putString("de", de == null ? "" : de.trim()).apply();
+        ReleveMail.programmer(c);
+    }
+
+    static boolean avisASuivre(Context c) {
+        return !avisDe(c).trim().isEmpty();
+    }
+
+    private static File fichierAvis(Context c) {
+        return new File(c.getFilesDir(), "dii-avis.json");
+    }
+
+    /** Avis de l'établissement reçus : [{fichier, recu, de, etat (a_verifier, complet, incomplet, ignore), jour, manque, agent, autre, valide}]. */
+    static JSONArray listeAvis(Context c) {
+        File f = fichierAvis(c);
+        if (!f.exists()) return new JSONArray();
+        try {
+            return new JSONArray(new String(BulletinsRanges.lire(f), StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            return new JSONArray();
+        }
+    }
+
+    private static void ecrireAvis(Context c, JSONArray l) {
+        JSONArray n = new JSONArray();
+        for (int i = Math.max(0, l.length() - 200); i < l.length(); i++) n.put(l.opt(i));
+        try (OutputStream out = new FileOutputStream(fichierAvis(c))) {
+            out.write(n.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            // pas grave
+        }
+    }
+
+    /** Résultat de la vérification d'un avis par la page ({fichier, etat, jour, manque, agent, autre} ou {fichier, valide}). */
+    static JSONArray noterAvisRecu(Context c, JSONObject o) {
+        synchronized (VERROU) {
+            JSONArray l = listeAvis(c);
+            for (int i = 0; i < l.length(); i++) {
+                JSONObject x = l.optJSONObject(i);
+                if (x == null || !x.optString("fichier").equals(o.optString("fichier"))) continue;
+                java.util.Iterator<String> k = o.keys();
+                while (k.hasNext()) {
+                    String cle = k.next();
+                    if (!cle.equals("fichier")) try {
+                        x.put(cle, o.get(cle));
+                    } catch (org.json.JSONException e) {
+                        // impossible
+                    }
+                }
+            }
+            ecrireAvis(c, l);
+            return l;
+        }
     }
 
     static File dossierRetours(Context c) {
@@ -296,7 +392,7 @@ final class AccusesDII {
             case "reponse": return "réponse reçue";
             case "echec": return "ÉCHEC de remise (non distribuée)";
             case "retard": return "remise retardée";
-            case "avis_recu": return "réponse avec PDF reçue : ouvrez l'application pour vérifier l'avis de l'établissement";
+            case "avis_recu": return "avis de l'établissement reçu : ouvrez l'application pour vérifier s'il est accepté";
             default: return nature;
         }
     }

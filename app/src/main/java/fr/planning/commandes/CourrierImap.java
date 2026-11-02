@@ -223,6 +223,54 @@ final class CourrierImap {
         return res;
     }
 
+    /**
+     * Messages des expéditeurs donnés (service DII) reçus depuis « depuis » (ms) et pas encore vus (« deja » : UID ;
+     * vidé si UIDVALIDITY a changé, nouvelle valeur dans validite[0]). Lecture seule.
+     */
+    List<Retour> avis(String serveur, int port, String adresse, String motDePasse, List<String> expediteurs, long depuis,
+                      long[] validite, java.util.Set<Long> deja) throws IOException {
+        List<Retour> l = new ArrayList<>();
+        connecter(serveur, port);
+        try {
+            lireLigne();
+            List<String> rep = commande("LOGIN " + quoter(adresse) + " " + quoter(motDePasse), null);
+            if (!ok(rep)) throw new IOException("connexion refusée : adresse ou mot de passe incorrect");
+            rep = commande("EXAMINE INBOX", null);
+            if (!ok(rep)) throw new IOException("boîte de réception introuvable");
+            long v = 0;
+            for (String x : rep) {
+                Matcher m = Pattern.compile("UIDVALIDITY (\\d+)", Pattern.CASE_INSENSITIVE).matcher(x);
+                if (m.find()) v = Long.parseLong(m.group(1));
+            }
+            if (v != validite[0]) deja.clear();
+            validite[0] = v;
+            java.util.TreeSet<Long> uids = new java.util.TreeSet<>();
+            for (String e : expediteurs) {
+                rep = commande("UID SEARCH SINCE " + dateImap(new Date(depuis)) + " FROM " + quoter(e), null);
+                if (!ok(rep)) continue;
+                for (String x : rep) {
+                    if (!x.toUpperCase(Locale.ROOT).startsWith("* SEARCH")) continue;
+                    for (String u : x.substring(8).trim().split("\\s+")) if (!u.isEmpty()) uids.add(Long.parseLong(u));
+                }
+            }
+            for (long uid : uids) {
+                if (deja.contains(uid)) continue;
+                byte[][] corps = new byte[1][];
+                rep = commande("UID FETCH " + uid + " BODY.PEEK[]", corps);
+                if (ok(rep) && corps[0] != null) l.add(new Retour(uid, corps[0]));
+                if (l.size() >= 30) break;                                  // le reste au prochain relevé
+            }
+            try {
+                commande("LOGOUT", null);
+            } catch (IOException e) {
+                // le serveur ferme parfois avant de répondre
+            }
+        } finally {
+            fermer();
+        }
+        return l;
+    }
+
     // ------------------------------------------------------------------ « Trouver les expéditeurs »
 
     /** Expéditeur des bulletins trouvé dans la boîte. */

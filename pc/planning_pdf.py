@@ -1569,9 +1569,31 @@ DII_ETAB1 = [("Text12", "n° de la DII"), ("Nom et prénom du représentant du l
              ("Text25", "lieu (« A … »)"), ("Text26", "date (« le … »)")]
 
 
+# partie 2 du cadre établissement (avis de réception de la renonciation / de la reprise) : exigée si l'agent a rempli sa partie 2
+DII_ETAB2 = [("Group280", "renonciation ou reprise (partie 2)"),
+             ("Nom et prénom du représentant du lEmployeur_2", "représentant de l'employeur (partie 2)"),
+             ("Fonction_2", "fonction (partie 2)"), ("Service_2", "service (partie 2)"), ("Text33", "nom de l'agent (partie 2)"),
+             ("Text34", "date de réception (partie 2)"), ("Text35", "heure de réception (partie 2)"),
+             ("Group2", "mode de réception (partie 2)"), ("Text37", "lieu (partie 2)"), ("Text38", "date (partie 2)")]
+
+
+def _date_champ(t):
+    """« 03/11/26 » ou « 03/11/2026 » → date, sinon None."""
+    m = re.search(r"(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{2,4})", t or "")
+    if not m:
+        return None
+    a = int(m.group(3))
+    try:
+        return dt.date(a + 2000 if a < 100 else a, int(m.group(2)), int(m.group(1)))
+    except ValueError:
+        return None
+
+
 def avis_etablissement_dii(octets):
-    """PDF reçu → None si ce n'est pas le formulaire DII ; sinon (complet, [ce qui manque]) pour la partie 1 du
-    « Cadre réservé à l'établissement ». Formulaire aplati ou scanné (plus de champs) : (False, [raison])."""
+    """PDF reçu → None si ce n'est pas un formulaire DII avec le « Cadre réservé à l'établissement » commencé ; sinon
+    {complet, manque [..], jour (date de grève de la partie 1 de l'agent, ou None), nom (agent), partie2, lisible}.
+    Complet : partie 1 du cadre établissement remplie, et sa partie 2 aussi si l'agent a rempli la sienne.
+    Formulaire aplati ou scanné (plus de champs) : complet False, lisible False."""
     import io
     from pypdf import PdfReader
     try:
@@ -1579,33 +1601,98 @@ def avis_etablissement_dii(octets):
         champs = r.get_fields() or {}
     except Exception:
         return None
+    val = lambda nom: str((champs.get(nom) or {}).get("/V") or "").strip()
+    rempli = lambda nom: val(nom) not in ("", "/Off", "Off")
     if DII_CHAMPS["nom1"] not in champs or "Group1" not in champs:
         try:
             texte = (r.pages[0].extract_text() or "").upper()
         except Exception:
             texte = ""
         if "DII" in texte and "RESERV" in texte.replace("É", "E"):
-            return False, ["cadre illisible automatiquement (formulaire imprimé, scanné ou aplati) : à vérifier vous-même"]
+            return {"complet": False, "lisible": False, "jour": None, "nom": "", "partie2": False,
+                    "manque": ["cadre illisible automatiquement (formulaire imprimé, scanné ou aplati) : à vérifier vous-même"]}
         return None
-    manque = []
-    for nom, lib in DII_ETAB1:
-        v = str((champs.get(nom) or {}).get("/V") or "").strip()
-        if not v or v == "/Off":
-            manque.append(lib)
-    if len(manque) >= len(DII_ETAB1) - 1:   # cadre vide (n° de DII seul : partagé avec la partie 2 de l'agent) : pas un avis
-        return None
-    return not manque, manque
+    manque1 = [lib for nom, lib in DII_ETAB1 if not rempli(nom)]
+    partie2 = rempli(DII_CHAMPS["nom2"]) or rempli(DII_CHAMPS["choix"])
+    manque2 = [lib for nom, lib in DII_ETAB2 if not rempli(nom)] if partie2 else []
+    if len(manque1) >= len(DII_ETAB1) - 1 and (not partie2 or len(manque2) >= len(DII_ETAB2)):
+        return None                            # cadre établissement vide (n° de DII seul) : pas un avis
+    return {"complet": not manque1 and not manque2, "manque": manque1 + manque2, "lisible": True,
+            "jour": _date_champ(val(DII_CHAMPS["gDu"])), "nom": val(DII_CHAMPS["nom1"]) or val(DII_CHAMPS["nom2"]),
+            "partie2": partie2}
 
 
-def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None, ssl=True, archiver=None):
-    """Fouille la boîte pour chaque envoi récent ; complète les envois (dates « jj/mm/aaaa hh:mm » de remise, lecture,
-    réponse, échec, retard, avis de l'établissement) et renvoie la liste des nouveautés [(envoi, nature)].
-    Avis : formulaire DII reçu en pièce jointe (réponse ou message du destinataire) ; « avis » si la partie 1 du cadre
-    établissement est remplie, sinon « avis_incomplet ». archiver(octets, envoi, complet) range le PDF reçu et renvoie
-    son chemin. Lève OSError (message clair)."""
+def relever_avis_dii(expediteurs, deja, adresse, mot_de_passe, serveur=None, port=None, ssl=True, jours=60):
+    """Messages des expéditeurs des avis DII (service DII de l'établissement) des « jours » derniers jours, pas encore
+    vus (deja : {"v": UIDVALIDITY, "uids": [..]}, complété) : [(quand, nom du PDF, octets, avis)] pour chaque formulaire
+    DII joint (avis : avis_etablissement_dii). Lecture seule. Lève OSError (message clair)."""
     import imaplib
     import email
     from email import policy
+    from email.utils import parsedate_to_datetime
+    exps = [e.strip() for e in expediteurs if e and "@" in e]
+    if not exps:
+        return []
+    serveur, port = serveur or MAIL_SERVEUR, int(port or MAIL_PORT)
+    try:
+        imap = imaplib.IMAP4_SSL(serveur, port, timeout=30) if ssl else imaplib.IMAP4(serveur, port, timeout=30)
+    except (OSError, imaplib.IMAP4.error) as ex:
+        raise OSError(f"serveur {serveur} injoignable ({ex})")
+    res = []
+    try:
+        try:
+            imap.login(adresse, mot_de_passe)
+        except imaplib.IMAP4.error:
+            raise OSError("connexion refusée : adresse ou mot de passe incorrect")
+        if imap.select("INBOX", readonly=True)[0] != "OK":
+            raise OSError("boîte de réception introuvable")
+        validite = int((imap.response("UIDVALIDITY")[1] or [b"0"])[0] or 0)
+        if deja.get("v") != validite:
+            deja.clear()
+            deja.update({"v": validite, "uids": []})
+        vus = set(deja.get("uids") or [])
+        d = dt.date.today() - dt.timedelta(days=jours)
+        depuis = f"{d.day}-{_MOIS_IMAP[d.month - 1]}-{d.year}"
+        uids = []
+        for e in exps:
+            typ, data = imap.uid("SEARCH", None, f'SINCE {depuis} FROM "{e.replace(chr(34), "")}"')
+            if typ == "OK":
+                uids += [x.decode() for x in (data[0] or b"").split() if x.decode() not in uids]
+        for uid in sorted(uids, key=int):
+            if uid in vus:
+                continue
+            typ, msg = imap.uid("FETCH", uid, "(BODY.PEEK[])")
+            brut = next((x[1] for x in msg or [] if isinstance(x, tuple)), b"")
+            if not brut:
+                continue
+            vus.add(uid)
+            mm = email.message_from_bytes(brut, policy=policy.default)
+            try:
+                quand = parsedate_to_datetime(str(mm.get("Date"))).astimezone().replace(tzinfo=None)
+            except (TypeError, ValueError):
+                quand = dt.datetime.now()
+            for part in mm.walk():
+                nom = part.get_filename() or ""
+                if part.get_content_type() != "application/pdf" and not nom.lower().endswith(".pdf"):
+                    continue
+                octets = part.get_payload(decode=True) or b""
+                avis = avis_etablissement_dii(octets)
+                if avis is not None:
+                    res.append((quand, nom, octets, avis))
+        deja["uids"] = sorted(vus, key=int)[-500:]
+    finally:
+        try:
+            imap.logout()
+        except Exception:
+            pass
+    return res
+
+
+def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None, ssl=True):
+    """Fouille la boîte pour chaque envoi récent ; complète les envois (dates « jj/mm/aaaa hh:mm » de remise, lecture,
+    réponse, échec, retard, avis de l'établissement) et renvoie la liste des nouveautés [(envoi, nature)].
+    Les avis de l'établissement (formulaire renvoyé) sont relevés à part : relever_avis_dii. Lève OSError."""
+    import imaplib
     from email.utils import parsedate_to_datetime
     serveur, port = serveur or MAIL_SERVEUR, int(port or MAIL_PORT)
     maintenant = dt.datetime.now()
@@ -1629,15 +1716,8 @@ def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None,
             d = dt.datetime.fromisoformat(e["le"]).date() - dt.timedelta(days=1)
             depuis = f"{d.day}-{_MOIS_IMAP[d.month - 1]}-{d.year}"
             cle = e["id"].strip("<>").replace('"', "")
-            uids = []
-            for critere in (f'SINCE {depuis} TEXT "{cle}"',
-                            f'SINCE {depuis} FROM "{(e.get("a") or "").replace(chr(34), "")}"' if e.get("a") else ""):
-                if not critere:
-                    continue
-                typ, data = imap.uid("SEARCH", None, critere)
-                if typ == "OK":
-                    uids += [x for x in (data[0] or b"").split() if x not in uids]
-            vus = set(e.get("vus") or [])
+            typ, data = imap.uid("SEARCH", None, f'SINCE {depuis} TEXT "{cle}"')
+            uids = (data[0] or b"").split() if typ == "OK" else []
             for uid in sorted(uids, key=int)[-25:]:
                 typ, msg = imap.uid("FETCH", uid, "(BODY.PEEK[])")
                 brut = next((x[1] for x in msg or [] if isinstance(x, tuple)), b"")
@@ -1654,38 +1734,6 @@ def verifier_accuses_dii(envois, adresse, mot_de_passe, serveur=None, port=None,
                 if nature and not e.get(nature):
                     e[nature] = quand.strftime("%d/%m/%Y %H:%M")
                     nouveaux.append((e, nature))
-                # avis de l'établissement : formulaire DII rempli renvoyé en pièce jointe (chaque message lu une fois)
-                u = uid.decode()
-                if u in vus or e.get("avis"):
-                    continue
-                vus.add(u)
-                mm = email.message_from_bytes(brut, policy=policy.default)
-                if (mm.get("Message-ID") or "").strip() == e["id"]:
-                    continue                           # le message envoyé lui-même
-                for part in mm.walk():
-                    nom = part.get_filename() or ""
-                    if part.get_content_type() != "application/pdf" and not nom.lower().endswith(".pdf"):
-                        continue
-                    octets = part.get_payload(decode=True) or b""
-                    res = avis_etablissement_dii(octets)
-                    if res is None:
-                        continue
-                    complet, manque = res
-                    chemin = ""
-                    if archiver:
-                        try:
-                            chemin = archiver(octets, e, complet) or ""
-                        except OSError:
-                            chemin = ""
-                    if complet:
-                        e["avis"] = quand.strftime("%d/%m/%Y %H:%M")
-                        e["avis_fichier"] = chemin
-                        e.pop("avis_incomplet", None)
-                        nouveaux.append((e, "avis"))
-                        break
-                    e["avis_incomplet"] = {"le": quand.strftime("%d/%m/%Y %H:%M"), "manque": manque, "fichier": chemin}
-                    nouveaux.append((e, "avis_incomplet"))
-            e["vus"] = sorted(vus, key=int)[-200:]
     finally:
         try:
             imap.logout()
@@ -3564,8 +3612,10 @@ def lancer_interface():
                           foreground="#c00000" if e.get("echec") or (e.get("avis_incomplet") and not e.get("avis"))
                           else "#1b7a3a" if ok else "#555").pack(anchor="w", pady=(4, 0))
                 self._boutons_avis_dii(cadre, e, fen.destroy)
-            if envois and self._envoi_direct():
-                ttk.Button(cadre, text="Vérifier les accusés de réception",
+            self._lignes_avis_dii(cadre, date, fen.destroy)       # avis de l'établissement (formulaire renvoyé)
+            if (envois or date in self.pl.greves or any(x.get("jour") == date.isoformat() for x in lire_prefs().get("dii_avis") or [])) \
+                    and lire_prefs().get("mail_adresse"):
+                ttk.Button(cadre, text="Vérifier les avis DII et accusés de réception",
                            command=lambda: (fen.destroy(), self.verifier_accuses_dii(manuel=True))).pack(anchor="w", pady=(4, 0))
 
             boutons = ttk.Frame(cadre, padding=(0, 10, 0, 0))
@@ -4375,7 +4425,7 @@ def lancer_interface():
             fichier.add_command(label="Exporter les bulletins en ZIP…", command=self.exporter_bulletins_zip)
             fichier.add_command(label="Sauvegarder les bulletins (NAS, kDrive…)…", command=self.fenetre_sauvegarde_bulletins)
             fichier.add_command(label="Déclaration de grève (DII)…", command=lambda: self.fenetre_dii(None))
-            fichier.add_command(label="Suivi des DII envoyées…", command=self.fenetre_suivi_dii)
+            fichier.add_command(label="Suivi des DII (avis de l'établissement)…", command=self.fenetre_suivi_dii)
             if MAIL_DISPONIBLE:                                         # version « mail » seulement
                 fichier.add_command(label="Commandes par mail…", command=self.fenetre_mail)
                 # confirmation de réception : seulement pour les commandes reçues par mail
@@ -5064,8 +5114,8 @@ def lancer_interface():
                 return
             if lire_prefs().get("mail_actif"):
                 self.relever_mail_maintenant(manuel=False)       # les accusés des DII sont cherchés à la suite
-            elif self._dii_a_suivre():
-                self.verifier_accuses_dii()
+            elif self._dii_a_suivre() or self._expediteurs_avis_dii():
+                self.verifier_accuses_dii()         # accusés et avis DII de l'établissement
             self.after(MAIL_INTERVALLE_MS, self._minuteur_mail)
 
         def relever_mail_maintenant(self, manuel=True, fini=None):
@@ -5115,7 +5165,7 @@ def lancer_interface():
                 etat = f"Relevé le {heure} : " + ("aucune nouvelle commande" if not n else
                                                   f"{n} nouvelle{'s' if n > 1 else ''} commande{'s' if n > 1 else ''}")
             ecrire_pref("mail_etat", etat)
-            if not erreur and self._dii_a_suivre():
+            if not erreur and (self._dii_a_suivre() or self._expediteurs_avis_dii()):
                 self.after(2000, self.verifier_accuses_dii)       # accusés des DII envoyées, avec le relevé
             if crees:
                 self.actualiser()                       # range les PDF et les ajoute au planning
@@ -5158,30 +5208,73 @@ def lancer_interface():
             return [e for e in (pr.get("dii_envois") or []) if e.get("id") and e.get("le")
                     and (maintenant - dt.datetime.fromisoformat(e["le"])).days <= DII_SUIVI_JOURS]
 
+        def _expediteurs_avis_dii(self):
+            """Expéditeurs des avis de l'établissement : réglage « Avis DII attendus de » (sinon l'adresse écrite dans
+            l'en-tête du formulaire vierge), plus les destinataires des DII envoyées ces 30 derniers jours."""
+            pr = lire_prefs()
+            l = [x.strip() for x in re.split(r"[,;\s]+", pr.get("dii_avis_de") or "") if "@" in x]
+            if not l:
+                a = adresse_modele_dii() if os.path.exists(chemin_modele_dii()) else ""
+                if a:
+                    l.append(a)
+            for e in self._dii_a_suivre():
+                if e.get("a") and e["a"].lower() not in [x.lower() for x in l]:
+                    l.append(e["a"])
+            return l
+
         def verifier_accuses_dii(self, manuel=False, fini=None):
-            """Cherche dans la boîte (fil à part) les accusés et réponses des DII envoyées ; prévient de chaque nouveauté."""
+            """Cherche dans la boîte (fil à part) les accusés des DII envoyées et les avis de l'établissement (formulaire
+            DII renvoyé par le service DII, cadre établissement rempli) ; prévient de chaque nouveauté. Avis complet :
+            filigrane GRÈVE posé sur le jour de grève lu dans le formulaire."""
             import threading
             if getattr(self, "_accuses_en_cours", False):
                 return
             pr = lire_prefs()
-            if not (pr.get("mail_adresse") and pr.get("mail_mdp")) or not self._dii_a_suivre():
+            exps = self._expediteurs_avis_dii()
+            if not (pr.get("mail_adresse") and pr.get("mail_mdp")) or not (self._dii_a_suivre() or exps):
                 if manuel:
-                    messagebox.showinfo("Accusés de réception", "Aucune DII envoyée par le programme à suivre (30 derniers jours).", parent=self)
+                    messagebox.showinfo("Avis DII", "Réglez d'abord la boîte mail (Fichier › Commandes par mail…) et "
+                                        "l'adresse du service DII (Fichier › Suivi des DII…).", parent=self)
                 return
             self._accuses_en_cours = True
             if manuel:
-                self.statut.config(text="Recherche des accusés de réception…")
+                self.statut.config(text="Recherche des accusés et des avis DII dans la boîte mail…")
+            agent = ((self.pl.agent or "").split() or [""])[0].upper()
 
             def travail():
-                nouveaux, err = [], None
+                nouveaux, avis_nouveaux, err = [], [], None
+                mdp = deproteger(pr.get("mail_mdp", ""))
+                srv, port = pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT)
                 try:
                     envois = list(lire_prefs().get("dii_envois") or [])
-                    nouveaux = verifier_accuses_dii(envois, pr.get("mail_adresse"), deproteger(pr.get("mail_mdp", "")),
-                                                    pr.get("mail_serveur") or MAIL_SERVEUR, int(pr.get("mail_port") or MAIL_PORT),
-                                                    archiver=lambda o, e, complet: archiver_dii(
-                                                        o, e.get("jour") or dt.date.today().isoformat(),
-                                                        "avis de l'établissement" + ("" if complet else " (incomplet)")))
-                    if nouveaux:
+                    if self._dii_a_suivre():
+                        nouveaux = verifier_accuses_dii(envois, pr.get("mail_adresse"), mdp, srv, port)
+                    deja = dict(lire_prefs().get("dii_avis_vus") or {})
+                    recus = relever_avis_dii(exps, deja, pr.get("mail_adresse"), mdp, srv, port)
+                    ecrire_pref("dii_avis_vus", deja)
+                    liste = list(lire_prefs().get("dii_avis") or [])
+                    for quand, nom, octets, a in recus:
+                        jour = a["jour"] or quand.date()
+                        autre = bool(agent and a.get("nom") and a["nom"].strip().upper().split()[0] != agent)
+                        try:                                # rangé avec les commandes (sauf avis d'un autre agent)
+                            fichier = "" if autre else archiver_dii(octets, jour, "avis de l'établissement" + ("" if a["complet"] else " (incomplet)"))
+                        except OSError:
+                            fichier = ""
+                        x = {"jour": jour.isoformat() if a["jour"] else "", "recu": quand.strftime("%d/%m/%Y %H:%M"),
+                             "complet": a["complet"], "manque": a["manque"], "fichier": fichier, "agent": a.get("nom", ""),
+                             "autre_agent": autre, "partie2": a.get("partie2", False)}
+                        liste.append(x)
+                        avis_nouveaux.append(x)
+                        for e in envois:                    # suivi de la DII envoyée pour ce jour
+                            if x["jour"] and e.get("jour") == x["jour"] and not autre:
+                                if a["complet"]:
+                                    e["avis"], e["avis_fichier"] = x["recu"], fichier
+                                    e.pop("avis_incomplet", None)
+                                elif not e.get("avis"):
+                                    e["avis_incomplet"] = {"le": x["recu"], "manque": a["manque"], "fichier": fichier}
+                    if recus:
+                        ecrire_pref("dii_avis", liste[-200:])
+                    if nouveaux or recus:
                         ecrire_pref("dii_envois", envois)
                 except OSError as ex:
                     err = str(ex)
@@ -5190,50 +5283,103 @@ def lancer_interface():
 
                 def fin():
                     self._accuses_en_cours = False
-                    for e, n in nouveaux:                  # avis complet : filigrane GRÈVE sur le jour déclaré
-                        if n == "avis" and e.get("greve_au_retour") and e.get("jour"):
-                            j = dt.date.fromisoformat(e["jour"])
-                            if j not in self.pl.greves:
-                                self.basculer_greve(j)
-                    if any(n in ("avis", "avis_incomplet") for _, n in nouveaux) and lire_prefs().get("copie_bulletins_auto"):
+                    lignes = []
+                    for x in avis_nouveaux:                 # avis complet : filigrane GRÈVE sur le jour de grève du formulaire
+                        j = dt.date.fromisoformat(x["jour"]).strftime("%d/%m/%Y") if x["jour"] else "date de grève non lue"
+                        if x["autre_agent"]:
+                            lignes.append(f"• Avis DII reçu le {x['recu']} pour un autre agent ({x['agent']}) : ignoré pour le planning.")
+                        elif x["complet"] and x["jour"]:
+                            jd = dt.date.fromisoformat(x["jour"])
+                            if jd not in self.pl.greves:
+                                self.basculer_greve(jd)
+                            lignes.append(f"• DII du {j} ACCEPTÉE : avis de réception de l'établissement reçu le {x['recu']}"
+                                          " (cadre établissement rempli) — filigrane GRÈVE mis au planning.")
+                        else:
+                            lignes.append(f"• Avis DII du {j} reçu le {x['recu']} : cadre établissement INCOMPLET"
+                                          f" (manque : {', '.join(x['manque'])}). Grève NON posée : vérifiez le PDF"
+                                          " (Fichier › Suivi des DII…).")
+                    if avis_nouveaux and lire_prefs().get("copie_bulletins_auto"):
                         self.sauvegarder_bulletins()       # avis rangé avec les commandes : sauvegarde NAS / kDrive
-                    if nouveaux:
-                        lignes = []
-                        for e, n in nouveaux:
-                            j = dt.date.fromisoformat(e["jour"]).strftime("%d/%m/%Y") if e.get("jour") else ""
-                            if n == "avis_incomplet":
-                                ai = e.get("avis_incomplet") or {}
-                                lignes.append(f"• DII du {j} : {DII_NATURES[n]} (manque : {', '.join(ai.get('manque') or [])})."
-                                              f" Filigrane GRÈVE pas mis : vérifiez le PDF reçu"
-                                              f" (Fichier › Suivi des DII envoyées…).")
-                            elif n == "avis":
-                                lignes.append(f"• DII du {j} : {DII_NATURES[n]} le {e[n]}"
-                                              + (" — filigrane GRÈVE mis au planning." if e.get("greve_au_retour") else "."))
-                            else:
-                                lignes.append(f"• DII du {j} ({e.get('a', '')}) : {DII_NATURES[n]} le {e[n]}")
-                        self.statut.config(text="Accusé de réception reçu : " + lignes[-1].lstrip("• "))
-                        (messagebox.showwarning if any(n in ("echec", "avis_incomplet") for _, n in nouveaux) else messagebox.showinfo)(
-                            "Accusé de réception", "\n".join(lignes), parent=self)
+                    for e, n in nouveaux:
+                        j = dt.date.fromisoformat(e["jour"]).strftime("%d/%m/%Y") if e.get("jour") else ""
+                        lignes.append(f"• DII du {j} ({e.get('a', '')}) : {DII_NATURES[n]} le {e[n]}")
+                    if lignes:
+                        self.statut.config(text=lignes[0].lstrip("• "))
+                        alerte = any(n == "echec" for _, n in nouveaux) or any(not x["complet"] for x in avis_nouveaux)
+                        (messagebox.showwarning if alerte else messagebox.showinfo)("Avis DII", "\n".join(lignes), parent=self)
                     elif manuel:
-                        self.statut.config(text=f"Accusés de réception : échec ({err})." if err else "Pas de nouvel accusé de réception pour l'instant.")
+                        self.statut.config(text=f"Avis DII : échec ({err})." if err else "Pas de nouvel avis ni accusé pour l'instant.")
                     if fini:
                         fini()
                 self.after(0, fin)
             threading.Thread(target=travail, daemon=True).start()
 
+        def _lignes_avis_dii(self, parent, jour=None, apres=None, largeur=460):
+            """Avis de l'établissement reçus (tous, ou ceux du jour) : état, Ouvrir le PDF, Avis vérifié : mettre la grève."""
+            avis = [x for x in (lire_prefs().get("dii_avis") or []) if jour is None or x.get("jour") == jour.isoformat()]
+            for x in reversed(avis[-15:]):
+                j = dt.date.fromisoformat(x["jour"]).strftime("%d/%m/%Y") if x.get("jour") else "date non lue"
+                if x.get("autre_agent"):
+                    t, coul = f"Avis DII reçu le {x['recu']} pour un autre agent ({x.get('agent', '')})", "#777"
+                elif x.get("complet") or x.get("valide"):
+                    t, coul = (f"✔ DII du {j} acceptée : avis de l'établissement reçu le {x['recu']}"
+                               + (" (vérifié par vous)" if x.get("valide") and not x.get("complet") else "")), "#1b7a3a"
+                else:
+                    t, coul = (f"Avis DII du {j} reçu le {x['recu']} : cadre établissement INCOMPLET"
+                               f" (manque : {', '.join(x.get('manque') or [])})"), "#c00000"
+                ttk.Label(parent, text=t, wraplength=largeur, foreground=coul).pack(anchor="w", pady=(4, 0))
+                fr = ttk.Frame(parent)
+                fr.pack(anchor="w")
+                if x.get("fichier") and os.path.exists(x["fichier"]):
+                    ttk.Button(fr, text="Ouvrir le PDF reçu", command=lambda f=x["fichier"]: self.ouvrir_fichier(f)).pack(side="left")
+                if not (x.get("complet") or x.get("valide") or x.get("autre_agent")) and x.get("jour"):
+                    def valider(x=x):
+                        l = lire_prefs().get("dii_avis") or []
+                        for y in l:
+                            if y.get("recu") == x["recu"] and y.get("fichier") == x.get("fichier"):
+                                y["valide"] = True
+                        ecrire_pref("dii_avis", l)
+                        jd = dt.date.fromisoformat(x["jour"])
+                        if jd not in self.pl.greves:
+                            self.basculer_greve(jd)
+                        if apres:
+                            apres()
+                    ttk.Button(fr, text="Avis vérifié : mettre la grève", command=valider).pack(side="left", padx=6)
+
         def fenetre_suivi_dii(self):
             """Liste des DII envoyées par le programme, avec les accusés de réception retrouvés."""
             fen = tk.Toplevel(self)
-            fen.title("Suivi des DII envoyées")
+            fen.title("Suivi des DII")
             fen.transient(self)
             c = ttk.Frame(fen, padding=14)
             c.pack(fill="both", expand=True)
+            # adresse du service DII qui renvoie le formulaire avec le « Cadre réservé à l'établissement » rempli
+            fa = ttk.Frame(c)
+            fa.pack(fill="x", pady=(0, 8))
+            ttk.Label(fa, text="Avis DII attendus de :").pack(side="left")
+            defaut = adresse_modele_dii() if os.path.exists(chemin_modele_dii()) else ""
+            v_de = tk.StringVar(value=lire_prefs().get("dii_avis_de") or defaut)
+            ttk.Entry(fa, textvariable=v_de, width=44).pack(side="left", padx=6)
+            ttk.Button(fa, text="Enregistrer", command=lambda: (ecrire_pref("dii_avis_de", v_de.get().strip()),
+                                                              self.statut.config(text="Adresse du service DII enregistrée."))).pack(side="left")
+            ttk.Label(c, foreground="#555", wraplength=640, justify="left", text=(
+                "Le programme lit les messages de cette adresse (plusieurs : séparées par des virgules ; vide : adresse "
+                "écrite en haut du formulaire). Un formulaire DII joint dont le « Cadre réservé à l'établissement » est "
+                "rempli (partie 1, et partie 2 si vous l'avez remplie) vaut acceptation : le filigrane GRÈVE est mis sur le "
+                "jour de grève du formulaire.")).pack(anchor="w", pady=(0, 8))
+            ttk.Label(c, text="Avis de l'établissement reçus", font=("", 10, "bold")).pack(anchor="w")
+            liste_avis = ttk.Frame(c)
+            liste_avis.pack(fill="x", pady=(0, 8))
+            ttk.Label(c, text="DII envoyées par le programme", font=("", 10, "bold")).pack(anchor="w")
             liste = ttk.Frame(c)
             liste.pack(fill="x")
 
             def remplir():
-                for w in liste.winfo_children():
+                for w in liste.winfo_children() + liste_avis.winfo_children():
                     w.destroy()
+                if not lire_prefs().get("dii_avis"):
+                    ttk.Label(liste_avis, text="Aucun avis reçu pour l'instant.", foreground="#555").pack(anchor="w")
+                self._lignes_avis_dii(liste_avis, None, remplir, 640)
                 envois = list(reversed(lire_prefs().get("dii_envois") or []))[:15]
                 if not envois:
                     ttk.Label(liste, text="Aucune DII envoyée directement par le programme.", foreground="#555").pack(anchor="w")
@@ -5250,7 +5396,8 @@ def lancer_interface():
             b = ttk.Frame(c, padding=(0, 10, 0, 0))
             b.pack(fill="x")
             ttk.Button(b, text="Vérifier maintenant",
-                       command=lambda: self.verifier_accuses_dii(manuel=True, fini=lambda: fen.winfo_exists() and remplir())).pack(side="left")
+                       command=lambda: (ecrire_pref("dii_avis_de", v_de.get().strip()),
+                                        self.verifier_accuses_dii(manuel=True, fini=lambda: fen.winfo_exists() and remplir()))).pack(side="left")
             ttk.Button(b, text="Fermer", command=fen.destroy).pack(side="right")
             fen.bind("<Escape>", lambda e: fen.destroy())
 
@@ -5457,8 +5604,11 @@ def lancer_interface():
             liste.pack(fill="both", expand=True)
 
             def remplir():
-                for w in liste.winfo_children():
+                for w in liste.winfo_children() + liste_avis.winfo_children():
                     w.destroy()
+                if not lire_prefs().get("dii_avis"):
+                    ttk.Label(liste_avis, text="Aucun avis reçu pour l'instant.", foreground="#555").pack(anchor="w")
+                self._lignes_avis_dii(liste_avis, None, remplir, 640)
                 for i, (emp, chemin) in enumerate(connues):
                     recu = self.pl.recus_mail.get(emp, {})
                     conf = self.pl.confirmations.get(emp)

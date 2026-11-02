@@ -144,9 +144,10 @@ DOSSIER « commande »
     sur la journée prévue » : début du premier et fin du dernier horaire
     AUTO de la commande du jour (affichée dans la fenêtre), modifiables. Accusé de réception possible (avis de
     remise et accusé de lecture) : le programme le cherche dans la boîte
-    mail et prévient à son arrivée (Fichier › « Suivi des DII envoyées… »).
-    Le filigrane GRÈVE n'est posé qu'à la réception de l'avis de
-    l'établissement (partie 1 de son cadre remplie), ou par vous.
+    mail et prévient à son arrivée (Fichier › « Suivi des DII… »).
+    Le filigrane GRÈVE n'est posé que quand le service DII renvoie le
+    formulaire avec le « Cadre réservé à l'établissement » rempli (adresse
+    du service : Fichier › « Suivi des DII… »), ou par vous.
     La DII envoyée et l'avis reçu sont rangés dans le dossier « commande »
     (année / mois du jour déclaré), comme les bulletins.
     Le formulaire vierge est choisi une fois et reste sur ce PC.
