@@ -4482,6 +4482,7 @@ def lancer_interface():
             barre.add_cascade(label="Affichage", menu=affichage)
 
             aide = tk.Menu(barre, tearoff=False)
+            aide.add_command(label="Aide au paramétrage…", command=self.fenetre_aide_parametrage)
             aide.add_command(label="Lisez-moi",
                              command=lambda: self.ouvrir_fichier(os.path.join(APP_DIR, "LISEZMOI.txt")))
             aide.add_command(label="Notice des codes",
@@ -5345,6 +5346,74 @@ def lancer_interface():
                         if apres:
                             apres()
                     ttk.Button(fr, text="Avis vérifié : mettre la grève", command=valider).pack(side="left", padx=6)
+
+        def fenetre_aide_parametrage(self):
+            """Étapes du paramétrage, avec ce qui est déjà réglé et un bouton vers chaque réglage."""
+            fen = tk.Toplevel(self)
+            fen.title("Aide au paramétrage")
+            fen.transient(self)
+            c = ttk.Frame(fen, padding=14)
+            c.pack(fill="both", expand=True)
+            haut = ttk.Label(c, wraplength=620, justify="left")
+            haut.pack(anchor="w", pady=(0, 8))
+            liste = ttk.Frame(c)
+            liste.pack(fill="x")
+
+            def etapes():
+                pr = lire_prefs()
+                l = [("Vos codes et couleurs", os.path.exists(chemin_codes()) or None,
+                      "Édition › Codes et couleurs : vos codes de service, leur nom et leur couleur (codes.txt).", self.editeur_codes),
+                     ("Ajouter vos commandes", bool(self.pl.importes),
+                      "Fichier › Ajouter une commande (ou déposez les PDF dans le dossier « commande ») : lus, rangés par année et par mois.",
+                      self.ouvrir)]
+                if MAIL_DISPONIBLE:
+                    l += [("Boîte mail : relevé des commandes",
+                           bool(pr.get("mail_actif") and pr.get("mail_adresse") and pr.get("mail_mdp") and pr.get("mail_expediteurs")),
+                           "Fichier › Commandes par mail : boîte, mot de passe (ou mot de passe d'application), expéditeurs des bulletins, "
+                           "relevé automatique.", self.fenetre_mail),
+                          ("Serveur d'envoi (SMTP)", self._envoi_direct(),
+                           "Même fenêtre : serveur et port d'envoi. Confirmations de réception et DII envoyées directement, avec accusé "
+                           "de réception et suivi.", self.fenetre_mail),
+                          ("Messages de confirmation de réception", None,
+                           "Fichier › Messages de confirmation : un message par expéditeur, avec un essai.", self.fenetre_message_confirmation)]
+                l.append(("Déclaration de grève : formulaire DII", os.path.exists(chemin_modele_dii()),
+                          "Fichier › Déclaration de grève (DII) : choisissez une fois le formulaire vierge reçu de votre établissement, "
+                          "puis nom, CP, entité, signature (gardés).", lambda: self.fenetre_dii(None)))
+                if MAIL_DISPONIBLE:
+                    l.append(("DII acceptée : adresse du service DII", bool(self._expediteurs_avis_dii()),
+                              "Fichier › Suivi des DII : adresse du service DII (par défaut celle écrite en haut du formulaire). Formulaire "
+                              "renvoyé avec le « Cadre réservé à l'établissement » rempli : grève posée, avis rangé avec les commandes.",
+                              self.fenetre_suivi_dii))
+                l += [("Sauvegarde des bulletins (NAS, kDrive, clé USB)", True if pr.get("copie_bulletins_dossier") else None,
+                       "Fichier › Sauvegarder les bulletins : copie du dossier « commande » (bulletins et DII), à la demande ou "
+                       "automatique.", self.fenetre_sauvegarde_bulletins),
+                      ("Agenda", None, "Fichier › Exporter vers l'agenda (.ics) : Outlook, Google Agenda, téléphone.", self.exporter_agenda),
+                      ("Téléphone", None, "Fichier › Envoyer vers le téléphone (.json) : le même planning dans l'application Android.",
+                       self.envoyer_telephone)]
+                return l
+
+            def remplir():
+                for w in liste.winfo_children():
+                    w.destroy()
+                l = etapes()
+                n = sum(1 for x in l if x[1] is False)
+                haut.config(text=("Version mail : les commandes arrivent toutes seules depuis votre boîte. " if MAIL_DISPONIBLE else
+                                  "Version manuelle : vous ajoutez les bulletins vous-même. ")
+                            + (f"{n} étape{'s' if n > 1 else ''} à faire." if n else "Tout l'essentiel est réglé.")
+                            + " Cliquez sur « Régler », puis sur « Actualiser » pour voir l'état à jour.")
+                for i, (titre, fait, texte, action) in enumerate(l):
+                    etat = "fait" if fait is True else "à faire" if fait is False else "facultatif"
+                    coul = "#1b7a3a" if fait is True else "#1a5fb4" if fait is False else "#666"
+                    ttk.Label(liste, text=f"{i + 1}. {titre} — {etat}", foreground=coul, font=("", 10, "bold")).grid(
+                        row=2 * i, column=0, sticky="w", pady=(8, 0))
+                    ttk.Button(liste, text="Régler…", command=action).grid(row=2 * i, column=1, rowspan=2, sticky="e", padx=(12, 0))
+                    ttk.Label(liste, text=texte, foreground="#555", wraplength=520, justify="left").grid(row=2 * i + 1, column=0, sticky="w")
+            remplir()
+            b = ttk.Frame(c, padding=(0, 12, 0, 0))
+            b.pack(fill="x")
+            ttk.Button(b, text="Actualiser", command=remplir).pack(side="left")
+            ttk.Button(b, text="Fermer", command=fen.destroy).pack(side="right")
+            fen.bind("<Escape>", lambda e: fen.destroy())
 
         def fenetre_suivi_dii(self):
             """Liste des DII envoyées par le programme, avec les accusés de réception retrouvés."""

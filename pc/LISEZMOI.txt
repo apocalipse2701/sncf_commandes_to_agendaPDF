@@ -137,6 +137,8 @@ DOSSIER « commande »
   • Fichier › « Exporter les bulletins en ZIP… » : tout le dossier
     « commande » (avec ses dossiers année / mois) dans une archive ZIP, pour
     le sauvegarder ou l'envoyer. Le téléphone fait le même ZIP.
+  • Aide › « Aide au paramétrage… » : les étapes du réglage, avec ce qui est
+    fait, ce qui reste à faire, et un bouton vers chaque réglage.
   • Fichier › « Déclaration de grève (DII)… » (ou clic droit sur un jour) :
     remplit le cadre agent du formulaire DII (parties 1 et 2), ajoute
     votre signature (dessinée ou image) et l'envoie au destinataire

@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.0 — 2 novembre 2026
+
+**Aide au paramétrage (PC et Android)**
+- Téléphone : Réglages › **Aide au paramétrage** (en tête du menu, avec le nombre d'étapes à faire). PC : Aide › **Aide au paramétrage…**
+- Les étapes sont adaptées à la version (manuelle, mail, lecture) et marquées **fait**, **à faire** ou **facultatif** selon les réglages actuels :
+  - codes et couleurs, commandes ajoutées ;
+  - boîte mail, serveur d'envoi, messages de confirmation ;
+  - formulaire DII et adresse du service DII ;
+  - agenda, partage, sauvegarde des bulletins, copie du planning, mise à jour.
+- Chaque étape a un bouton **Régler** qui ouvre le bon réglage. Version lecture : réception du planning partagé, notifications, widget, apparence.
+
 ## 2.14.0 — 2 novembre 2026
 
 **DII acceptée : l'application lit les avis du service DII (PC et Android, version « mail »)**
