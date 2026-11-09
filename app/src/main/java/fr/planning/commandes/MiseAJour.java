@@ -177,7 +177,7 @@ final class MiseAJour {
         Publication pub = derniere != null ? derniere : publication(c);
         HttpURLConnection h = ouvrir(pub.fiche ? adresseFichier(depot(c), pub.tag, nomApk(c)) : adresse(depot(c), nomApk(c)));
         File f = new File(c.getCacheDir(), "mise-a-jour.apk");
-        long total = h.getContentLengthLong(), lu = 0;
+        long total = Build.VERSION.SDK_INT >= 24 ? h.getContentLengthLong() : h.getContentLength(), lu = 0;
         int dernier = -1;
         try (InputStream in = h.getInputStream(); OutputStream out = new FileOutputStream(f)) {
             byte[] bloc = new byte[65536];

@@ -333,6 +333,15 @@ public class PartagePlanning extends JobService {
         }
     }
 
+    /** Version d'Android (API), 99 hors Android (ordinateur, tests). */
+    static int sdk() {
+        try {
+            return Class.forName("android.os.Build$VERSION").getField("SDK_INT").getInt(null);
+        } catch (Exception e) {
+            return 99;
+        }
+    }
+
     private static boolean surAndroid() {
         return "Dalvik".equals(System.getProperty("java.vm.name"));
     }
@@ -449,7 +458,7 @@ public class PartagePlanning extends JobService {
         try (javax.net.ssl.SSLSocket s = (javax.net.ssl.SSLSocket) f.createSocket(brut, hote, port, true)) {
             s.setSoTimeout(DELAI_MS);
             // nom du serveur vérifié pendant la poignée de main (comme HttpsURLConnection), sauf certificat accepté par l'utilisateur…
-            if (epingle.isEmpty()) {
+            if (epingle.isEmpty() && sdk() >= 24) {        // Android 6 : pas disponible, nom vérifié juste après (VERIFICATEUR)
                 javax.net.ssl.SSLParameters prm = s.getSSLParameters();
                 prm.setEndpointIdentificationAlgorithm("HTTPS");
                 s.setSSLParameters(prm);

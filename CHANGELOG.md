@@ -7,6 +7,12 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.2 — 9 novembre 2026
+
+**Android 6 : deux corrections repérées par le contrôle de compatibilité**
+- Mise à jour de l'application : la taille du téléchargement est lue d'une façon compatible avec Android 6 (sans cela, plantage à l'installation d'une nouvelle version).
+- Partage du planning et sauvegarde sur NAS / kDrive : la vérification du nom du serveur se fait après la connexion sur Android 6, avec la même sécurité (sans cela, échec de connexion).
+
 ## 2.15.1 — 9 novembre 2026
 
 **Android 6 (anciennes tablettes)**
