@@ -7,6 +7,17 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.3 — 9 novembre 2026
+
+**Android 6 / anciennes tablettes : boutons sans effet (Android)**
+- Cause : une expression de recherche de lettres accentuées (`\p{L}`) que les anciennes WebView ne comprennent pas. Tout le script de l'application était refusé, donc aucun bouton ne répondait. Elle est remplacée par une liste de lettres (A-Z, accents français).
+- Le script de l'application et les bibliothèques PDF sont maintenant réécrits pour les WebView anciennes (Chrome 51 et plus, 2016) :
+  - syntaxe récente transformée ;
+  - pdf.js chargé en scripts classiques (sans module) ;
+  - fonctions manquantes ajoutées.
+- Si une erreur survient malgré tout, un bandeau rouge l'affiche en bas de l'écran avec la version de la WebView (à transmettre pour diagnostic).
+- Fond des fenêtres et filigrane GRÈVE : positionnement compatible avec les anciennes WebView.
+
 ## 2.15.2 — 9 novembre 2026
 
 **Android 6 : deux corrections repérées par le contrôle de compatibilité**
