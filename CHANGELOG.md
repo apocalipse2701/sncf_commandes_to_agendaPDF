@@ -7,6 +7,12 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.6 — 9 novembre 2026
+
+**Anciennes WebView, petite tablette (601 × 962) : champs de réglage sur une colonne**
+- Sans grille CSS, les champs prévus sur une seule colonne (partage, sauvegarde NAS, mail…) se mettaient côte à côte avec leurs explications, illisibles. Ils sont de nouveau les uns sous les autres, et les explications sur toute la largeur. Les champs sur deux colonnes de la fenêtre DII restent sur deux colonnes.
+- Vérifié en 601 × 962 et en 962 × 601 : pas de défilement de côté, calendrier sur 7 colonnes, bouton Enregistrer au-dessus de la barre d'onglets.
+
 ## 2.15.5 — 9 novembre 2026
 
 **Anciennes WebView : bouton « Enregistrer » caché sous la barre d'onglets**
