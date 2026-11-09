@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.5 — 9 novembre 2026
+
+**Anciennes WebView : bouton « Enregistrer » caché sous la barre d'onglets**
+- La marge du bas de la page (padding-block avec env()) n'était pas comprise par Chrome 55. Le bas de chaque page de réglage, dont le bouton **Enregistrer** du partage, restait sous la barre Planning / Réglages. Des marges compatibles sont maintenant indiquées en premier.
+- Même correction pour la fenêtre du bas (feuilles), les messages (toasts) et les grands boutons.
+- Espacement des boutons d'une même ligne sur les anciennes WebView.
+
 ## 2.15.4 — 9 novembre 2026
 
 **Android 6 / WebView Chrome 55 (tablette sans mise à jour possible)**
