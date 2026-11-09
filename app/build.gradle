@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "fr.planning.commandes"
-        minSdk 24
+        minSdk 23
         targetSdk 34
         // numéro de version = numéro de fabrication GitHub (chaque mise à jour s'installe par-dessus)
         versionCode Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")

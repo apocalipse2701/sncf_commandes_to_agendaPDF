@@ -114,7 +114,7 @@ Même planning et mêmes réglages : on passe de l'une à l'autre en installant 
 3. Autorisez l'installation depuis cette source si Android le demande, puis **Installer**.
 4. Si Play Protect signale une « appli inconnue » (normal hors Play Store) : **Plus de détails → Installer quand même**.
 
-Android 7.0 ou plus récent. Les versions suivantes se proposent toutes seules (bandeau **Installer**, ou **Réglages → Mise à jour**).
+Android 6.0 ou plus récent (sur une vieille tablette, mettez à jour « Android System WebView » dans le Play Store). Les versions suivantes se proposent toutes seules (bandeau **Installer**, ou **Réglages → Mise à jour**).
 
 ## 💻 Installer sur le PC
 
@@ -137,7 +137,7 @@ Les versions suivantes se proposent toutes seules (ou **Aide → Rechercher une 
 
 À chaque envoi de fichiers, GitHub Actions (`.github/workflows/apk.yml`) fabrique et publie :
 
-- **les 2 APK** (release `apk`) : `PlanningCommandes.apk` (manuelle) et `PlanningCommandes-mail.apk` (variantes Gradle `manuel` / `mail`) ; Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 24 ; numéro de fabrication GitHub ; signés avec la clé fournie par les secrets du dépôt ;
+- **les 2 APK** (release `apk`) : `PlanningCommandes.apk` (manuelle) et `PlanningCommandes-mail.apk` (variantes Gradle `manuel` / `mail`) ; Gradle 8.7, Android Gradle Plugin 8.5, Java 17, `compileSdk` 34, `minSdk` 23 (Android 6) ; numéro de fabrication GitHub ; signés avec la clé fournie par les secrets du dépôt ;
 - **les 2 exe Windows** (release `exe`) : `PlanningPDF.exe` (manuelle) et `PlanningPDF-mail.exe` ; Python 3.12 + PyInstaller à partir de `pc/planning_pdf.py` et `pc/regles.json`.
 
 Chaque release contient aussi `version.json`, lu par la mise à jour automatique.

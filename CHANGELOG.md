@@ -7,6 +7,14 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.1 — 9 novembre 2026
+
+**Android 6 (anciennes tablettes)**
+- L'application s'installe maintenant à partir d'**Android 6.0**, au lieu d'Android 7.0. Le message « Erreur d'analyse du package » apparaissait sur Android 6.
+- Les fonctions récentes utilisées par la lecture des PDF (pdf.js) et le formulaire DII sont ajoutées quand l'ancienne WebView ne les a pas.
+- Conseil : sur une vieille tablette, mettez à jour **Android System WebView** (et Chrome) dans le Play Store.
+- Contrôle de compatibilité Android 6 ajouté à la fabrication.
+
 ## 2.15.0 — 2 novembre 2026
 
 **Aide au paramétrage (PC et Android)**
