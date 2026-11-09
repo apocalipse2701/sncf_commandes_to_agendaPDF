@@ -75,6 +75,25 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: gradle assembleManuelRelease assembleMailRelease assembleLectureRelease --no-daemon --stacktrace
 
+      # compatibilité Android 6 (minSdk 23) : appels d'API plus récentes repérés par lint, affichés en avertissement
+      - name: Vérifier la compatibilité Android 6
+        continue-on-error: true
+        run: |
+          gradle lintMailRelease --no-daemon -q > /dev/null 2>&1 || true
+          f=$(ls app/build/reports/lint-results-mailRelease.xml 2>/dev/null | head -1)
+          if [ -z "$f" ]; then echo "rapport lint introuvable"; exit 0; fi
+          python3 - "$f" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          n = 0
+          for i in ET.parse(sys.argv[1]).getroot().iter("issue"):
+              if i.get("id") in ("NewApi", "InlinedApi", "UnusedAttribute"):
+                  loc = i.find("location")
+                  where = f"{loc.get('file', '').split('/app/')[-1]}:{loc.get('line', '')}" if loc is not None else ""
+                  print(f"::warning::{i.get('id')} {where} {i.get('message')}")
+                  n += 1
+          print(f"Compatibilité Android 6 : {n} avertissement(s)")
+          PY
+
       - name: Préparer les fichiers
         run: |
           cp app/build/outputs/apk/manuel/release/app-manuel-release.apk PlanningCommandes.apk
