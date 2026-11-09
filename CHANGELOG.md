@@ -7,6 +7,13 @@ Numéro de version : **MAJEUR.MINEUR.CORRECTIF**
 
 Chaque version existe pour le téléphone (`PlanningCommandes.apk` manuelle, `PlanningCommandes-mail.apk`, et depuis 2.9.0 `PlanningCommandes-lecture.apk` pour un proche) et pour Windows (`PlanningPDF.exe` manuelle, `PlanningPDF-mail.exe`). Le « numéro de fabrication » (N) est celui de GitHub ; chaque fabrication est gardée sur la page Releases (« Version X.Y.Z (fabrication N) »).
 
+## 2.15.4 — 9 novembre 2026
+
+**Android 6 / WebView Chrome 55 (tablette sans mise à jour possible)**
+- Corrige l'erreur « replaceChildren is not a function », affichée par le bandeau d'erreur sur la tablette : les fonctions de page récentes manquantes sont ajoutées (replaceChildren, toggleAttribute…).
+- Copie profonde complète (structuredClone) pour la lecture des PDF sur les anciennes WebView. Sans elle, les bulletins n'étaient pas lus.
+- Mises en page de remplacement quand la WebView ne connaît pas la grille CSS (Chrome < 57) : calendrier compact, onglets, détail du jour, champs, aide au paramétrage.
+
 ## 2.15.3 — 9 novembre 2026
 
 **Android 6 / anciennes tablettes : boutons sans effet (Android)**
